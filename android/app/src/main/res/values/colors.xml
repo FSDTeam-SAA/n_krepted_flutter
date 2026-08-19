@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash ground, matching AppColors.yellow / Splash (1).png -->
+    <color name="brand_yellow">#FFE88B</color>
+</resources>

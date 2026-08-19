@@ -1,0 +1,53 @@
+name: n_krepted_flutter
+description: "Signature Dish - N_Krepted Mobile App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  dio: ^5.8.0+1
+  shared_preferences: ^2.5.2
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.17
+  smooth_page_indicator: ^1.2.0+3
+  shimmer: ^3.0.0
+  flutter_rating_bar: ^4.0.1
+  intl: ^0.20.2
+  image_picker: ^1.1.2
+  flutter_animate: ^4.5.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Only the cut-outs ship. The full-frame Figma exports stay in assets/ for
+  # reference — bundling them added ~15 MB of screenshots to the binary.
+  assets:
+    - assets/img/
+
+  # Bundled rather than fetched at runtime: google_fonts downloads on first
+  # launch, so the design typefaces showed as system fallbacks until then.
+  # Urbanist and Lora are variable (wght axis) — weights are selected with
+  # `fontVariations` in AppTextStyles, not by shipping one file per weight.
+  fonts:
+    - family: KaushanScript
+      fonts:
+        - asset: assets/fonts/KaushanScript-Regular.ttf
+    - family: Urbanist
+      fonts:
+        - asset: assets/fonts/Urbanist.ttf
+    - family: Lora
+      fonts:
+        - asset: assets/fonts/Lora.ttf

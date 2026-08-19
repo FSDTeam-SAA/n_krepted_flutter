@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cold-start window, painted before the Flutter engine draws its first frame.
+     Matching the Dart splash's yellow means the launch hands over without a
+     white flash. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/brand_yellow" />
+</layer-list>
