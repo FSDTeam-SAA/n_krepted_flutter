@@ -23,6 +23,9 @@ class UserModel {
     this.token,
   });
 
+  bool get isRestaurantOwner => role == 'restaurant_owner';
+  bool get isAdmin => role == 'admin';
+
   factory UserModel.fromJson(Map<String, dynamic> json, {String? token}) {
     return UserModel(
       id: json['_id'] ?? json['id'] ?? '',

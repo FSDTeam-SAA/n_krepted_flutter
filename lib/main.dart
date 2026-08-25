@@ -9,12 +9,14 @@ import 'data/repositories/auth_repository.dart';
 import 'data/repositories/deal_repository.dart';
 import 'data/repositories/review_repository.dart';
 import 'data/repositories/booking_repository.dart';
+import 'data/repositories/owner_restaurant_repository.dart';
 import 'providers/auth_provider.dart';
 import 'providers/deal_provider.dart';
 import 'providers/category_provider.dart';
 import 'providers/review_provider.dart';
 import 'providers/booking_provider.dart';
 import 'providers/saved_provider.dart';
+import 'providers/owner_restaurant_provider.dart';
 import 'views/splash/splash_screen.dart';
 
 void main() async {
@@ -34,6 +36,8 @@ void main() async {
   final dealRepository = DealRepository(apiClient: apiClient);
   final reviewRepository = ReviewRepository(apiClient: apiClient);
   final bookingRepository = BookingRepository(apiClient: apiClient);
+  final ownerRestaurantRepository =
+      OwnerRestaurantRepository(apiClient: apiClient);
 
   runApp(
     MultiProvider(
@@ -55,6 +59,11 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => SavedProvider(dealRepository: dealRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OwnerRestaurantProvider(
+            repository: ownerRestaurantRepository,
+          ),
         ),
       ],
       child: const SignatureDishApp(),

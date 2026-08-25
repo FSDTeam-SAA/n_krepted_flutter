@@ -11,6 +11,10 @@ class DealProvider with ChangeNotifier {
   String? _errorMessage;
   String? _selectedCategory;
   String _searchQuery = '';
+  String _locationQuery = '';
+  double _radiusKm = 15;
+  int _minimumRating = 0;
+  String? _cuisine;
 
   DealProvider({required this.dealRepository}) {
     fetchDeals();
@@ -21,17 +25,35 @@ class DealProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
+  String get locationQuery => _locationQuery;
+  double get radiusKm => _radiusKm;
+  int get minimumRating => _minimumRating;
+  String? get cuisine => _cuisine;
 
   List<DealModel> get filteredDeals {
-    if (_searchQuery.isEmpty) return _deals;
     return _deals
-        .where((d) =>
-            d.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            d.description.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .where((d) {
+          final searchMatches = _searchQuery.isEmpty ||
+              d.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              d.description.toLowerCase().contains(_searchQuery.toLowerCase());
+          final locationMatches = _locationQuery.isEmpty ||
+              d.location.city.toLowerCase().contains(_locationQuery.toLowerCase()) ||
+              d.location.country.toLowerCase().contains(_locationQuery.toLowerCase()) ||
+              d.location.address.toLowerCase().contains(_locationQuery.toLowerCase());
+          final ratingMatches = d.rating >= _minimumRating;
+          final cuisineMatches = _cuisine == null ||
+              _cuisine!.isEmpty ||
+              d.category?.categoryName.toLowerCase() == _cuisine!.toLowerCase();
+          return searchMatches && locationMatches && ratingMatches && cuisineMatches;
+        })
         .toList();
   }
 
-  Future<void> fetchDeals({String? categoryId, String? search}) async {
+  Future<void> fetchDeals({
+    String? categoryId,
+    String? search,
+    String? location,
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -40,6 +62,7 @@ class DealProvider with ChangeNotifier {
       _deals = await dealRepository.getAllDeals(
         categoryId: categoryId,
         search: search,
+        location: location,
       );
       _isLoading = false;
       notifyListeners();
@@ -58,6 +81,31 @@ class DealProvider with ChangeNotifier {
   void setSearchQuery(String query) {
     _searchQuery = query;
     notifyListeners();
+  }
+
+  Future<void> applyFilters({
+    required String location,
+    required double radiusKm,
+    required int minimumRating,
+    String? cuisine,
+  }) async {
+    _locationQuery = location.trim();
+    _radiusKm = radiusKm;
+    _minimumRating = minimumRating;
+    _cuisine = cuisine;
+    await fetchDeals(
+      categoryId: _selectedCategory,
+      search: _searchQuery,
+      location: _locationQuery,
+    );
+  }
+
+  Future<void> resetFilters() async {
+    _locationQuery = '';
+    _radiusKm = 15;
+    _minimumRating = 0;
+    _cuisine = null;
+    await fetchDeals(categoryId: _selectedCategory, search: _searchQuery);
   }
 
   Future<DealModel?> getDealDetails(String id) async {

@@ -13,8 +13,9 @@ import '../reviews/all_reviews_screen.dart';
 
 class DishDetailsScreen extends StatefulWidget {
   final DealModel deal;
+  final DealDish? dish;
 
-  const DishDetailsScreen({super.key, required this.deal});
+  const DishDetailsScreen({super.key, required this.deal, this.dish});
 
   @override
   State<DishDetailsScreen> createState() => _DishDetailsScreenState();
@@ -41,6 +42,16 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final deal = widget.deal;
+    final dish = widget.dish;
+    final dishName = dish?.name ?? deal.dishName;
+    final dishPrice = dish?.price ?? deal.price;
+    final dishDescription = dish?.description.isNotEmpty == true
+        ? dish!.description
+        : deal.description;
+    final galleryImages = [
+      if (dish?.image.isNotEmpty == true) dish!.image,
+      ..._galleryImages,
+    ];
     final reviewProvider = context.watch<ReviewProvider>();
     final savedProvider = context.watch<SavedProvider>();
     final isSaved = savedProvider.isSaved(deal.id);
@@ -55,7 +66,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          deal.dishName,
+          dishName,
           style: const TextStyle(
             color: AppColors.textDark,
             fontSize: 18,
@@ -97,7 +108,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: CachedNetworkImage(
-                      imageUrl: _galleryImages[_selectedImageIndex],
+                      imageUrl: galleryImages[_selectedImageIndex],
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -107,7 +118,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
 
                 // Thumbnails Gallery Row
                 Row(
-                  children: List.generate(_galleryImages.length, (index) {
+                  children: List.generate(galleryImages.length, (index) {
                     final isSelected = _selectedImageIndex == index;
                     return GestureDetector(
                       onTap: () => setState(() => _selectedImageIndex = index),
@@ -124,7 +135,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: CachedNetworkImage(
-                          imageUrl: _galleryImages[index],
+                          imageUrl: galleryImages[index],
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -139,7 +150,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      deal.dishName,
+                      dishName,
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -157,7 +168,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${deal.price.toStringAsFixed(2).replaceAll('.', ',')} \$',
+                      '${dishPrice.toStringAsFixed(2).replaceAll('.', ',')} \$',
                       style: const TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
@@ -195,7 +206,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  deal.description,
+                  dishDescription,
                   style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textBody,

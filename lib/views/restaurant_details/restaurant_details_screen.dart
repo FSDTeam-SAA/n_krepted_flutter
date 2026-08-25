@@ -248,29 +248,37 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Signature Dish 1
-                      _buildSignatureDishBigCard(
-                        title: 'Signature Dish 1',
-                        dishName: deal.dishName,
-                        image: deal.firstImage,
-                        description: deal.description,
-                        price: deal.price,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Signature Dish 2
-                      _buildSignatureDishBigCard(
-                        title: 'Signature Dish 2',
-                        dishName: 'Gebratenes Steak',
-                        image: deal.images.length > 1
-                            ? deal.images[0]
-                            : 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
-                        description: 'Saftig gegrilltes Rumpsteak mit Kräuterbutter und Rosmarinkartoffeln.',
-                        price: 24.50,
-                      ),
-
-                      const SizedBox(height: 24),
+                      if (deal.dishes.any((dish) => dish.isSignatureDish)) ...[
+                        ...deal.dishes
+                            .where((dish) => dish.isSignatureDish)
+                            .toList()
+                            .asMap()
+                            .entries
+                            .expand(
+                              (entry) => [
+                                _buildSignatureDishBigCard(
+                                  title: 'Signature Dish ${entry.key + 1}',
+                                  dishName: entry.value.name,
+                                  image: entry.value.image.isNotEmpty
+                                      ? entry.value.image
+                                      : deal.firstImage,
+                                  description: entry.value.description,
+                                  price: entry.value.price,
+                                  dish: entry.value,
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
+                      ] else ...[
+                        _buildSignatureDishBigCard(
+                          title: 'Signature Dish',
+                          dishName: deal.dishName,
+                          image: deal.firstImage,
+                          description: deal.description,
+                          price: deal.price,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
                       // Alle Gerichte Category Filter
                       const Text(
@@ -319,12 +327,20 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
                         childAspectRatio: 0.95,
-                        children: [
-                          _buildGridDishItem('Rouladen', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&auto=format&fit=crop&q=80'),
-                          _buildGridDishItem('Currywurst', 'https://images.unsplash.com/photo-1599921841143-819065a55cc6?w=400&auto=format&fit=crop&q=80'),
-                          _buildGridDishItem('Schnitzel', deal.firstImage),
-                          _buildGridDishItem('Pasta Trüffel', 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=400&auto=format&fit=crop&q=80'),
-                        ],
+                        children: deal.dishes.isNotEmpty
+                            ? deal.dishes
+                                .map(
+                                  (dish) => _buildGridDishItem(
+                                    dish.name,
+                                    dish.image.isNotEmpty
+                                        ? dish.image
+                                        : deal.firstImage,
+                                  ),
+                                )
+                                .toList()
+                            : [
+                                _buildGridDishItem('Schnitzel', deal.firstImage),
+                              ],
                       ),
 
                       const SizedBox(height: 90),
@@ -392,6 +408,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     required String image,
     required String description,
     required double price,
+    DealDish? dish,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +423,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => DishDetailsScreen(deal: widget.deal),
+                builder: (_) => DishDetailsScreen(deal: widget.deal, dish: dish),
               ),
             );
           },

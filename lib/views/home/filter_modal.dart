@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../providers/deal_provider.dart';
 
 class FilterModal extends StatefulWidget {
   const FilterModal({super.key});
@@ -13,6 +15,8 @@ class _FilterModalState extends State<FilterModal> {
   double _distance = 15;
   int _selectedRating = 4;
   String _selectedCuisine = 'Deutsch';
+  late final TextEditingController _locationController;
+  bool _initialized = false;
 
   final List<String> _cuisines = [
     'Deutsch',
@@ -22,6 +26,24 @@ class _FilterModalState extends State<FilterModal> {
     'Japanisch',
     'Mediterran',
   ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    final provider = context.read<DealProvider>();
+    _distance = provider.radiusKm;
+    _selectedRating = provider.minimumRating;
+    _selectedCuisine = provider.cuisine ?? '';
+    _locationController = TextEditingController(text: provider.locationQuery);
+    _initialized = true;
+  }
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,9 +86,11 @@ class _FilterModalState extends State<FilterModal> {
                   onPressed: () {
                     setState(() {
                       _distance = 15;
-                      _selectedRating = 4;
-                      _selectedCuisine = 'Deutsch';
+                      _selectedRating = 0;
+                      _selectedCuisine = '';
+                      _locationController.clear();
                     });
+                    context.read<DealProvider>().resetFilters();
                   },
                   child: const Text(
                     'Zurücksetzen',
@@ -78,6 +102,27 @@ class _FilterModalState extends State<FilterModal> {
 
             const Divider(color: AppColors.divider),
             const SizedBox(height: 12),
+
+            const Text(
+              'Standort',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _locationController,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: 'Stadt oder Land eingeben',
+                prefixIcon: const Icon(Icons.location_on_outlined, color: AppColors.primary),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Distance Slider
             Row(
@@ -160,7 +205,8 @@ class _FilterModalState extends State<FilterModal> {
               children: _cuisines.map((cuisine) {
                 final isSelected = _selectedCuisine == cuisine;
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedCuisine = cuisine),
+                  onTap: () => setState(() =>
+                      _selectedCuisine = isSelected ? '' : cuisine),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
@@ -186,7 +232,15 @@ class _FilterModalState extends State<FilterModal> {
             // Apply Button
             CustomButton(
               text: 'Filter anwenden',
-              onPressed: () => Navigator.pop(context),
+              onPressed: () async {
+                await context.read<DealProvider>().applyFilters(
+                      location: _locationController.text,
+                      radiusKm: _distance,
+                      minimumRating: _selectedRating,
+                      cuisine: _selectedCuisine,
+                    );
+                if (context.mounted) Navigator.pop(context);
+              },
             ),
           ],
         ),

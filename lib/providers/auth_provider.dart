@@ -31,7 +31,9 @@ class AuthProvider with ChangeNotifier {
       // Refresh in background
       try {
         if (_currentUser?.id != null) {
-          final refreshed = await authRepository.getSingleUser(_currentUser!.id);
+          final refreshed = await authRepository.getSingleUser(
+            _currentUser!.id,
+          );
           _currentUser = refreshed;
           notifyListeners();
         }
@@ -55,7 +57,13 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> register(String name, String email, String password, {String? phoneNumber}) async {
+  Future<bool> register(
+    String name,
+    String email,
+    String password, {
+    String? phoneNumber,
+    bool isRestaurantOwner = false,
+  }) async {
     _setLoading(true);
     _errorMessage = null;
 
@@ -65,6 +73,7 @@ class AuthProvider with ChangeNotifier {
         email: email,
         password: password,
         phoneNumber: phoneNumber,
+        isRestaurantOwner: isRestaurantOwner,
       );
       _currentUser = user;
       _setLoading(false);
@@ -106,12 +115,20 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> resetPassword(String email, String password, {String? token}) async {
+  Future<bool> resetPassword(
+    String email,
+    String password, {
+    String? token,
+  }) async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
-      await authRepository.resetPassword(email: email, password: password, token: token);
+      await authRepository.resetPassword(
+        email: email,
+        password: password,
+        token: token,
+      );
       _setLoading(false);
       return true;
     } catch (e) {
@@ -121,7 +138,10 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> changePassword(String currentPassword, String newPassword) async {
+  Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     if (_currentUser == null) return false;
     _setLoading(true);
     _errorMessage = null;

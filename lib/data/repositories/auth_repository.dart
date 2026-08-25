@@ -37,6 +37,7 @@ class AuthRepository {
     required String email,
     required String password,
     String? phoneNumber,
+    bool isRestaurantOwner = false,
   }) async {
     final response = await apiClient.post(
       ApiConstants.register,
@@ -45,7 +46,7 @@ class AuthRepository {
         'email': email,
         'password': password,
         'phoneNumber': phoneNumber,
-        'role': 'user',
+        'role': isRestaurantOwner ? 'restaurant_owner' : 'user',
       },
     );
 
@@ -59,7 +60,9 @@ class AuthRepository {
       }
       return user;
     } else {
-      throw Exception(response.data?['message'] ?? 'Registrierung fehlgeschlagen');
+      throw Exception(
+        response.data?['message'] ?? 'Registrierung fehlgeschlagen',
+      );
     }
   }
 
@@ -69,7 +72,9 @@ class AuthRepository {
       data: {'email': email},
     );
     if (response.data?['success'] != true) {
-      throw Exception(response.data?['message'] ?? 'Fehler beim Senden des OTP');
+      throw Exception(
+        response.data?['message'] ?? 'Fehler beim Senden des OTP',
+      );
     }
   }
 
@@ -97,10 +102,7 @@ class AuthRepository {
     required String password,
     String? token,
   }) async {
-    final data = <String, dynamic>{
-      'email': email,
-      'password': password,
-    };
+    final data = <String, dynamic>{'email': email, 'password': password};
     if (token != null) {
       data['token'] = token;
     }
@@ -109,7 +111,9 @@ class AuthRepository {
       data: data,
     );
     if (response.data?['success'] != true) {
-      throw Exception(response.data?['message'] ?? 'Fehler beim Zurücksetzen des Passworts');
+      throw Exception(
+        response.data?['message'] ?? 'Fehler beim Zurücksetzen des Passworts',
+      );
     }
   }
 
@@ -127,7 +131,9 @@ class AuthRepository {
       },
     );
     if (response.data?['success'] != true) {
-      throw Exception(response.data?['message'] ?? 'Fehler beim Ändern des Passworts');
+      throw Exception(
+        response.data?['message'] ?? 'Fehler beim Ändern des Passworts',
+      );
     }
   }
 
@@ -139,9 +145,7 @@ class AuthRepository {
     String? cityState,
     File? avatarFile,
   }) async {
-    final map = <String, dynamic>{
-      'userId': userId,
-    };
+    final map = <String, dynamic>{'userId': userId};
     if (name != null) map['name'] = name;
     if (phoneNumber != null) map['phoneNumber'] = phoneNumber;
     if (country != null) map['country'] = country;
@@ -172,7 +176,9 @@ class AuthRepository {
       await StorageService.saveUser(user.toJson());
       return user;
     } else {
-      throw Exception(response.data?['message'] ?? 'Fehler beim Aktualisieren des Profils');
+      throw Exception(
+        response.data?['message'] ?? 'Fehler beim Aktualisieren des Profils',
+      );
     }
   }
 

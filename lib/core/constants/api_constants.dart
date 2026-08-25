@@ -26,6 +26,9 @@ class ApiConstants {
   // Deals / Restaurants Endpoints
   static const String deals = '/deals';
   static const String categories = '/categories';
+  static const String ownerRestaurant = '/owner/restaurant';
+  static const String adminRestaurants = '/admin/restaurants';
+  static const String restaurants = '/restaurants';
 
   // Bookings & Reviews
   static const String bookings = '/bookings';

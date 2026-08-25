@@ -3,6 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/owner_restaurant_provider.dart';
+import '../restaurant_owner/owner_workspace_screen.dart';
 import '../auth/signin_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -15,6 +17,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final ownerProvider = context.watch<OwnerRestaurantProvider>();
     final user = authProvider.currentUser;
 
     return Scaffold(
@@ -66,13 +69,38 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            user?.name ?? 'Vicky Jams',
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textDark,
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  user?.name ?? 'Vicky Jams',
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
+                              ),
+                              if (user?.isRestaurantOwner == true)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                        color: AppColors.primary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: const Text(
+                                    'Owner',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 3),
                           Text(
@@ -89,7 +117,56 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              // Restaurant Owner Workspace Access
+              _buildSectionBox(
+                title: 'Restaurantbesitzer',
+                children: [
+                  _buildListTile(
+                    icon: Icons.storefront_outlined,
+                    title: 'Restaurantverwaltung',
+                    subtitle: ownerProvider.restaurant != null
+                        ? (ownerProvider.restaurant!.isApproved
+                            ? '„${ownerProvider.restaurant!.title}“ ist live'
+                            : ownerProvider.restaurant!.isPending
+                                ? 'Wartet auf Genehmigung'
+                                : 'Abgelehnt (Überarbeiten)')
+                        : 'Eigenes Restaurant erstellen & verwalten',
+                    badge: ownerProvider.restaurant != null
+                        ? (ownerProvider.restaurant!.isApproved
+                            ? 'Genehmigt'
+                            : ownerProvider.restaurant!.isPending
+                                ? 'Ausstehend'
+                                : 'Abgelehnt')
+                        : null,
+                    badgeColor: ownerProvider.restaurant != null
+                        ? (ownerProvider.restaurant!.isApproved
+                            ? const Color(0xFF065F46)
+                            : ownerProvider.restaurant!.isPending
+                                ? const Color(0xFFB45309)
+                                : Colors.red.shade700)
+                        : null,
+                    badgeBg: ownerProvider.restaurant != null
+                        ? (ownerProvider.restaurant!.isApproved
+                            ? const Color(0xFFECFDF5)
+                            : ownerProvider.restaurant!.isPending
+                                ? const Color(0xFFFFFBE7)
+                                : Colors.red.shade50)
+                        : null,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OwnerWorkspaceScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
 
               // Group 1: Konto
               _buildSectionBox(
@@ -249,19 +326,52 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildListTile({
     required IconData icon,
     required String title,
+    String? subtitle,
+    String? badge,
+    Color? badgeColor,
+    Color? badgeBg,
     required VoidCallback onTap,
   }) {
     return ListTile(
       leading: Icon(icon, color: AppColors.textDark, size: 20),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textDark,
-        ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+          ),
+          if (badge != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: badgeBg ?? const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                badge,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: badgeColor ?? const Color(0xFF065F46),
+                ),
+              ),
+            ),
+        ],
       ),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textGrey),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: const TextStyle(fontSize: 11.5, color: AppColors.textGrey),
+            )
+          : null,
+      trailing:
+          const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textGrey),
       onTap: onTap,
     );
   }

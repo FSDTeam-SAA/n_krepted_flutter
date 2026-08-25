@@ -13,8 +13,7 @@
 
          This Theme is only used starting with V2 of Flutter's Android embedding. -->
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <!-- The app is light-only; keep the window behind Flutter white so no dark
-             frame shows through during route transitions. -->
-        <item name="android:windowBackground">@android:color/white</item>
+        <!-- Match the first Flutter frame even when the device uses Dark Mode. -->
+        <item name="android:windowBackground">@color/brand_yellow</item>
     </style>
 </resources>

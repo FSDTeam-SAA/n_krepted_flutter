@@ -9,7 +9,9 @@ import '../../core/widgets/auth_backdrop.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/owner_restaurant_provider.dart';
 import '../main_navigation/main_bottom_nav.dart';
+import '../restaurant_owner/create_edit_restaurant_screen.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -53,6 +55,22 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!mounted) return;
 
     if (success) {
+      final user = authProvider.currentUser;
+      if (user?.isRestaurantOwner == true) {
+        final ownerProvider = context.read<OwnerRestaurantProvider>();
+        await ownerProvider.fetchMyRestaurant();
+        if (!mounted) return;
+        if (ownerProvider.restaurant == null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  const CreateEditRestaurantScreen(isInitialSetup: true),
+            ),
+          );
+          return;
+        }
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainBottomNav()),

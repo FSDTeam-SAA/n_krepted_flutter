@@ -9,6 +9,7 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
 import '../main_navigation/main_bottom_nav.dart';
+import '../restaurant_owner/create_edit_restaurant_screen.dart';
 
 /// Frame `Sign up.png`:
 ///   heading   @ y 191, subtitle @ y 223
@@ -28,6 +29,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _joinAsRestaurantOwner = false;
 
   @override
   void dispose() {
@@ -46,10 +48,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text.trim(),
+      isRestaurantOwner: _joinAsRestaurantOwner,
     );
     if (!mounted) return;
 
     if (success) {
+      if (_joinAsRestaurantOwner) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const CreateEditRestaurantScreen(isInitialSetup: true),
+          ),
+          (route) => false,
+        );
+        return;
+      }
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainBottomNav()),
@@ -58,7 +72,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Registrierung fehlgeschlagen.'),
+          content: Text(
+            authProvider.errorMessage ?? 'Registrierung fehlgeschlagen.',
+          ),
           backgroundColor: AppColors.badgeRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -99,7 +115,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 CustomTextField(
                   controller: _nameController,
                   hintText: 'Benutzername',
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Bitte Namen eingeben' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Bitte Namen eingeben'
+                      : null,
                 ).fadeSlideUp(delay: Motion.step(2)),
 
                 SizedBox(height: 12.h),
@@ -107,7 +125,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _emailController,
                   hintText: 'E-Mail',
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Bitte E-Mail eingeben' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Bitte E-Mail eingeben'
+                      : null,
                 ).fadeSlideUp(delay: Motion.step(3)),
 
                 SizedBox(height: 12.h),
@@ -116,8 +136,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   hintText: 'Neues Passwort',
                   isPassword: true,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Bitte Passwort eingeben';
-                    if (v.length < 6) return 'Mindestens 6 Zeichen erforderlich';
+                    if (v == null || v.isEmpty) {
+                      return 'Bitte Passwort eingeben';
+                    }
+                    if (v.length < 6) {
+                      return 'Mindestens 6 Zeichen erforderlich';
+                    }
                     return null;
                   },
                 ).fadeSlideUp(delay: Motion.step(4)),
@@ -127,22 +151,81 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _confirmPasswordController,
                   hintText: 'Passwort bestätigen',
                   isPassword: true,
-                  validator: (v) =>
-                      v != _passwordController.text ? 'Passwörter stimmen nicht überein' : null,
+                  validator: (v) => v != _passwordController.text
+                      ? 'Passwörter stimmen nicht überein'
+                      : null,
                 ).fadeSlideUp(delay: Motion.step(5)),
 
-                SizedBox(height: 73.h),
+                SizedBox(height: 20.h),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(
+                    () => _joinAsRestaurantOwner = !_joinAsRestaurantOwner,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 18.w,
+                        height: 18.w,
+                        margin: EdgeInsets.only(top: 1.h),
+                        decoration: BoxDecoration(
+                          color: _joinAsRestaurantOwner
+                              ? AppColors.primary
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(4.w),
+                          border: Border.all(
+                            color: _joinAsRestaurantOwner
+                                ? AppColors.primary
+                                : AppColors.inputBorder,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: _joinAsRestaurantOwner
+                            ? Icon(Icons.check, size: 13.w, color: Colors.white)
+                            : null,
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Als Restaurantbesitzer registrieren',
+                              style: AppTextStyles.label(
+                                size: 13,
+                                color: AppColors.textDark,
+                                weight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'Die Freigabe durch einen Administrator ist erforderlich.',
+                              style: AppTextStyles.body(size: 11.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ).fadeSlideUp(delay: Motion.step(6)),
+
+                SizedBox(height: 28.h),
                 CustomButton(
                   text: 'Melden Sie sich an',
                   isLoading: authProvider.isLoading,
                   onPressed: _handleSignUp,
-                ).fadeSlideUp(delay: Motion.step(6)),
+                ).fadeSlideUp(delay: Motion.step(7)),
 
                 SizedBox(height: 16.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Sie haben bereits ein Konto? ', style: AppTextStyles.body(size: 13)),
+                    Text(
+                      'Sie haben bereits ein Konto? ',
+                      style: AppTextStyles.body(size: 13),
+                    ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Text(
@@ -156,7 +239,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ],
-                ).fadeSlideUp(delay: Motion.step(7)),
+                ).fadeSlideUp(delay: Motion.step(8)),
 
                 SizedBox(height: 40.h),
               ],
