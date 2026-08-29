@@ -51,6 +51,9 @@ class AuthRepository {
     );
 
     if (response.data != null && response.data['success'] == true) {
+      if (isRestaurantOwner) {
+        return login(email: email, password: password);
+      }
       final userMap = response.data['data'];
       final token = response.data['token'];
       final user = UserModel.fromJson(userMap, token: token);
@@ -78,7 +81,7 @@ class AuthRepository {
     }
   }
 
-  Future<String?> verifyOtp({
+  Future<UserModel> verifyOtp({
     required String email,
     required String code,
   }) async {
@@ -91,7 +94,9 @@ class AuthRepository {
       if (token != null) {
         await StorageService.saveToken(token);
       }
-      return token;
+      final user = UserModel.fromJson(response.data['data'], token: token);
+      await StorageService.saveUser(user.toJson());
+      return user;
     } else {
       throw Exception(response.data?['message'] ?? 'Ungültiger OTP-Code');
     }
@@ -172,7 +177,8 @@ class AuthRepository {
     );
 
     if (response.data?['success'] == true) {
-      final user = UserModel.fromJson(response.data['data']);
+      final token = await StorageService.getToken();
+      final user = UserModel.fromJson(response.data['data'], token: token);
       await StorageService.saveUser(user.toJson());
       return user;
     } else {
@@ -185,7 +191,8 @@ class AuthRepository {
   Future<UserModel> getSingleUser(String userId) async {
     final response = await apiClient.get('${ApiConstants.singleUser}/$userId');
     if (response.data?['success'] == true) {
-      final user = UserModel.fromJson(response.data['data']);
+      final token = await StorageService.getToken();
+      final user = UserModel.fromJson(response.data['data'], token: token);
       await StorageService.saveUser(user.toJson());
       return user;
     } else {

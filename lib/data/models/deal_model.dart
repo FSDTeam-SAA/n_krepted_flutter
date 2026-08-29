@@ -29,35 +29,12 @@ class DealLocation {
   }
 
   Map<String, dynamic> toJson() => {
-        'country': country,
-        'city': city,
-        'address': address,
-        'latitude': latitude,
-        'longitude': longitude,
-      };
-}
-
-class DealScheduleDate {
-  final DateTime date;
-  final bool active;
-  final int participationsLimit;
-  final int bookedCount;
-
-  DealScheduleDate({
-    required this.date,
-    this.active = true,
-    this.participationsLimit = 20,
-    this.bookedCount = 0,
-  });
-
-  factory DealScheduleDate.fromJson(Map<String, dynamic> json) {
-    return DealScheduleDate(
-      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
-      active: json['active'] ?? true,
-      participationsLimit: json['participationsLimit'] ?? 20,
-      bookedCount: json['bookedCount'] ?? 0,
-    );
-  }
+    'country': country,
+    'city': city,
+    'address': address,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 }
 
 class DealDish {
@@ -82,15 +59,15 @@ class DealDish {
   });
 
   factory DealDish.fromJson(Map<String, dynamic> json) => DealDish(
-        id: json['_id'] ?? '',
-        name: json['name'] ?? '',
-        description: json['description'] ?? '',
-        price: (json['price'] as num?)?.toDouble() ?? 0,
-        image: json['image'] ?? '',
-        category: json['category'] ?? '',
-        isSignatureDish: json['isSignatureDish'] ?? false,
-        isActive: json['isActive'] ?? true,
-      );
+    id: json['_id'] ?? '',
+    name: json['name'] ?? '',
+    description: json['description'] ?? '',
+    price: (json['price'] as num?)?.toDouble() ?? 0,
+    image: json['image'] ?? '',
+    category: json['category'] ?? '',
+    isSignatureDish: json['isSignatureDish'] ?? false,
+    isActive: json['isActive'] ?? true,
+  );
 }
 
 class DealModel {
@@ -111,9 +88,9 @@ class DealModel {
   final double rating;
   final double sdRating;
   final int reviewCount;
+  final int totalCheckIns;
   final String distance;
   final String duration;
-  final List<DealScheduleDate> scheduleDates;
   final List<String> ingredients;
   final String preparationProcess;
   final List<DealDish> dishes;
@@ -136,9 +113,9 @@ class DealModel {
     this.rating = 4.5,
     this.sdRating = 4.5,
     this.reviewCount = 12,
+    this.totalCheckIns = 0,
     this.distance = '6 km • 4 Meilen',
     this.duration = '20 Minuten',
-    this.scheduleDates = const [],
     this.ingredients = const [
       'Zartes Fleischkotelett',
       'Salz und Pfeffer',
@@ -171,14 +148,6 @@ class DealModel {
       cat = CategoryModel.fromJson(json['category']);
     }
 
-    List<DealScheduleDate> schedules = [];
-    if (json['scheduleDates'] is List) {
-      schedules = (json['scheduleDates'] as List)
-          .map((s) => s is Map<String, dynamic> ? DealScheduleDate.fromJson(s) : null)
-          .whereType<DealScheduleDate>()
-          .toList();
-    }
-
     String ownerId = '';
     if (json['owner'] is Map<String, dynamic>) {
       ownerId = json['owner']['_id'] ?? json['owner']['id'] ?? '';
@@ -191,25 +160,29 @@ class DealModel {
       title: json['title'] ?? '',
       shortDescription: json['shortDescription'],
       description: json['description'] ?? '',
-      price: (json['price'] != null) ? (json['price'] as num).toDouble() : 15.45,
+      price: (json['price'] != null)
+          ? (json['price'] as num).toDouble()
+          : 15.45,
       location: DealLocation.fromJson(json['location']),
       images: imgList,
-      offers: json['offers'] is List ? (json['offers'] as List).map((e) => e.toString()).toList() : [],
+      offers: json['offers'] is List
+          ? (json['offers'] as List).map((e) => e.toString()).toList()
+          : [],
       status: json['status'] ?? 'activate',
       approvalStatus: json['approvalStatus'] ?? 'pending',
       rejectionReason: json['rejectionReason'],
       owner: ownerId.isNotEmpty ? ownerId : null,
       category: cat,
       time: json['time'] ?? 45,
-      rating: 4.8,
-      sdRating: 4.5,
-      reviewCount: 12,
-      scheduleDates: schedules,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      sdRating: (json['sdRating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+      totalCheckIns: (json['totalCheckIns'] as num?)?.toInt() ?? 0,
       dishes: json['dishes'] is List
           ? (json['dishes'] as List)
-              .whereType<Map<String, dynamic>>()
-              .map(DealDish.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(DealDish.fromJson)
+                .toList()
           : const [],
     );
   }

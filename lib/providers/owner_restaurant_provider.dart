@@ -7,14 +7,18 @@ class OwnerRestaurantProvider with ChangeNotifier {
   final OwnerRestaurantRepository repository;
 
   DealModel? _restaurant;
+  OwnerDashboardStats _dashboardStats = const OwnerDashboardStats();
   bool _isLoading = false;
+  bool _isDashboardLoading = false;
   bool _isActionLoading = false;
   String? _errorMessage;
 
   OwnerRestaurantProvider({required this.repository});
 
   DealModel? get restaurant => _restaurant;
+  OwnerDashboardStats get dashboardStats => _dashboardStats;
   bool get isLoading => _isLoading;
+  bool get isDashboardLoading => _isDashboardLoading;
   bool get isActionLoading => _isActionLoading;
   String? get errorMessage => _errorMessage;
 
@@ -23,7 +27,7 @@ class OwnerRestaurantProvider with ChangeNotifier {
   bool get isPending => _restaurant?.isPending ?? false;
   bool get isRejected => _restaurant?.isRejected ?? false;
 
-  Future<void> fetchMyRestaurant() async {
+  Future<bool> fetchMyRestaurant() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -32,11 +36,42 @@ class OwnerRestaurantProvider with ChangeNotifier {
       _restaurant = await repository.getMyRestaurant();
       _isLoading = false;
       notifyListeners();
+      return true;
     } catch (e) {
       _errorMessage = friendlyApiError(e);
       _isLoading = false;
       notifyListeners();
+      return false;
     }
+  }
+
+  Future<bool> fetchDashboardStats() async {
+    _isDashboardLoading = true;
+    notifyListeners();
+    try {
+      _dashboardStats = await repository.getDashboardStats();
+      _isDashboardLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = friendlyApiError(e);
+      _isDashboardLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> refreshOwnerData() async {
+    await Future.wait([fetchMyRestaurant(), fetchDashboardStats()]);
+  }
+
+  void clear() {
+    _restaurant = null;
+    _dashboardStats = const OwnerDashboardStats();
+    _isLoading = false;
+    _isDashboardLoading = false;
+    _errorMessage = null;
+    notifyListeners();
   }
 
   Future<bool> submitRestaurant(Map<String, dynamic> payload) async {

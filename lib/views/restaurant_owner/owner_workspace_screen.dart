@@ -103,13 +103,10 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
       ),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => provider.fetchMyRestaurant(),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: _buildBody(provider, restaurant),
-              ),
+          : SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: _buildBody(provider, restaurant),
             ),
     );
   }

@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -22,9 +25,11 @@ class _DishFormSheetState extends State<DishFormSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
   late final TextEditingController _categoryController;
-  late final TextEditingController _imageController;
   late final TextEditingController _descController;
   late bool _isSignatureDish;
+  final ImagePicker _imagePicker = ImagePicker();
+  XFile? _newImage;
+  String? _existingImage;
 
   @override
   void initState() {
@@ -34,8 +39,10 @@ class _DishFormSheetState extends State<DishFormSheet> {
     _priceController = TextEditingController(
       text: d != null ? d.price.toStringAsFixed(2) : '12.00',
     );
-    _categoryController = TextEditingController(text: d?.category ?? 'Hauptspeise');
-    _imageController = TextEditingController(text: d?.image ?? '');
+    _categoryController = TextEditingController(
+      text: d?.category ?? 'Hauptspeise',
+    );
+    _existingImage = d?.image.isNotEmpty == true ? d!.image : null;
     _descController = TextEditingController(text: d?.description ?? '');
     _isSignatureDish = d?.isSignatureDish ?? false;
   }
@@ -45,13 +52,40 @@ class _DishFormSheetState extends State<DishFormSheet> {
     _nameController.dispose();
     _priceController.dispose();
     _categoryController.dispose();
-    _imageController.dispose();
     _descController.dispose();
     super.dispose();
   }
 
+  bool get _hasImage => _newImage != null || _existingImage != null;
+
+  Future<void> _pickImage() async {
+    final selected = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1800,
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _newImage = selected);
+  }
+
+  void _removeImage() {
+    setState(() {
+      _newImage = null;
+      _existingImage = null;
+    });
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_hasImage) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte ein Gerichtbild ausw\u00e4hlen.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     final provider = context.read<OwnerRestaurantProvider>();
 
@@ -59,9 +93,8 @@ class _DishFormSheetState extends State<DishFormSheet> {
       'name': _nameController.text.trim(),
       'price': double.tryParse(_priceController.text.trim()) ?? 12.0,
       'category': _categoryController.text.trim(),
-      'image': _imageController.text.trim().isNotEmpty
-          ? _imageController.text.trim()
-          : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
+      'existingImage': _existingImage,
+      'imageFile': _newImage,
       'description': _descController.text.trim(),
       'isSignatureDish': _isSignatureDish,
     };
@@ -91,9 +124,7 @@ class _DishFormSheetState extends State<DishFormSheet> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            provider.errorMessage ?? 'Aktion fehlgeschlagen.',
-          ),
+          content: Text(provider.errorMessage ?? 'Aktion fehlgeschlagen.'),
           backgroundColor: AppColors.badgeRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -124,7 +155,9 @@ class _DishFormSheetState extends State<DishFormSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isEditing ? 'Gericht bearbeiten' : 'Neues Gericht hinzufügen',
+                    isEditing
+                        ? 'Gericht bearbeiten'
+                        : 'Neues Gericht hinzufügen',
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -143,8 +176,9 @@ class _DishFormSheetState extends State<DishFormSheet> {
               CustomTextField(
                 controller: _nameController,
                 hintText: 'z. B. Signature Truffel Pasta',
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Bitte Gerichtname eingeben' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Bitte Gerichtname eingeben'
+                    : null,
               ),
 
               const SizedBox(height: 12),
@@ -158,8 +192,9 @@ class _DishFormSheetState extends State<DishFormSheet> {
                         CustomTextField(
                           controller: _priceController,
                           hintText: '0.00',
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           validator: (v) => (v == null || v.trim().isEmpty)
                               ? 'Preis eingeben'
                               : null,
@@ -184,11 +219,8 @@ class _DishFormSheetState extends State<DishFormSheet> {
               ),
 
               const SizedBox(height: 12),
-              _buildFieldLabel('Bild-URL'),
-              CustomTextField(
-                controller: _imageController,
-                hintText: 'https://images.unsplash.com/...',
-              ),
+              _buildFieldLabel('Gerichtbild'),
+              _buildImagePicker(),
 
               const SizedBox(height: 12),
               _buildFieldLabel('Beschreibung'),
@@ -197,26 +229,36 @@ class _DishFormSheetState extends State<DishFormSheet> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Zutaten und Zubereitung kurz beschreiben...',
-                  hintStyle: AppTextStyles.body(size: 13, color: AppColors.textGrey),
+                  hintStyle: AppTextStyles.body(
+                    size: 13,
+                    color: AppColors.textGrey,
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: AppColors.inputBorder, width: 1.2),
+                    borderSide: const BorderSide(
+                      color: AppColors.inputBorder,
+                      width: 1.2,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: AppColors.primary, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 14),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFBE7),
                   borderRadius: BorderRadius.circular(14),
@@ -240,7 +282,10 @@ class _DishFormSheetState extends State<DishFormSheet> {
                           ),
                           Text(
                             'Als Hauptspezialität in der App hervorheben',
-                            style: TextStyle(fontSize: 11.5, color: AppColors.textGrey),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.textGrey,
+                            ),
                           ),
                         ],
                       ),
@@ -277,6 +322,110 @@ class _DishFormSheetState extends State<DishFormSheet> {
           fontWeight: FontWeight.w600,
           color: Color(0xFF334155),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        height: 165,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.primary, width: 1.2),
+        ),
+        child: !_hasImage
+            ? const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Color(0xFFF4F6F6),
+                    child: Icon(Icons.add, color: AppColors.primary, size: 25),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Hauptfoto hinzuf\u00fcgen',
+                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  ),
+                ],
+              )
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(13),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _newImage != null
+                        ? Image.file(
+                            File(_newImage!.path),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) =>
+                                const _DishBrokenImage(),
+                          )
+                        : Image.network(
+                            _existingImage!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) =>
+                                const _DishBrokenImage(),
+                          ),
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: _DishImageAction(
+                        icon: Icons.edit_outlined,
+                        onTap: _pickImage,
+                      ),
+                    ),
+                    Positioned(
+                      right: 8,
+                      bottom: 8,
+                      child: _DishImageAction(
+                        icon: Icons.delete_outline,
+                        onTap: _removeImage,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _DishImageAction extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _DishImageAction({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black54,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(7),
+          child: Icon(icon, size: 18, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+class _DishBrokenImage extends StatelessWidget {
+  const _DishBrokenImage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Color(0xFFF3F4F6),
+      child: Center(
+        child: Icon(Icons.broken_image_outlined, color: AppColors.textGrey),
       ),
     );
   }

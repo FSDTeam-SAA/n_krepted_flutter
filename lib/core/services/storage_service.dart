@@ -6,6 +6,7 @@ class StorageService {
   static const String _userKey = 'nk_user';
   static const String _firstTimeKey = 'nk_first_time';
   static const String _savedDealsKey = 'nk_saved_deals';
+  static const String _languageKey = 'nk_language';
 
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -57,6 +58,16 @@ class StorageService {
       list.add(dealId);
     }
     await prefs.setStringList(_savedDealsKey, list);
+  }
+
+  static Future<String> getLanguageCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_languageKey) ?? 'de';
+  }
+
+  static Future<void> saveLanguageCode(String languageCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_languageKey, languageCode);
   }
 
   static Future<void> clearAuth() async {

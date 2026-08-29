@@ -6,7 +6,6 @@ import '../../core/widgets/app_motion.dart';
 import '../../core/widgets/curved_header.dart';
 import '../../core/widgets/restaurant_card.dart';
 import '../../providers/deal_provider.dart';
-import '../../providers/category_provider.dart';
 import '../restaurant_details/restaurant_details_screen.dart';
 import '../dish_details/dish_details_screen.dart';
 import 'search_screen.dart';
@@ -25,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final dealProvider = context.watch<DealProvider>();
-    final categoryProvider = context.watch<CategoryProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -146,13 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Main Feed of Restaurants
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                await dealProvider.fetchDeals();
-                await categoryProvider.fetchCategories();
-              },
-              color: AppColors.primary,
-              child: dealProvider.isLoading
+            child: dealProvider.isLoading
                   ? const Center(
                       child: CircularProgressIndicator(color: AppColors.primary),
                     )
@@ -195,7 +187,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ).fadeSlideUp(delay: Motion.step(index, ms: 70, max: 5));
                           },
                         ),
-            ),
           ),
         ],
       ),

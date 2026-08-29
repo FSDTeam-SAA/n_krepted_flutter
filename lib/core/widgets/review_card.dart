@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 import '../../data/models/review_model.dart';
 
 class ReviewCard extends StatelessWidget {
   final ReviewModel review;
 
-  const ReviewCard({
-    super.key,
-    required this.review,
-  });
+  const ReviewCard({super.key, required this.review});
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +56,11 @@ class ReviewCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'vor 7 Minuten',
-                      style: TextStyle(
+                    Text(
+                      DateFormat(
+                        'dd.MM.yyyy',
+                      ).format(review.createdAt.toLocal()),
+                      style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textGrey,
                       ),
@@ -71,7 +71,9 @@ class ReviewCard extends StatelessWidget {
               Row(
                 children: List.generate(5, (index) {
                   return Icon(
-                    index < review.ratings.floor() ? Icons.star : Icons.star_border,
+                    index < review.ratings.floor()
+                        ? Icons.star
+                        : Icons.star_border,
                     size: 15,
                     color: AppColors.orangeAccent,
                   );
@@ -83,15 +85,26 @@ class ReviewCard extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Metadata Tag Row
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              _buildMetaTag(Icons.calendar_today, '4. Juni 2026'),
-              const SizedBox(width: 8),
-              _buildMetaTag(Icons.access_time, '21:30 Uhr'),
-              const SizedBox(width: 8),
-              _buildMetaTag(Icons.restaurant_menu, review.dishName ?? 'Schnitzel'),
-              const SizedBox(width: 8),
-              _buildMetaTag(Icons.people, '4 Personen'),
+              _buildMetaTag(
+                Icons.calendar_today,
+                DateFormat('dd.MM.yyyy').format(
+                  (review.checkIn?.checkedInAt ?? review.createdAt).toLocal(),
+                ),
+              ),
+              _buildMetaTag(
+                Icons.access_time,
+                '${DateFormat('HH:mm').format((review.checkIn?.checkedInAt ?? review.createdAt).toLocal())} Uhr',
+              ),
+              if (review.dishName != null)
+                _buildMetaTag(Icons.restaurant_menu, review.dishName!),
+              _buildMetaTag(
+                Icons.people,
+                '${review.checkIn?.partySize ?? 1} Personen',
+              ),
             ],
           ),
 

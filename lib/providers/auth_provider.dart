@@ -10,34 +10,52 @@ class AuthProvider with ChangeNotifier {
 
   UserModel? _currentUser;
   bool _isLoading = false;
+  bool _isInitialized = false;
   String? _errorMessage;
+  late final Future<void> _initialization;
 
   AuthProvider({required this.authRepository}) {
-    _loadUserFromStorage();
+    _initialization = _loadUserFromStorage();
   }
 
   UserModel? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
   bool get isLoading => _isLoading;
+  bool get isInitialized => _isInitialized;
   String? get errorMessage => _errorMessage;
+  Future<void> get initialization => _initialization;
 
   Future<void> _loadUserFromStorage() async {
-    final userMap = await StorageService.getUser();
-    if (userMap != null) {
-      final token = await StorageService.getToken();
-      _currentUser = UserModel.fromJson(userMap, token: token);
-      notifyListeners();
+    try {
+      final results = await Future.wait([
+        StorageService.getUser(),
+        StorageService.getToken(),
+      ]);
+      final userMap = results[0] as Map<String, dynamic>?;
+      final token = results[1] as String?;
 
-      // Refresh in background
-      try {
-        if (_currentUser?.id != null) {
-          final refreshed = await authRepository.getSingleUser(
-            _currentUser!.id,
-          );
-          _currentUser = refreshed;
-          notifyListeners();
-        }
-      } catch (_) {}
+      if (userMap != null && token != null && token.isNotEmpty) {
+        _currentUser = UserModel.fromJson(userMap, token: token);
+        notifyListeners();
+        await refreshCurrentUser();
+      }
+    } finally {
+      _isInitialized = true;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> refreshCurrentUser() async {
+    final user = _currentUser;
+    if (user == null || user.id.isEmpty) return false;
+
+    try {
+      _currentUser = await authRepository.getSingleUser(user.id);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      // Keep the locally restored session during temporary network failures.
+      return false;
     }
   }
 
@@ -47,6 +65,12 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final user = await authRepository.login(email: email, password: password);
+      if (!user.isVerified || user.token == null || user.token!.isEmpty) {
+        _currentUser = null;
+        _errorMessage = 'Bitte verifizieren Sie zuerst Ihr Konto.';
+        _setLoading(false);
+        return false;
+      }
       _currentUser = user;
       _setLoading(false);
       return true;
@@ -105,7 +129,7 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
 
     try {
-      await authRepository.verifyOtp(email: email, code: code);
+      _currentUser = await authRepository.verifyOtp(email: email, code: code);
       _setLoading(false);
       return true;
     } catch (e) {

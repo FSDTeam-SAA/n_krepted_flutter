@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/app_language_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -58,9 +59,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!mounted) return;
 
     if (success) {
+      final language = context.read<AppLanguageProvider>();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil erfolgreich aktualisiert!'),
+        SnackBar(
+          content: Text(
+            language.text(
+              'Profil erfolgreich aktualisiert!',
+              'Profile updated successfully!',
+            ),
+          ),
           backgroundColor: AppColors.successGreen,
         ),
       );
@@ -68,7 +75,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Fehler beim Speichern.'),
+          content: Text(
+            authProvider.errorMessage ??
+                context.read<AppLanguageProvider>().text(
+                  'Fehler beim Speichern.',
+                  'Failed to save changes.',
+                ),
+          ),
           backgroundColor: AppColors.badgeRed,
         ),
       );
@@ -78,6 +91,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final language = context.watch<AppLanguageProvider>();
     final user = authProvider.currentUser;
 
     return Scaffold(
@@ -89,9 +103,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Profil bearbeiten',
-          style: TextStyle(
+        title: Text(
+          language.text('Profil bearbeiten', 'Edit profile'),
+          style: const TextStyle(
             color: AppColors.textDark,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -142,8 +156,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               CustomTextField(
                 controller: _nameController,
-                hintText: 'Vollständiger Name',
-                labelText: 'Name',
+                hintText: language.text('Vollständiger Name', 'Full name'),
+                labelText: language.text('Name', 'Name'),
               ),
 
               const SizedBox(height: 16),
@@ -151,7 +165,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               CustomTextField(
                 controller: _phoneController,
                 hintText: '+49 151 23456789',
-                labelText: 'Telefonnummer',
+                labelText: language.text('Telefonnummer', 'Phone number'),
                 keyboardType: TextInputType.phone,
               ),
 
@@ -160,13 +174,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               CustomTextField(
                 controller: _cityController,
                 hintText: 'München, Deutschland',
-                labelText: 'Stadt / Region',
+                labelText: language.text('Stadt / Region', 'City / region'),
               ),
 
               const SizedBox(height: 36),
 
               CustomButton(
-                text: 'Speichern',
+                text: language.text('Speichern', 'Save'),
                 isLoading: authProvider.isLoading,
                 onPressed: _handleSave,
               ),

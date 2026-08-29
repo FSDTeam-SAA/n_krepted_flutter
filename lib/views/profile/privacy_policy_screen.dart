@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/app_language_provider.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final language = context.watch<AppLanguageProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -15,9 +18,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Datenschutzrichtlinie',
-          style: TextStyle(
+        title: Text(
+          language.text('Datenschutzrichtlinie', 'Privacy policy'),
+          style: const TextStyle(
             color: AppColors.textDark,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -26,46 +29,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.cardBorder),
+        child: Text(
+          language.text(
+            'Ihre Privatsphäre ist uns wichtig. Diese Datenschutzrichtlinie erklärt, wie wir Informationen erfassen, verwenden und schützen, wenn Sie die Anwendung nutzen. Die App kann begrenzte Informationen wie Kontodaten, Geräteinformationen, Nutzungsanalysen und Präferenzen erfassen, um die Leistung zu verbessern, die Benutzerfreundlichkeit zu optimieren und die Sicherheit zu gewährleisten.\n\nDie Anwendung verarbeitet keine Zahlungen, ermöglicht keine Käufe und erfasst keine Finanzinformationen, da sie ausschließlich als Plattform zum Entdecken und Ansehen von Gerichten aus Restaurants und Bars dient. Wir verkaufen oder vermieten keine personenbezogenen Daten an Dritte. Informationen werden nur dann an vertrauenswürdige Dienstleister weitergegeben, wenn dies für den Betrieb, die Wartung oder die Verbesserung der App erforderlich ist oder wenn dies gesetzlich vorgeschrieben ist.\n\nWir setzen angemessene Sicherheitsmaßnahmen zum Schutz von Benutzerinformationen ein; jedoch kann keine Methode der elektronischen Speicherung oder Übertragung absolute Sicherheit garantieren. Durch die Nutzung der App stimmen Sie der Erfassung und Verwendung von Informationen gemäß dieser Datenschutzrichtlinie zu.\n\nWir behalten uns das Recht vor, diese Richtlinie regelmäßig zu aktualisieren. Die fortgesetzte Nutzung der App nach Änderungen gilt als Zustimmung zur geänderten Datenschutzrichtlinie.',
+            'Your privacy is important to us. This privacy policy explains how we collect, use, and protect information when you use the application. The app may collect limited information such as account data, device information, usage analytics, and preferences to improve performance, usability, and security.\n\nThe application does not process payments, enable purchases, or collect financial information. It is solely a platform for discovering and viewing dishes from restaurants and bars. We do not sell or rent personal data to third parties. Information is shared with trusted service providers only when required to operate, maintain, or improve the app, or when required by law.\n\nWe use reasonable safeguards to protect user information; however, no method of electronic storage or transmission can guarantee absolute security. By using the app, you consent to the collection and use of information in accordance with this privacy policy.\n\nWe reserve the right to update this policy periodically. Continued use of the app after changes constitutes acceptance of the revised privacy policy.',
           ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '1. Datenschutz auf einen Blick',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.',
-                style: TextStyle(fontSize: 13, color: AppColors.textBody, height: 1.5),
-              ),
-              SizedBox(height: 18),
-              Text(
-                '2. Datenerfassung in unserer App',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Die Datenverarbeitung in dieser App erfolgt durch den App-Betreiber. Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen (z. B. bei der Registrierung oder Reservierung). Andere Daten werden automatisch beim Besuch der App erfasst (z. B. Standortdaten zur Restaurantsuche).',
-                style: TextStyle(fontSize: 13, color: AppColors.textBody, height: 1.5),
-              ),
-              SizedBox(height: 18),
-              Text(
-                '3. Ihre Rechte',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Datenverarbeitung sowie ein Recht auf Berichtigung oder Löschung dieser Daten.',
-                style: TextStyle(fontSize: 13, color: AppColors.textBody, height: 1.5),
-              ),
-            ],
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textGrey,
+            height: 1.5,
           ),
         ),
       ),

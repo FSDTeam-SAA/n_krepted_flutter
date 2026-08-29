@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/app_language_provider.dart';
 import '../home/home_screen.dart';
 import '../map_explore/explore_map_screen.dart';
 import '../saved_bookmarks/saved_dishes_screen.dart';
@@ -32,6 +34,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   @override
   Widget build(BuildContext context) {
+    final language = context.watch<AppLanguageProvider>();
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       // IndexedStack so each tab keeps its scroll position — a cross-fade here
@@ -64,25 +67,25 @@ class _MainBottomNavState extends State<MainBottomNav> {
                 index: 0,
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home,
-                label: 'Heim',
+                label: language.text('Startseite', 'Home'),
               ),
               _buildNavItem(
                 index: 1,
                 icon: Icons.map_outlined,
                 activeIcon: Icons.map,
-                label: 'Karte',
+                label: language.text('Karte', 'Map'),
               ),
               _buildNavItem(
                 index: 2,
                 icon: Icons.favorite_border,
                 activeIcon: Icons.favorite,
-                label: 'Gespeichert',
+                label: language.text('Gespeichert', 'Saved'),
               ),
               _buildNavItem(
                 index: 3,
                 icon: Icons.person_outline,
                 activeIcon: Icons.person,
-                label: 'Profil',
+                label: language.text('Profil', 'Profile'),
               ),
             ],
           ),

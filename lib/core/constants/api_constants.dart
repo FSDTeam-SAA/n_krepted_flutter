@@ -29,8 +29,9 @@ class ApiConstants {
   static const String ownerRestaurant = '/owner/restaurant';
   static const String adminRestaurants = '/admin/restaurants';
   static const String restaurants = '/restaurants';
+  static const String dashboardStats = '/dashboard/stats';
 
-  // Bookings & Reviews
-  static const String bookings = '/bookings';
+  // Physical check-ins & reviews
+  static const String checkIns = '/check-ins';
   static const String reviews = '/reviews';
 }

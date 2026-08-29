@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../data/models/check_in_model.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/booking_provider.dart';
+import '../../providers/check_in_provider.dart';
 
 class CheckinScreen extends StatefulWidget {
   final DealModel deal;
@@ -17,62 +18,90 @@ class CheckinScreen extends StatefulWidget {
 }
 
 class _CheckinScreenState extends State<CheckinScreen> {
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
-  int _guestCount = 2;
+  int _guestCount = 1;
 
-  Future<void> _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 90)),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textDark,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
+  Future<Position?> _getCurrentPosition() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      _showError(
+        'Bitte aktivieren Sie die Standortdienste und versuchen Sie es erneut.',
+      );
+      return null;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied) {
+      _showError(
+        'Die Standortberechtigung ist für einen Check-in erforderlich.',
+      );
+      return null;
+    }
+    if (permission == LocationPermission.deniedForever) {
+      _showError(
+        'Bitte erlauben Sie den Standortzugriff in den App-Einstellungen.',
+      );
+      return null;
+    }
+
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+    } catch (_) {
+      _showError('Ihr aktueller Standort konnte nicht ermittelt werden.');
+      return null;
     }
   }
 
   Future<void> _handleCheckin() async {
-    final authProvider = context.read<AuthProvider>();
-    final bookingProvider = context.read<BookingProvider>();
+    if (context.read<AuthProvider>().currentUser == null) {
+      _showError('Bitte melden Sie sich zuerst an.');
+      return;
+    }
 
-    final userId = authProvider.currentUser?.id ?? '6a852dd213d863acd80c9b08';
+    final position = await _getCurrentPosition();
+    if (!mounted || position == null) return;
 
-    final success = await bookingProvider.createReservation(
-      dealId: widget.deal.id,
-      userId: userId,
-      date: _selectedDate,
-      quantity: _guestCount,
-      price: widget.deal.price * _guestCount,
+    final checkIn = await context.read<CheckInProvider>().checkIn(
+      restaurantId: widget.deal.id,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      accuracy: position.accuracy,
+      partySize: _guestCount,
     );
-
     if (!mounted) return;
 
-    if (success) {
-      _showSuccessDialog();
-    } else {
-      _showSuccessDialog(); // Demo confirmation
+    if (checkIn == null) {
+      _showError(
+        context.read<CheckInProvider>().errorMessage ??
+            'Der Check-in konnte nicht verifiziert werden.',
+      );
+      return;
     }
+    _showSuccessDialog(checkIn);
   }
 
-  void _showSuccessDialog() {
-    showDialog(
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.badgeRed,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSuccessDialog(CheckInModel checkIn) {
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -103,7 +132,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Ihre Reservierung für ${widget.deal.restaurantName} am ${DateFormat('d. MMMM yyyy', 'de').format(_selectedDate)} wurde bestätigt.',
+              'Ihr Standort bei ${widget.deal.restaurantName} wurde in ${checkIn.distanceMeters.round()} m Entfernung verifiziert. Personen: ${checkIn.partySize}.',
               style: const TextStyle(fontSize: 13, color: AppColors.textGrey),
               textAlign: TextAlign.center,
             ),
@@ -111,8 +140,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
             CustomButton(
               text: 'Fertig',
               onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
+                Navigator.pop(context, checkIn);
               },
             ),
           ],
@@ -124,19 +153,17 @@ class _CheckinScreenState extends State<CheckinScreen> {
   @override
   Widget build(BuildContext context) {
     final deal = widget.deal;
-    final bookingProvider = context.watch<BookingProvider>();
+    final checkInProvider = context.watch<CheckInProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Einchecken & Reservieren',
+          'Im Restaurant einchecken',
           style: TextStyle(
             color: AppColors.textDark,
             fontSize: 18,
@@ -150,7 +177,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Restaurant Summary Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -167,6 +193,15 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         width: 64,
                         height: 64,
                         fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 64,
+                          height: 64,
+                          color: const Color(0xFFE0F7FA),
+                          child: const Icon(
+                            Icons.restaurant,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -184,8 +219,14 @@ class _CheckinScreenState extends State<CheckinScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            deal.dishName,
-                            style: const TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600),
+                            [
+                              deal.location.address,
+                              deal.location.city,
+                            ].where((value) => value.isNotEmpty).join(', '),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textGrey,
+                            ),
                           ),
                         ],
                       ),
@@ -193,47 +234,46 @@ class _CheckinScreenState extends State<CheckinScreen> {
                   ],
                 ),
               ),
-
-              const SizedBox(height: 24),
-
-              // Date Picker Selector
-              const Text(
-                'Datum auswählen',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: _selectDate,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.inputBorder),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        DateFormat('EEEE, d. MMMM yyyy', 'de').format(_selectedDate),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0F7FA),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.my_location, color: AppColors.primary),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Der Check-in ist nur vor Ort möglich. Ihr aktueller GPS-Standort muss höchstens 100 Meter vom Restaurant entfernt sein.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: AppColors.textDark,
+                        ),
                       ),
-                      const Icon(Icons.calendar_month, color: AppColors.primary),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Guests Counter
               const Text(
-                'Anzahl der Gäste',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                'Anzahl der Personen',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -242,33 +282,46 @@ class _CheckinScreenState extends State<CheckinScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Personen', style: TextStyle(fontSize: 14, color: AppColors.textDark, fontWeight: FontWeight.w500)),
+                    const Text(
+                      'Personen',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove_circle_outline, color: AppColors.primary),
-                          onPressed: _guestCount > 1 ? () => setState(() => _guestCount--) : null,
+                          icon: const Icon(
+                            Icons.remove_circle_outline,
+                            color: AppColors.primary,
+                          ),
+                          onPressed: _guestCount > 1
+                              ? () => setState(() => _guestCount--)
+                              : null,
                         ),
                         Text(
                           '$_guestCount',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
-                          onPressed: () => setState(() => _guestCount++),
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            color: AppColors.primary,
+                          ),
+                          onPressed: _guestCount < 50
+                              ? () => setState(() => _guestCount++)
+                              : null,
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 36),
-
-              // Submit Check-in Button
               CustomButton(
-                text: 'Jetzt einchecken',
-                isLoading: bookingProvider.isLoading,
+                text: 'Standort prüfen & einchecken',
+                isLoading: checkInProvider.isLoading,
                 onPressed: _handleCheckin,
               ),
             ],

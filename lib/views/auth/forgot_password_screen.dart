@@ -9,7 +9,6 @@ import '../../core/widgets/auth_back_button.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
-import 'verify_otp_screen.dart';
 
 /// Frame `Forgot Password (1).png`:
 ///   heading  @ y 285, subtitle @ y 316
@@ -41,10 +40,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!mounted) return;
 
     if (success) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => VerifyOtpScreen(email: email)),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Wenn die E-Mail registriert ist, wurde ein sicherer Reset-Link gesendet.',
+          ),
+          backgroundColor: AppColors.successGreen,
+        ),
       );
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

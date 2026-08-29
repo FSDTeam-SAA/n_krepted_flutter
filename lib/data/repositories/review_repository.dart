@@ -8,7 +8,9 @@ class ReviewRepository {
   ReviewRepository({required this.apiClient});
 
   Future<List<ReviewModel>> getReviewsByDeal(String dealId) async {
-    final response = await apiClient.get('${ApiConstants.reviews}/deal/$dealId');
+    final response = await apiClient.get(
+      '${ApiConstants.reviews}/deal/$dealId',
+    );
     if (response.data != null && response.data['reviews'] is List) {
       return (response.data['reviews'] as List)
           .map((item) => ReviewModel.fromJson(item))
@@ -29,23 +31,35 @@ class ReviewRepository {
 
   Future<ReviewModel> createReview({
     required String dealId,
-    required String userId,
+    required String checkInId,
+    String? dishId,
     required double ratings,
     required String reviewComment,
   }) async {
-    final response = await apiClient.post(
-      ApiConstants.reviews,
-      data: {
-        'dealID': dealId,
-        'userID': userId,
-        'ratings': ratings,
-        'reviewComment': reviewComment,
-      },
-    );
+    final data = <String, dynamic>{
+      'dealID': dealId,
+      'checkInID': checkInId,
+      'ratings': ratings.toInt(),
+      'reviewComment': reviewComment,
+    };
+    if (dishId != null) data['dishID'] = dishId;
+    final response = await apiClient.post(ApiConstants.reviews, data: data);
 
     if (response.data != null && response.data['success'] == true) {
-      return ReviewModel.fromJson(response.data['data']);
+      return ReviewModel.fromJson(response.data['review']);
     }
-    throw Exception(response.data?['message'] ?? 'Fehler beim Erstellen der Bewertung');
+    throw Exception(
+      response.data?['message'] ?? 'Fehler beim Erstellen der Bewertung',
+    );
+  }
+
+  Future<ReviewEligibility> getEligibility(String dealId) async {
+    final response = await apiClient.get(
+      '${ApiConstants.reviews}/eligibility/$dealId',
+    );
+    if (response.data is Map<String, dynamic>) {
+      return ReviewEligibility.fromJson(response.data);
+    }
+    throw Exception('Bewertungsberechtigung konnte nicht geprüft werden');
   }
 }

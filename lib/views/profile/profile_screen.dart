@@ -3,13 +3,15 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/app_language_provider.dart';
 import '../../providers/owner_restaurant_provider.dart';
-import '../restaurant_owner/owner_workspace_screen.dart';
 import '../auth/signin_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
+import 'my_check_ins_screen.dart';
+import '../restaurant_owner/create_edit_restaurant_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -18,6 +20,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final ownerProvider = context.watch<OwnerRestaurantProvider>();
+    final language = context.watch<AppLanguageProvider>();
     final user = authProvider.currentUser;
 
     return Scaffold(
@@ -25,10 +28,10 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Profil',
-          style: TextStyle(
+        automaticallyImplyLeading: Navigator.canPop(context),
+        title: Text(
+          language.text('Profil', 'Profile'),
+          style: const TextStyle(
             color: AppColors.textDark,
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -41,7 +44,8 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             children: [
               // User Profile Banner Card
-              Container(
+              if (user?.isRestaurantOwner != true)
+                Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
@@ -61,7 +65,11 @@ class ProfileScreen extends StatelessWidget {
                           ? CachedNetworkImageProvider(user!.avatar!)
                           : null,
                       child: user?.avatar == null
-                          ? const Icon(Icons.person, size: 30, color: AppColors.primary)
+                          ? const Icon(
+                              Icons.person,
+                              size: 30,
+                              color: AppColors.primary,
+                            )
                           : null,
                     ),
                     const SizedBox(width: 14),
@@ -84,16 +92,23 @@ class ProfileScreen extends StatelessWidget {
                               if (user?.isRestaurantOwner == true)
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.1),
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                        color: AppColors.primary.withValues(alpha: 0.3)),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
                                   ),
-                                  child: const Text(
-                                    'Owner',
-                                    style: TextStyle(
+                                    child: Text(
+                                      language.text('Inhaber', 'Owner'),
+                                      style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.primary,
@@ -119,112 +134,98 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Restaurant Owner Workspace Access
+              // Group 1: Konto
               _buildSectionBox(
-                title: 'Restaurantbesitzer',
+                title: language.text('Konto', 'Account'),
                 children: [
+                  if (user?.role == 'user') ...[
+                    _buildListTile(
+                      icon: Icons.location_on_outlined,
+                      title: language.text('Meine Check-ins', 'My check-ins'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MyCheckInsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.divider),
+                  ],
                   _buildListTile(
-                    icon: Icons.storefront_outlined,
-                    title: 'Restaurantverwaltung',
-                    subtitle: ownerProvider.restaurant != null
-                        ? (ownerProvider.restaurant!.isApproved
-                            ? '„${ownerProvider.restaurant!.title}“ ist live'
-                            : ownerProvider.restaurant!.isPending
-                                ? 'Wartet auf Genehmigung'
-                                : 'Abgelehnt (Überarbeiten)')
-                        : 'Eigenes Restaurant erstellen & verwalten',
-                    badge: ownerProvider.restaurant != null
-                        ? (ownerProvider.restaurant!.isApproved
-                            ? 'Genehmigt'
-                            : ownerProvider.restaurant!.isPending
-                                ? 'Ausstehend'
-                                : 'Abgelehnt')
-                        : null,
-                    badgeColor: ownerProvider.restaurant != null
-                        ? (ownerProvider.restaurant!.isApproved
-                            ? const Color(0xFF065F46)
-                            : ownerProvider.restaurant!.isPending
-                                ? const Color(0xFFB45309)
-                                : Colors.red.shade700)
-                        : null,
-                    badgeBg: ownerProvider.restaurant != null
-                        ? (ownerProvider.restaurant!.isApproved
-                            ? const Color(0xFFECFDF5)
-                            : ownerProvider.restaurant!.isPending
-                                ? const Color(0xFFFFFBE7)
-                                : Colors.red.shade50)
-                        : null,
+                    icon: Icons.person_outline,
+                    title: language.text('Profil bearbeiten', 'Edit profile'),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const OwnerWorkspaceScreen(),
+                          builder: (_) => user?.isRestaurantOwner == true &&
+                                  ownerProvider.restaurant != null
+                              ? CreateEditRestaurantScreen(
+                                  restaurant: ownerProvider.restaurant,
+                                )
+                              : const EditProfileScreen(),
                         ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Group 1: Konto
-              _buildSectionBox(
-                title: 'Konto',
-                children: [
-                  _buildListTile(
-                    icon: Icons.person_outline,
-                    title: 'Profil bearbeiten',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                       );
                     },
                   ),
                   const Divider(height: 1, color: AppColors.divider),
                   _buildListTile(
                     icon: Icons.vpn_key_outlined,
-                    title: 'Kennwort ändern',
+                    title: language.text('Kennwort ändern', 'Change password'),
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const ChangePasswordScreen(),
+                        ),
                       );
-                    },
-                  ),
-                ],
-              ),
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.divider),
+                    _buildListTile(
+                      icon: Icons.language_outlined,
+                      title: language.text('Sprache', 'Language'),
+                      subtitle: language.languageName,
+                      onTap: () => _showLanguageSheet(context),
+                    ),
+                  ],
+                ),
 
               const SizedBox(height: 16),
 
               // Group 2: Social
-              _buildSectionBox(
-                title: 'Folgen Sie uns',
-                children: [
-                  _buildListTile(
-                    icon: Icons.camera_alt_outlined,
-                    title: 'Instagram',
-                    onTap: () {},
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  _buildListTile(
-                    icon: Icons.music_note_outlined,
-                    title: 'TikTok',
-                    onTap: () {},
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
+              if (user?.isRestaurantOwner != true) ...[
+                _buildSectionBox(
+                  title: language.text('Folgen Sie uns', 'Follow us'),
+                  children: [
+                    _buildListTile(
+                      icon: Icons.camera_alt_outlined,
+                      title: 'Instagram',
+                      onTap: () {},
+                    ),
+                    const Divider(height: 1, color: AppColors.divider),
+                    _buildListTile(
+                      icon: Icons.music_note_outlined,
+                      title: 'TikTok',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Group 3: Legal & Help
               _buildSectionBox(
-                title: 'Hilfe & Recht',
+                title: language.text('Hilfe & Recht', 'Help & legal'),
                 children: [
                   _buildListTile(
                     icon: Icons.verified_user_outlined,
-                    title: 'Geschäftsbedingungen',
+                    title: language.text(
+                      'Geschäftsbedingungen',
+                      'Terms and conditions',
+                    ),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -235,11 +236,16 @@ class ProfileScreen extends StatelessWidget {
                   const Divider(height: 1, color: AppColors.divider),
                   _buildListTile(
                     icon: Icons.shield_outlined,
-                    title: 'Datenschutzrichtlinie',
+                    title: language.text(
+                      'Datenschutzrichtlinie',
+                      'Privacy policy',
+                    ),
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const PrivacyPolicyScreen(),
+                        ),
                       );
                     },
                   ),
@@ -252,6 +258,7 @@ class ProfileScreen extends StatelessWidget {
               GestureDetector(
                 onTap: () async {
                   await authProvider.logout();
+                  ownerProvider.clear();
                   if (!context.mounted) return;
                   Navigator.pushAndRemoveUntil(
                     context,
@@ -269,12 +276,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.logout, color: AppColors.badgeRed, size: 18),
-                      SizedBox(width: 8),
+                    children: [
+                      const Icon(
+                        Icons.logout,
+                        color: AppColors.badgeRed,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        'Abmelden',
-                        style: TextStyle(
+                        language.text('Abmelden', 'Log out'),
+                        style: const TextStyle(
                           color: AppColors.badgeRed,
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
@@ -286,6 +297,57 @@ class ProfileScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageSheet(BuildContext context) {
+    final language = context.read<AppLanguageProvider>();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    language.text('Sprache auswählen', 'Choose language'),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              RadioGroup<String>(
+                groupValue: language.locale.languageCode,
+                onChanged: (value) async {
+                  if (value == null) return;
+                  await language.setLanguage(value);
+                  if (sheetContext.mounted) Navigator.pop(sheetContext);
+                },
+                child: const Column(
+                  children: [
+                    RadioListTile<String>(
+                      value: 'de',
+                      title: Text('Deutsch'),
+                    ),
+                    RadioListTile<String>(
+                      value: 'en',
+                      title: Text('English'),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -370,8 +432,11 @@ class ProfileScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 11.5, color: AppColors.textGrey),
             )
           : null,
-      trailing:
-          const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textGrey),
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 14,
+        color: AppColors.textGrey,
+      ),
       onTap: onTap,
     );
   }

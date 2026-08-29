@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/widgets/app_brand_logo.dart';
@@ -19,6 +20,7 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
   int _selectedFilterTab = 0;
   String _selectedCategory = 'Deutsch';
   DealModel? _selectedDeal;
+  bool _isLocating = false;
 
   final List<String> _categories = [
     'Deutsch',
@@ -28,10 +30,63 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
     'Japanisch',
   ];
 
+  Future<void> _locateMe() async {
+    if (_isLocating) return;
+    setState(() => _isLocating = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        throw Exception('Bitte aktivieren Sie die Standortdienste.');
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception('Standortberechtigung wurde nicht erteilt.');
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+      if (!mounted) return;
+      await context.read<DealProvider>().fetchDeals(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Restaurants in Ihrer Nähe wurden aktualisiert.'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.badgeRed,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dealProvider = context.watch<DealProvider>();
-    final deals = dealProvider.deals;
+    final deals = [...dealProvider.deals];
+    if (_selectedFilterTab == 0) {
+      deals.sort((a, b) => b.rating.compareTo(a.rating));
+    } else if (_selectedFilterTab == 1) {
+      deals.sort((a, b) => a.price.compareTo(b.price));
+    } else {
+      deals.sort((a, b) => b.price.compareTo(a.price));
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -39,20 +94,22 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
         children: [
           // Background Simulated Interactive Map
           Positioned.fill(
-            child: Image.asset(
-              AppAssets.mapPlaceholder,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset(AppAssets.mapPlaceholder, fit: BoxFit.cover),
           ),
 
           // Custom Food Markers Positioned across Map
           if (deals.isNotEmpty) ...[
             _buildMapMarker(top: 240, left: 160, deal: deals[0]),
-            if (deals.length > 1) _buildMapMarker(top: 310, right: 80, deal: deals[1]),
-            if (deals.length > 2) _buildMapMarker(top: 420, left: 90, deal: deals[2]),
-            if (deals.length > 3) _buildMapMarker(top: 480, right: 120, deal: deals[3]),
-            if (deals.length > 4) _buildMapMarker(top: 590, left: 60, deal: deals[4]),
-            if (deals.length > 5) _buildMapMarker(top: 660, left: 130, deal: deals[5]),
+            if (deals.length > 1)
+              _buildMapMarker(top: 310, right: 80, deal: deals[1]),
+            if (deals.length > 2)
+              _buildMapMarker(top: 420, left: 90, deal: deals[2]),
+            if (deals.length > 3)
+              _buildMapMarker(top: 480, right: 120, deal: deals[3]),
+            if (deals.length > 4)
+              _buildMapMarker(top: 590, left: 60, deal: deals[4]),
+            if (deals.length > 5)
+              _buildMapMarker(top: 660, left: 130, deal: deals[5]),
           ],
 
           // Top Header & Controls Stack
@@ -62,7 +119,10 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
                 // Top Header Card
                 Container(
                   color: AppColors.background.withValues(alpha: 0.95),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: Column(
                     children: [
                       Row(
@@ -81,7 +141,25 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.my_location, color: AppColors.textDark, size: 20),
+                            child: IconButton(
+                              onPressed: _locateMe,
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                              icon: _isLocating
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.primary,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.my_location,
+                                      color: AppColors.textDark,
+                                      size: 20,
+                                    ),
+                            ),
                           ),
                         ],
                       ),
@@ -114,11 +192,18 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
                         onTap: () => setState(() => _selectedCategory = cat),
                         child: Container(
                           margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: isSel ? const Color(0xFFFFF9E6) : Colors.white.withValues(alpha: 0.92),
+                            color: isSel
+                                ? const Color(0xFFFFF9E6)
+                                : Colors.white.withValues(alpha: 0.92),
                             borderRadius: BorderRadius.circular(16),
-                            border: isSel ? Border.all(color: AppColors.orangeAccent) : null,
+                            border: isSel
+                                ? Border.all(color: AppColors.orangeAccent)
+                                : null,
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.06),
@@ -130,8 +215,12 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
                             cat,
                             style: TextStyle(
                               fontSize: 12.5,
-                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                              color: isSel ? AppColors.textDark : AppColors.textBody,
+                              fontWeight: isSel
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSel
+                                  ? AppColors.textDark
+                                  : AppColors.textBody,
                             ),
                           ),
                         ),
@@ -281,18 +370,35 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
                 const SizedBox(height: 3),
                 Text(
                   '${deal.location.city}, ${deal.location.country}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textGrey,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.star, color: AppColors.orangeAccent, size: 14),
+                    const Icon(
+                      Icons.star,
+                      color: AppColors.orangeAccent,
+                      size: 14,
+                    ),
                     const SizedBox(width: 3),
-                    const Text('4.8', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const Text(
+                      '4.8',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       '${deal.price.toStringAsFixed(2)} \$',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -300,7 +406,11 @@ class _ExploreMapScreenState extends State<ExploreMapScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.arrow_forward_ios, color: AppColors.primary, size: 16),
+            icon: const Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.primary,
+              size: 16,
+            ),
             onPressed: () {
               Navigator.push(
                 context,

@@ -31,28 +31,40 @@ class DealProvider with ChangeNotifier {
   String? get cuisine => _cuisine;
 
   List<DealModel> get filteredDeals {
-    return _deals
-        .where((d) {
-          final searchMatches = _searchQuery.isEmpty ||
-              d.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              d.description.toLowerCase().contains(_searchQuery.toLowerCase());
-          final locationMatches = _locationQuery.isEmpty ||
-              d.location.city.toLowerCase().contains(_locationQuery.toLowerCase()) ||
-              d.location.country.toLowerCase().contains(_locationQuery.toLowerCase()) ||
-              d.location.address.toLowerCase().contains(_locationQuery.toLowerCase());
-          final ratingMatches = d.rating >= _minimumRating;
-          final cuisineMatches = _cuisine == null ||
-              _cuisine!.isEmpty ||
-              d.category?.categoryName.toLowerCase() == _cuisine!.toLowerCase();
-          return searchMatches && locationMatches && ratingMatches && cuisineMatches;
-        })
-        .toList();
+    return _deals.where((d) {
+      final searchMatches =
+          _searchQuery.isEmpty ||
+          d.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          d.description.toLowerCase().contains(_searchQuery.toLowerCase());
+      final locationMatches =
+          _locationQuery.isEmpty ||
+          d.location.city.toLowerCase().contains(
+            _locationQuery.toLowerCase(),
+          ) ||
+          d.location.country.toLowerCase().contains(
+            _locationQuery.toLowerCase(),
+          ) ||
+          d.location.address.toLowerCase().contains(
+            _locationQuery.toLowerCase(),
+          );
+      final ratingMatches = d.rating >= _minimumRating;
+      final cuisineMatches =
+          _cuisine == null ||
+          _cuisine!.isEmpty ||
+          d.category?.categoryName.toLowerCase() == _cuisine!.toLowerCase();
+      return searchMatches &&
+          locationMatches &&
+          ratingMatches &&
+          cuisineMatches;
+    }).toList();
   }
 
   Future<void> fetchDeals({
     String? categoryId,
     String? search,
     String? location,
+    double? latitude,
+    double? longitude,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -63,6 +75,9 @@ class DealProvider with ChangeNotifier {
         categoryId: categoryId,
         search: search,
         location: location,
+        latitude: latitude,
+        longitude: longitude,
+        radiusKm: latitude != null && longitude != null ? _radiusKm : null,
       );
       _isLoading = false;
       notifyListeners();

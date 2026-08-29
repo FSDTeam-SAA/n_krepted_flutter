@@ -9,11 +9,11 @@ import '../../core/widgets/auth_backdrop.dart';
 import '../../core/widgets/auth_back_button.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../providers/auth_provider.dart';
-import 'reset_password_screen.dart';
+import '../main_navigation/main_bottom_nav.dart';
 
 /// Frame `OTP.png`:
 ///   heading  @ y 284, subtitle @ y 316
-///   5 boxes  63 x 40 at y 420, 10px apart, spanning x 20..372
+///   6-character verification code
 ///   button   353 x 40 @ y 532
 class VerifyOtpScreen extends StatefulWidget {
   final String email;
@@ -25,8 +25,11 @@ class VerifyOtpScreen extends StatefulWidget {
 }
 
 class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
-  final List<TextEditingController> _controllers = List.generate(5, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   @override
   void dispose() {
@@ -42,7 +45,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   String get _otpCode => _controllers.map((c) => c.text).join();
 
   void _onDigitChanged(int index, String value) {
-    if (value.isNotEmpty && index < 4) {
+    if (value.isNotEmpty && index < 5) {
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
@@ -51,10 +54,12 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   }
 
   Future<void> _handleVerify() async {
-    if (_otpCode.length < 5) {
+    if (_otpCode.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Bitte geben Sie den vollständigen 5-stelligen Code ein.'),
+          content: Text(
+            'Bitte geben Sie den vollständigen 6-stelligen Code ein.',
+          ),
           backgroundColor: AppColors.badgeRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -63,14 +68,21 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     }
 
     final authProvider = context.read<AuthProvider>();
-    await authProvider.verifyOtp(widget.email, _otpCode);
+    final success = await authProvider.verifyOtp(widget.email, _otpCode);
     if (!mounted) return;
-
-    Navigator.push(
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Ungültiger Code.'),
+          backgroundColor: AppColors.badgeRed,
+        ),
+      );
+      return;
+    }
+    Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => ResetPasswordScreen(email: widget.email, code: _otpCode),
-      ),
+      MaterialPageRoute(builder: (_) => const MainBottomNav()),
+      (route) => false,
     );
   }
 
@@ -106,15 +118,19 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
                   SizedBox(height: 75.h),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(
-                      5,
-                      (i) => _OtpBox(
-                        controller: _controllers[i],
-                        focusNode: _focusNodes[i],
-                        onChanged: (v) => _onDigitChanged(i, v),
-                      ).fadeSlideUp(delay: Motion.step(2 + i, ms: 55)),
-                    ),
+                    children: List.generate(11, (itemIndex) {
+                      if (itemIndex.isOdd) {
+                        return SizedBox(width: 7.w);
+                      }
+                      final otpIndex = itemIndex ~/ 2;
+                      return Expanded(
+                        child: _OtpBox(
+                          controller: _controllers[otpIndex],
+                          focusNode: _focusNodes[otpIndex],
+                          onChanged: (v) => _onDigitChanged(otpIndex, v),
+                        ).fadeSlideUp(delay: Motion.step(2 + otpIndex, ms: 55)),
+                      );
+                    }),
                   ),
 
                   SizedBox(height: 69.h),
@@ -122,7 +138,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     text: 'Verifizieren',
                     isLoading: authProvider.isLoading,
                     onPressed: _handleVerify,
-                  ).fadeSlideUp(delay: Motion.step(7)),
+                  ).fadeSlideUp(delay: Motion.step(8)),
 
                   SizedBox(height: 40.h),
                 ],
@@ -135,7 +151,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   }
 }
 
-/// One 63 x 40 digit cell, 10px radius, #6CD5E7 border.
+/// One responsive verification-code cell, 10px radius, #6CD5E7 border.
 class _OtpBox extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
@@ -171,8 +187,7 @@ class _OtpBoxState extends State<_OtpBox> {
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
       child: Container(
-        width: 63.w,
-        height: 40.h,
+        height: 44.h,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10.w),
@@ -186,11 +201,18 @@ class _OtpBoxState extends State<_OtpBox> {
           controller: widget.controller,
           focusNode: widget.focusNode,
           textAlign: TextAlign.center,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.characters,
+          textInputAction: TextInputAction.next,
           maxLength: 1,
           cursorColor: AppColors.primary,
           style: AppTextStyles.body(size: 16, color: AppColors.textDark),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
+            TextInputFormatter.withFunction((oldValue, newValue) {
+              return newValue.copyWith(text: newValue.text.toUpperCase());
+            }),
+          ],
           decoration: const InputDecoration(
             counterText: '',
             border: InputBorder.none,

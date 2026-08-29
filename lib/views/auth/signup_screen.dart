@@ -8,8 +8,8 @@ import '../../core/widgets/auth_backdrop.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
-import '../main_navigation/main_bottom_nav.dart';
-import '../restaurant_owner/create_edit_restaurant_screen.dart';
+import '../authenticated_landing_screen.dart';
+import 'verify_otp_screen.dart';
 
 /// Frame `Sign up.png`:
 ///   heading   @ y 191, subtitle @ y 223
@@ -57,17 +57,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                const CreateEditRestaurantScreen(isInitialSetup: true),
+            builder: (_) => const AuthenticatedLandingScreen(),
           ),
           (route) => false,
         );
         return;
       }
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainBottomNav()),
-        (route) => false,
+        MaterialPageRoute(
+          builder: (_) => VerifyOtpScreen(email: _emailController.text.trim()),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
