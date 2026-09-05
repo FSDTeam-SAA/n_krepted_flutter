@@ -34,6 +34,23 @@ class CheckInProvider with ChangeNotifier {
     }
   }
 
+  Future<void> fetchOwnerCheckIns() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      _checkIns = await repository.getOwnerCheckIns();
+    } catch (error) {
+      _errorMessage = friendlyApiError(
+        error,
+        fallback: 'Die Restaurantbesuche konnten nicht geladen werden.',
+      );
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<CheckInModel?> checkIn({
     required String restaurantId,
     required double latitude,

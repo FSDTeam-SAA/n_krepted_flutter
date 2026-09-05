@@ -59,9 +59,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
   }
 
   OutlineInputBorder _border(Color color, double width) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.w),
-        borderSide: BorderSide(color: color, width: width),
-      );
+    borderRadius: BorderRadius.circular(10.w),
+    borderSide: BorderSide(color: color, width: width),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +93,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
             decoration: InputDecoration(
               isDense: true,
               hintText: widget.hintText,
-              hintStyle: AppTextStyles.body(size: 14, color: AppColors.textLightGrey),
+              hintStyle: AppTextStyles.body(
+                size: 14,
+                color: AppColors.textLightGrey,
+              ),
               filled: true,
               fillColor: AppColors.inputFill,
               prefixIcon: widget.prefixIcon,
@@ -104,13 +107,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
                       behavior: HitTestBehavior.opaque,
                       onTap: () => setState(() => _obscureText = !_obscureText),
                       child: Icon(
-                        _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        _obscureText
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                         size: 18.w,
                         color: AppColors.textLightGrey,
                       ),
                     )
                   : widget.suffixIcon,
-              suffixIconConstraints: BoxConstraints(minWidth: 36.w, minHeight: 20.h),
+              suffixIconConstraints: BoxConstraints(
+                minWidth: 36.w,
+                minHeight: 20.h,
+              ),
               // Vertical padding, not a height constraint: the decorator centres
               // the text between these and lands on exactly 40.
               contentPadding: EdgeInsets.symmetric(
@@ -122,7 +130,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
               focusedBorder: _border(AppColors.primary, 1.4),
               errorBorder: _border(AppColors.badgeRed, 1),
               focusedErrorBorder: _border(AppColors.badgeRed, 1.4),
-              errorStyle: AppTextStyles.body(size: 11, color: AppColors.badgeRed),
+              errorStyle: AppTextStyles.body(
+                size: 11,
+                color: AppColors.badgeRed,
+              ),
             ),
           ),
         ),

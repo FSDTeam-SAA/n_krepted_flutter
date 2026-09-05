@@ -43,7 +43,11 @@ class DealDish {
   final String description;
   final double price;
   final String image;
+  final List<String> images;
   final String category;
+  final String specialtyDescription;
+  final List<String> ingredients;
+  final String preparationProcess;
   final bool isSignatureDish;
   final bool isActive;
 
@@ -53,21 +57,45 @@ class DealDish {
     required this.description,
     required this.price,
     required this.image,
+    this.images = const [],
     required this.category,
+    this.specialtyDescription = '',
+    this.ingredients = const [],
+    this.preparationProcess = '',
     required this.isSignatureDish,
     required this.isActive,
   });
 
-  factory DealDish.fromJson(Map<String, dynamic> json) => DealDish(
-    id: json['_id'] ?? '',
-    name: json['name'] ?? '',
-    description: json['description'] ?? '',
-    price: (json['price'] as num?)?.toDouble() ?? 0,
-    image: json['image'] ?? '',
-    category: json['category'] ?? '',
-    isSignatureDish: json['isSignatureDish'] ?? false,
-    isActive: json['isActive'] ?? true,
-  );
+  factory DealDish.fromJson(Map<String, dynamic> json) {
+    final legacyImage = json['image']?.toString().trim() ?? '';
+    final images = json['images'] is List
+        ? (json['images'] as List)
+              .map((image) => image.toString().trim())
+              .where((image) => image.isNotEmpty)
+              .toList()
+        : <String>[];
+    if (images.isEmpty && legacyImage.isNotEmpty) images.add(legacyImage);
+
+    return DealDish(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0,
+      image: images.isNotEmpty ? images.first : legacyImage,
+      images: images,
+      category: json['category'] ?? '',
+      specialtyDescription: json['specialtyDescription'] ?? '',
+      ingredients: json['ingredients'] is List
+          ? (json['ingredients'] as List)
+                .map((item) => item.toString().trim())
+                .where((item) => item.isNotEmpty)
+                .toList()
+          : const [],
+      preparationProcess: json['preparationProcess'] ?? '',
+      isSignatureDish: json['isSignatureDish'] ?? false,
+      isActive: json['isActive'] ?? true,
+    );
+  }
 }
 
 class DealModel {
@@ -110,24 +138,14 @@ class DealModel {
     this.owner,
     this.category,
     this.time = 45,
-    this.rating = 4.5,
-    this.sdRating = 4.5,
-    this.reviewCount = 12,
+    this.rating = 0,
+    this.sdRating = 0,
+    this.reviewCount = 0,
     this.totalCheckIns = 0,
-    this.distance = '6 km • 4 Meilen',
-    this.duration = '20 Minuten',
-    this.ingredients = const [
-      'Zartes Fleischkotelett',
-      'Salz und Pfeffer',
-      'Paniermehl',
-      'Zitrone',
-      'Eier',
-      'Frische Kräuter',
-      'Mehl',
-      'Knusprige Pommes',
-    ],
-    this.preparationProcess =
-        'Das Fleisch wird zunächst zart geklopft, um eine saftige und zarte Konsistenz zu gewährleisten. Anschließend wird es leicht in Mehl gewendet, durch verquirlte Eier gezogen und mit feinen Semmelbröseln paniert. Das panierte Schnitzel wird goldbraun und knusprig gebraten, während es innen zart bleibt. Serviert wird es frisch mit knusprigen Pommes frites, Zitronenspalten und Kräutern.',
+    this.distance = '',
+    this.duration = '',
+    this.ingredients = const [],
+    this.preparationProcess = '',
     this.dishes = const [],
   });
 
@@ -136,13 +154,6 @@ class DealModel {
     if (json['images'] is List) {
       imgList = (json['images'] as List).map((e) => e.toString()).toList();
     }
-    if (imgList.isEmpty) {
-      imgList = [
-        'https://images.unsplash.com/photo-1599921841143-819065a55cc6?w=600&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
-      ];
-    }
-
     CategoryModel? cat;
     if (json['category'] is Map<String, dynamic>) {
       cat = CategoryModel.fromJson(json['category']);
@@ -160,9 +171,7 @@ class DealModel {
       title: json['title'] ?? '',
       shortDescription: json['shortDescription'],
       description: json['description'] ?? '',
-      price: (json['price'] != null)
-          ? (json['price'] as num).toDouble()
-          : 15.45,
+      price: (json['price'] != null) ? (json['price'] as num).toDouble() : 0,
       location: DealLocation.fromJson(json['location']),
       images: imgList,
       offers: json['offers'] is List
@@ -202,10 +211,8 @@ class DealModel {
     if (title.contains('-')) {
       return title.split('-').last.trim();
     }
-    return 'Schnitzel';
+    return title;
   }
 
-  String get firstImage => images.isNotEmpty
-      ? images.first
-      : 'https://images.unsplash.com/photo-1599921841143-819065a55cc6?w=600&auto=format&fit=crop&q=80';
+  String get firstImage => images.isNotEmpty ? images.first : '';
 }

@@ -25,10 +25,12 @@ class SavedProvider with ChangeNotifier {
     notifyListeners();
 
     _savedDealIds = await StorageService.getSavedDealIds();
-    
+
     try {
       final allDeals = await dealRepository.getAllDeals(limit: 50);
-      _savedDeals = allDeals.where((d) => _savedDealIds.contains(d.id)).toList();
+      _savedDeals = allDeals
+          .where((d) => _savedDealIds.contains(d.id))
+          .toList();
     } catch (_) {}
 
     _isLoading = false;

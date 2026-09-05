@@ -24,13 +24,6 @@ class DishDetailsScreen extends StatefulWidget {
 class _DishDetailsScreenState extends State<DishDetailsScreen> {
   int _selectedImageIndex = 0;
 
-  final List<String> _galleryImages = [
-    'https://images.unsplash.com/photo-1599921841143-819065a55cc6?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -45,14 +38,38 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
     final dish = widget.dish;
     final dishName = dish?.name ?? deal.dishName;
     final dishPrice = dish?.price ?? deal.price;
-    final dishDescription = dish?.description.isNotEmpty == true
-        ? dish!.description
-        : deal.description;
-    final galleryImages = [
-      if (dish?.image.isNotEmpty == true) dish!.image,
-      ..._galleryImages,
-    ];
+    final dishDescription = dish != null
+        ? dish.description.trim()
+        : deal.description.trim();
+    final galleryImages = dish != null
+        ? (dish.images.isNotEmpty
+              ? dish.images
+              : <String>[if (dish.image.trim().isNotEmpty) dish.image.trim()])
+        : deal.images
+              .map((image) => image.trim())
+              .where((image) => image.isNotEmpty)
+              .toList();
     final reviewProvider = context.watch<ReviewProvider>();
+    final dishReviews = dish == null
+        ? reviewProvider.reviews
+        : reviewProvider.reviews.where((review) {
+            if (review.dishId?.isNotEmpty == true) {
+              return review.dishId == dish.id;
+            }
+            return review.dishName?.trim().toLowerCase() ==
+                dish.name.trim().toLowerCase();
+          }).toList();
+    final averageRating = dishReviews.isEmpty
+        ? 0.0
+        : dishReviews.fold<double>(
+                0,
+                (total, review) => total + review.ratings,
+              ) /
+              dishReviews.length;
+    final specialtyDescription = dish?.specialtyDescription.trim() ?? '';
+    final ingredients = dish?.ingredients ?? deal.ingredients;
+    final preparationProcess =
+        dish?.preparationProcess.trim() ?? deal.preparationProcess.trim();
     final savedProvider = context.watch<SavedProvider>();
     final isSaved = savedProvider.isSaved(deal.id);
 
@@ -107,41 +124,72 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: CachedNetworkImage(
-                      imageUrl: galleryImages[_selectedImageIndex],
-                      fit: BoxFit.cover,
-                    ),
+                    child: galleryImages.isEmpty
+                        ? Container(
+                            color: const Color(0xFFF8FAFC),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.restaurant_menu,
+                              size: 48,
+                              color: AppColors.textGrey,
+                            ),
+                          )
+                        : ColoredBox(
+                            color: const Color(0xFFF8FAFC),
+                            child: CachedNetworkImage(
+                              imageUrl: galleryImages[_selectedImageIndex],
+                              fit: BoxFit.contain,
+                              errorWidget: (_, _, _) => const Center(
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 44,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                            ),
+                          ),
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                if (galleryImages.length > 1) ...[
+                  const SizedBox(height: 12),
 
-                // Thumbnails Gallery Row
-                Row(
-                  children: List.generate(galleryImages.length, (index) {
-                    final isSelected = _selectedImageIndex == index;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedImageIndex = index),
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        margin: const EdgeInsets.only(right: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isSelected ? AppColors.primary : Colors.transparent,
-                            width: 2.2,
+                  // Only render a gallery when the API actually returned
+                  // multiple images. A one-image dish needs no duplicate
+                  // thumbnail below its hero image.
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(galleryImages.length, (index) {
+                        final isSelected = _selectedImageIndex == index;
+                        return GestureDetector(
+                          onTap: () =>
+                              setState(() => _selectedImageIndex = index),
+                          child: Container(
+                            width: 72,
+                            height: 72,
+                            margin: const EdgeInsets.only(right: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                width: 2.2,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: CachedNetworkImage(
+                              imageUrl: galleryImages[index],
+                              fit: BoxFit.contain,
+                            ),
                           ),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: CachedNetworkImage(
-                          imageUrl: galleryImages[index],
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 20),
 
@@ -149,15 +197,22 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      dishName,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
+                    Expanded(
+                      child: Text(
+                        dishName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark,
+                        ),
                       ),
                     ),
-                    const RatingBadge(rating: 4.5, isSdBadge: true),
+                    if (dish?.isSignatureDish == true) ...[
+                      const SizedBox(width: 10),
+                      RatingBadge(rating: averageRating, isSdBadge: true),
+                    ],
                   ],
                 ),
 
@@ -168,7 +223,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${dishPrice.toStringAsFixed(2).replaceAll('.', ',')} \$',
+                      '${dishPrice.toStringAsFixed(2).replaceAll('.', ',')} €',
                       style: const TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
@@ -176,134 +231,141 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                       ),
                     ),
                     Row(
-                      children: const [
-                        Icon(Icons.star, color: AppColors.orangeAccent, size: 16),
-                        SizedBox(width: 4),
-                        Text(
-                          '4,5',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          color: AppColors.orangeAccent,
+                          size: 16,
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         Text(
-                          '12 Bewertungen',
-                          style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                          averageRating.toStringAsFixed(1).replaceAll('.', ','),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${dishReviews.length} Bewertungen',
+                          style: const TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 20),
+                if (dishDescription.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Beschreibung',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    dishDescription,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textBody,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
 
-                // Beschreibung (Description)
-                const Text(
-                  'Beschreibung',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                if (specialtyDescription.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Spezialität des Gerichts',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  dishDescription,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textBody,
-                    height: 1.5,
+                  const SizedBox(height: 6),
+                  Text(
+                    specialtyDescription,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textBody,
+                      height: 1.5,
+                    ),
                   ),
-                ),
+                ],
 
-                const SizedBox(height: 20),
-
-                // Spezialität des Schnitzels
-                const Text(
-                  'Spezialität des Gerichts',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                if (ingredients.isNotEmpty ||
+                    preparationProcess.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Zubereitungsmethode',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Schnitzel ist berühmt für seine perfekt ausbalancierte Kombination aus knuspriger, goldbrauner Panade und zartem, saftigem Fleisch. Nach traditionellen Methoden zubereitet und mit frischer Zitrone serviert, bietet es ein volles Geschmackserlebnis.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textBody,
-                    height: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Zubereitungsmethode
-                const Text(
-                  'Zubereitungsmethode',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Hauptzutaten (Main Ingredients 2-Col Grid)
-                const Text(
-                  'Hauptzutaten',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisExtent: 26,
-                  ),
-                  itemCount: deal.ingredients.length,
-                  itemBuilder: (context, index) {
-                    return Row(
-                      children: [
-                        const Icon(Icons.fiber_manual_record, size: 8, color: AppColors.textGrey),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            deal.ingredients[index],
-                            style: const TextStyle(fontSize: 12.5, color: AppColors.textBody),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  if (ingredients.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Hauptzutaten',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisExtent: 26,
                           ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 14),
-
-                // Herstellungsprozess
-                const Text(
-                  'Herstellungsprozess',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  deal.preparationProcess,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textBody,
-                    height: 1.5,
-                  ),
-                ),
+                      itemCount: ingredients.length,
+                      itemBuilder: (context, index) => Row(
+                        children: [
+                          const Icon(
+                            Icons.fiber_manual_record,
+                            size: 8,
+                            color: AppColors.textGrey,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              ingredients[index],
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppColors.textBody,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (preparationProcess.isNotEmpty) ...[
+                    if (ingredients.isNotEmpty) const SizedBox(height: 14),
+                    Text(
+                      preparationProcess,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textBody,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ],
 
                 const SizedBox(height: 24),
 
@@ -343,18 +405,21 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                 const SizedBox(height: 12),
 
                 // Reviews List
-                if (reviewProvider.reviews.isEmpty)
+                if (dishReviews.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Center(
                       child: Text(
                         'Noch keine Bewertungen vorhanden.',
-                        style: TextStyle(color: AppColors.textGrey, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   )
                 else
-                  ...reviewProvider.reviews.take(2).map((r) => ReviewCard(review: r)),
+                  ...dishReviews.take(2).map((r) => ReviewCard(review: r)),
 
                 const SizedBox(height: 90),
               ],
@@ -371,9 +436,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => CheckinScreen(deal: deal),
-                  ),
+                  MaterialPageRoute(builder: (_) => CheckinScreen(deal: deal)),
                 );
               },
             ),

@@ -70,7 +70,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         bottom: false,
         child: Stack(
           children: [
-            const AuthBackButton(),
             SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Form(
@@ -114,6 +113,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
             ),
+            const AuthBackButton(),
           ],
         ),
       ),

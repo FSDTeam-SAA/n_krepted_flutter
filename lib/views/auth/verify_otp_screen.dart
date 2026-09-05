@@ -96,7 +96,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         bottom: false,
         child: Stack(
           children: [
-            const AuthBackButton(),
             SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Column(
@@ -144,6 +143,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 ],
               ),
             ),
+            const AuthBackButton(),
           ],
         ),
       ),

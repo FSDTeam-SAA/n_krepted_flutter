@@ -51,7 +51,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Passwort erfolgreich geändert! Bitte melden Sie sich an.'),
+          content: Text(
+            'Passwort erfolgreich geändert! Bitte melden Sie sich an.',
+          ),
           backgroundColor: AppColors.successGreen,
           behavior: SnackBarBehavior.floating,
         ),
@@ -64,7 +66,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Fehler beim Zurücksetzen des Passworts.'),
+          content: Text(
+            authProvider.errorMessage ??
+                'Fehler beim Zurücksetzen des Passworts.',
+          ),
           backgroundColor: AppColors.badgeRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -82,7 +87,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         bottom: false,
         child: Stack(
           children: [
-            const AuthBackButton(),
             SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Form(
@@ -110,8 +114,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       hintText: 'Neues Passwort',
                       isPassword: true,
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Bitte Passwort eingeben';
-                        if (v.length < 6) return 'Mindestens 6 Zeichen erforderlich';
+                        if (v == null || v.isEmpty) {
+                          return 'Bitte Passwort eingeben';
+                        }
+                        if (v.length < 6) {
+                          return 'Mindestens 6 Zeichen erforderlich';
+                        }
                         return null;
                       },
                     ).fadeSlideUp(delay: Motion.step(2)),
@@ -121,8 +129,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       controller: _confirmPasswordController,
                       hintText: 'Passwort bestätigen',
                       isPassword: true,
-                      validator: (v) =>
-                          v != _passwordController.text ? 'Passwörter stimmen nicht überein' : null,
+                      validator: (v) => v != _passwordController.text
+                          ? 'Passwörter stimmen nicht überein'
+                          : null,
                     ).fadeSlideUp(delay: Motion.step(3)),
 
                     SizedBox(height: 72.h),
@@ -137,6 +146,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
             ),
+            const AuthBackButton(),
           ],
         ),
       ),

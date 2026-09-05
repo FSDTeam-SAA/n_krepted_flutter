@@ -34,4 +34,5 @@ class ApiConstants {
   // Physical check-ins & reviews
   static const String checkIns = '/check-ins';
   static const String reviews = '/reviews';
+  static const String legalContent = '/content/legal';
 }

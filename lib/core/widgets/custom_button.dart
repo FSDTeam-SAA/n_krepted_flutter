@@ -48,7 +48,9 @@ class _CustomButtonState extends State<CustomButton> {
   @override
   Widget build(BuildContext context) {
     final bg = widget.backgroundColor ?? AppColors.primary;
-    final fg = widget.textColor ?? (widget.isOutlined ? AppColors.primary : Colors.white);
+    final fg =
+        widget.textColor ??
+        (widget.isOutlined ? AppColors.primary : Colors.white);
 
     return GestureDetector(
       onTapDown: _enabled ? (_) => _set(true) : null,
@@ -68,7 +70,9 @@ class _CustomButtonState extends State<CustomButton> {
             decoration: BoxDecoration(
               color: widget.isOutlined ? Colors.transparent : bg,
               borderRadius: BorderRadius.circular(widget.borderRadius.w),
-              border: widget.isOutlined ? Border.all(color: fg, width: 1.2) : null,
+              border: widget.isOutlined
+                  ? Border.all(color: fg, width: 1.2)
+                  : null,
             ),
             alignment: Alignment.center,
             child: widget.isLoading
@@ -77,7 +81,9 @@ class _CustomButtonState extends State<CustomButton> {
                     height: 18.w,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.2,
-                      color: widget.isOutlined ? AppColors.primary : Colors.white,
+                      color: widget.isOutlined
+                          ? AppColors.primary
+                          : Colors.white,
                     ),
                   )
                 : Row(

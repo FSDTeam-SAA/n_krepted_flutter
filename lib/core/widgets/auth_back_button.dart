@@ -17,7 +17,11 @@ class AuthBackButton extends StatelessWidget {
       top: 8.h,
       child: IconButton(
         onPressed: onTap ?? () => Navigator.maybePop(context),
-        icon: Icon(Icons.arrow_back_ios_new, size: 18.w, color: AppColors.textDark),
+        icon: Icon(
+          Icons.arrow_back_ios_new,
+          size: 18.w,
+          color: AppColors.textDark,
+        ),
         splashRadius: 22.w,
       ).fadeSlideX(offset: -0.4, duration: const Duration(milliseconds: 350)),
     );

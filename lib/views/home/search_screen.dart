@@ -53,11 +53,22 @@ class _SearchScreenState extends State<SearchScreen> {
             style: const TextStyle(fontSize: 14, color: AppColors.textDark),
             decoration: InputDecoration(
               hintText: 'Suchen nach Gericht oder Restaurant...',
-              hintStyle: const TextStyle(fontSize: 13, color: AppColors.textLightGrey),
-              prefixIcon: const Icon(Icons.search, color: AppColors.textGrey, size: 18),
+              hintStyle: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textLightGrey,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textGrey,
+                size: 18,
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 16, color: AppColors.textGrey),
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 16,
+                        color: AppColors.textGrey,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         dealProvider.setSearchQuery('');
@@ -88,7 +99,11 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.search_off, size: 54, color: AppColors.textLightGrey),
+                  Icon(
+                    Icons.search_off,
+                    size: 54,
+                    color: AppColors.textLightGrey,
+                  ),
                   SizedBox(height: 12),
                   Text(
                     'Keine Ergebnisse gefunden',

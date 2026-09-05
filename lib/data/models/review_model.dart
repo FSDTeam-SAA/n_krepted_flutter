@@ -75,15 +75,15 @@ class ReviewUserModel {
     if (json is Map<String, dynamic>) {
       return ReviewUserModel(
         id: json['_id'] ?? json['id'] ?? '',
-        name: json['name'] ?? 'Nita Money',
-        email: json['email'] ?? 'nitabani@gmail.com',
+        name: json['name'] ?? 'Unbekannter Benutzer',
+        email: json['email'] ?? '',
         avatar: json['avatar'],
       );
     }
     return ReviewUserModel(
       id: 'default',
-      name: 'Nita Money',
-      email: 'nitabani@gmail.com',
+      name: 'Unbekannter Benutzer',
+      email: '',
     );
   }
 }
@@ -92,6 +92,7 @@ class ReviewModel {
   final String id;
   final ReviewUserModel user;
   final String dealId;
+  final String? dishId;
   final String? restaurantName;
   final String? dishName;
   final String reviewComment;
@@ -104,10 +105,11 @@ class ReviewModel {
     required this.id,
     required this.user,
     required this.dealId,
+    this.dishId,
     this.restaurantName,
     this.dishName,
     required this.reviewComment,
-    this.ratings = 5.0,
+    this.ratings = 0,
     required this.createdAt,
     this.dishImage,
     this.checkIn,
@@ -117,6 +119,7 @@ class ReviewModel {
     String dId = '';
     String? rName;
     String? dImg;
+    String? dishId;
     if (json['dealID'] is Map<String, dynamic>) {
       dId = json['dealID']['_id'] ?? '';
       rName = json['dealID']['title'];
@@ -127,17 +130,23 @@ class ReviewModel {
     } else if (json['dealID'] is String) {
       dId = json['dealID'];
     }
+    if (json['dishID'] is Map<String, dynamic>) {
+      dishId = json['dishID']['_id']?.toString();
+    } else {
+      dishId = json['dishID']?.toString();
+    }
 
     return ReviewModel(
       id: json['_id'] ?? json['id'] ?? '',
       user: ReviewUserModel.fromJson(json['userID']),
       dealId: dId,
-      restaurantName: rName ?? 'Restaurant JAN',
+      dishId: dishId,
+      restaurantName: rName,
       dishName: json['dishName']?.toString(),
       reviewComment: json['reviewComment'] ?? '',
       ratings: (json['ratings'] != null)
           ? (json['ratings'] as num).toDouble()
-          : 5.0,
+          : 0,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),

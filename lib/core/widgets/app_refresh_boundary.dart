@@ -46,9 +46,7 @@ class _AppRefreshBoundaryState extends State<AppRefreshBoundary> {
     ];
 
     if (authProvider.currentUser?.isRestaurantOwner == true) {
-      refreshes.add(
-        context.read<OwnerRestaurantProvider>().refreshOwnerData(),
-      );
+      refreshes.add(context.read<OwnerRestaurantProvider>().refreshOwnerData());
     } else {
       refreshes.addAll([
         context.read<DealProvider>().fetchDeals(),
@@ -79,8 +77,6 @@ class _AlwaysRefreshScrollBehavior extends MaterialScrollBehavior {
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
-    return const AlwaysScrollableScrollPhysics(
-      parent: ClampingScrollPhysics(),
-    );
+    return const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics());
   }
 }

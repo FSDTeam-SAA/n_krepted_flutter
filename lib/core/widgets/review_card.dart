@@ -36,10 +36,15 @@ class ReviewCard extends StatelessWidget {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: review.user.avatar != null
+                backgroundImage: review.user.avatar?.isNotEmpty == true
                     ? CachedNetworkImageProvider(review.user.avatar!)
-                    : const CachedNetworkImageProvider(
-                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+                    : null,
+                child: review.user.avatar?.isNotEmpty == true
+                    ? null
+                    : const Icon(
+                        Icons.person_outline,
+                        color: AppColors.textGrey,
+                        size: 20,
                       ),
               ),
               const SizedBox(width: 10),

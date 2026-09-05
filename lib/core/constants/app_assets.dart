@@ -49,21 +49,35 @@ class AppAssets {
   static const String decoSkewers = '${_img}deco_skewers.png';
   static const double skewersW = 137, skewersH = 160;
 
+  // Restaurant-owner home decoration. These transparent PNGs are deliberately
+  // kept separate from the cards so they can be positioned responsively and
+  // never intercept taps or scrolling.
+  static const String homeDecoSpice = '${_img}home_deco_spice.png';
+  static const String homeDecoCoffee = '${_img}home_deco_coffee.png';
+  static const String homeDecoHerbs = '${_img}home_deco_herbs.png';
+  static const String homeDecoOnion = '${_img}home_deco_onion.png';
+
   /// Stand-in for the live map until a map SDK is wired in — this is a real
   /// background image, so `BoxFit.cover` is correct here.
   static const String mapPlaceholder = '${_img}map_placeholder.jpg';
 
   // Onboarding slide 1 — "Entdecken Sie unsere Spezialitäten"
-  static const String onb1Coffee = '${_img}onb1_coffee.png'; // 200 x 233 @ (193, 114)
+  static const String onb1Coffee =
+      '${_img}onb1_coffee.png'; // 200 x 233 @ (193, 114)
   static const String onb1Beef = '${_img}onb1_beef.png'; // 185 x 276 @ (0, 503)
-  static const String onb1Spice = '${_img}onb1_spice.png'; // 113 x 109 @ (280, 486)
+  static const String onb1Spice =
+      '${_img}onb1_spice.png'; // 113 x 109 @ (280, 486)
 
   // Onboarding slide 2 — "Finde Gerichte, für die sich eine Reise lohnt"
   static const String onb2Pan = '${_img}onb2_pan.png'; // 211 x 276 @ (0, 108)
-  static const String onb2Skewers = '${_img}onb2_skewers.png'; // 193 x 221 @ (0, 554)
+  static const String onb2Skewers =
+      '${_img}onb2_skewers.png'; // 193 x 221 @ (0, 554)
 
   // Onboarding slide 3 — "Vertrauenswürdige Bewertungen und echte Erfahrungen"
-  static const String onb3Shake = '${_img}onb3_shake.png'; // 155 x 271 @ (238, 77)
-  static const String onb3Pancakes = '${_img}onb3_pancakes.png'; // 190 x 219 @ (0, 550)
-  static const String onb3Garnish = '${_img}onb3_garnish.png'; // 95 x 100 @ (298, 498)
+  static const String onb3Shake =
+      '${_img}onb3_shake.png'; // 155 x 271 @ (238, 77)
+  static const String onb3Pancakes =
+      '${_img}onb3_pancakes.png'; // 190 x 219 @ (0, 550)
+  static const String onb3Garnish =
+      '${_img}onb3_garnish.png'; // 95 x 100 @ (298, 498)
 }

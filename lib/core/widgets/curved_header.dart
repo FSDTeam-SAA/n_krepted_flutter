@@ -65,7 +65,11 @@ class CurvedHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(Icons.my_location, color: AppColors.textDark, size: 19.w),
+                          child: Icon(
+                            Icons.my_location,
+                            color: AppColors.textDark,
+                            size: 19.w,
+                          ),
                         ),
                       ).popIn(delay: const Duration(milliseconds: 120)),
                     ],

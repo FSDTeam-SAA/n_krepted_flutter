@@ -5,11 +5,7 @@ class RatingBadge extends StatelessWidget {
   final double rating;
   final bool isSdBadge;
 
-  const RatingBadge({
-    super.key,
-    required this.rating,
-    this.isSdBadge = false,
-  });
+  const RatingBadge({super.key, required this.rating, this.isSdBadge = false});
 
   @override
   Widget build(BuildContext context) {

@@ -39,7 +39,10 @@ class AuthBackdrop extends StatelessWidget {
       width: AppAssets.blobLeafAuthW,
       height: AppAssets.blobLeafAuthH,
       effect: animate
-          ? (c) => c.fadeSlideX(offset: -0.25, duration: const Duration(milliseconds: 800))
+          ? (c) => c.fadeSlideX(
+              offset: -0.25,
+              duration: const Duration(milliseconds: 800),
+            )
           : null,
     );
     final herbs = FramePositioned.art(
@@ -48,7 +51,9 @@ class AuthBackdrop extends StatelessWidget {
       top: 0,
       width: AppAssets.herbsW,
       height: AppAssets.herbsH,
-      effect: animate ? (c) => c.fadeSoft(delay: const Duration(milliseconds: 120)) : null,
+      effect: animate
+          ? (c) => c.fadeSoft(delay: const Duration(milliseconds: 120))
+          : null,
     );
     final spice = FramePositioned.art(
       AppAssets.decoSpice,
@@ -56,7 +61,9 @@ class AuthBackdrop extends StatelessWidget {
       bottom: 0,
       width: AppAssets.spiceW,
       height: AppAssets.spiceH,
-      effect: animate ? (c) => c.fadeSoft(delay: const Duration(milliseconds: 220)) : null,
+      effect: animate
+          ? (c) => c.fadeSoft(delay: const Duration(milliseconds: 220))
+          : null,
     );
     final skewers = FramePositioned.art(
       AppAssets.decoSkewers,
@@ -65,7 +72,10 @@ class AuthBackdrop extends StatelessWidget {
       width: AppAssets.skewersW,
       height: AppAssets.skewersH,
       effect: animate
-          ? (c) => c.fadeSlideX(offset: 0.2, duration: const Duration(milliseconds: 900))
+          ? (c) => c.fadeSlideX(
+              offset: 0.2,
+              duration: const Duration(milliseconds: 900),
+            )
           : null,
     );
 

@@ -99,7 +99,10 @@ class OwnerRestaurantProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _restaurant = await repository.resubmitRestaurant(_restaurant!.id, payload);
+      _restaurant = await repository.resubmitRestaurant(
+        _restaurant!.id,
+        payload,
+      );
       _isActionLoading = false;
       notifyListeners();
       return true;
@@ -156,7 +159,11 @@ class OwnerRestaurantProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _restaurant = await repository.updateDish(_restaurant!.id, dishId, payload);
+      _restaurant = await repository.updateDish(
+        _restaurant!.id,
+        dishId,
+        payload,
+      );
       _isActionLoading = false;
       notifyListeners();
       return true;

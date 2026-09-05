@@ -2,16 +2,22 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_brand_logo.dart';
 import '../../data/models/deal_model.dart';
+import '../../data/models/review_model.dart';
 import '../../providers/app_language_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/owner_restaurant_provider.dart';
+import '../../providers/review_provider.dart';
 import '../dish_details/dish_details_screen.dart';
 import '../profile/profile_screen.dart';
 import '../reviews/all_reviews_screen.dart';
 import 'owner_workspace_screen.dart';
+import 'owner_activity_screen.dart';
+import 'owner_ratings_screen.dart';
+import 'owner_dishes_screen.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -24,15 +30,23 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OwnerRestaurantProvider>().refreshOwnerData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDashboard());
+  }
+
+  Future<void> _loadDashboard() async {
+    final ownerProvider = context.read<OwnerRestaurantProvider>();
+    await ownerProvider.refreshOwnerData();
+    if (!mounted || ownerProvider.restaurant == null) return;
+    await context.read<ReviewProvider>().fetchReviewsForDeal(
+      ownerProvider.restaurant!.id,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final language = context.watch<AppLanguageProvider>();
     final provider = context.watch<OwnerRestaurantProvider>();
+    final reviews = context.watch<ReviewProvider>().reviews;
     final auth = context.watch<AuthProvider>();
     final restaurant = provider.restaurant;
 
@@ -48,12 +62,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 onProfileTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                ),
-                onManageTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const OwnerWorkspaceScreen(),
-                  ),
                 ),
               ),
             ),
@@ -86,20 +94,57 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 sliver: SliverToBoxAdapter(
-                  child: _StatsGrid(
-                    language: language,
-                    restaurant: restaurant,
-                    provider: provider,
-                    onReviewsTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AllReviewsScreen(
-                            dealId: restaurant.id,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Positioned(
+                        left: -70,
+                        top: 50,
+                        child: _DecorativeImage(
+                          asset: AppAssets.homeDecoCoffee,
+                          width: 138,
+                          opacity: .13,
+                          angle: -.18,
+                        ),
+                      ),
+                      _StatsGrid(
+                        language: language,
+                        restaurant: restaurant,
+                        provider: provider,
+                        onReviewsTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  AllReviewsScreen(dealId: restaurant.id),
+                            ),
+                          );
+                        },
+                        onRatingsTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                OwnerRatingsScreen(restaurantId: restaurant.id),
                           ),
                         ),
-                      );
-                    },
+                        onCheckInsTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const OwnerActivityScreen(
+                              type: OwnerActivityType.checkIns,
+                            ),
+                          ),
+                        ),
+                        onViewersTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const OwnerActivityScreen(
+                              type: OwnerActivityType.viewers,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -121,7 +166,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const OwnerWorkspaceScreen(),
+                            builder: (_) =>
+                                const OwnerDishesScreen(signaturesOnly: true),
                           ),
                         ),
                         icon: const Icon(Icons.edit_outlined, size: 16),
@@ -131,14 +177,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                 ),
               ),
-              if (restaurant.dishes.isEmpty)
+              if (_dashboardDishes(restaurant).isEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   sliver: SliverToBoxAdapter(
                     child: _EmptyDishesCard(
                       text: language.text(
-                        'Noch keine Gerichte vorhanden.',
-                        'No dishes have been added yet.',
+                        restaurant.dishes.isEmpty
+                            ? 'Noch keine Gerichte vorhanden.'
+                            : 'Noch kein Signature Dish vorhanden.',
+                        restaurant.dishes.isEmpty
+                            ? 'No dishes have been added yet.'
+                            : 'No signature dish has been added yet.',
                       ),
                       onTap: () => Navigator.push(
                         context,
@@ -157,10 +207,56 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     separatorBuilder: (_, _) => const SizedBox(height: 22),
                     itemBuilder: (context, index) {
                       final dish = _dashboardDishes(restaurant)[index];
-                      return _OwnerDishCard(
-                        restaurant: restaurant,
-                        dish: dish,
-                        language: language,
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          if (index.isEven)
+                            const Positioned(
+                              right: -64,
+                              top: 174,
+                              child: _DecorativeImage(
+                                asset: AppAssets.homeDecoOnion,
+                                width: 112,
+                                opacity: .20,
+                                angle: -.24,
+                              ),
+                            )
+                          else
+                            const Positioned(
+                              left: -66,
+                              top: 210,
+                              child: _DecorativeImage(
+                                asset: AppAssets.homeDecoSpice,
+                                width: 122,
+                                opacity: .48,
+                                angle: .12,
+                              ),
+                            ),
+                          if (index == 0)
+                            const Positioned(
+                              left: -60,
+                              bottom: -32,
+                              child: _DecorativeImage(
+                                asset: AppAssets.homeDecoSpice,
+                                width: 116,
+                                opacity: .42,
+                                angle: .10,
+                              ),
+                            ),
+                          _OwnerDishCard(
+                            restaurant: restaurant,
+                            dish: dish,
+                            language: language,
+                            review: _latestReviewForDish(reviews, dish),
+                            onReviewsTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AllReviewsScreen(dealId: restaurant.id),
+                              ),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -173,23 +269,25 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   List<DealDish> _dashboardDishes(DealModel restaurant) {
-    final signature = restaurant.dishes
-        .where((dish) => dish.isSignatureDish)
-        .toList();
-    return signature.isNotEmpty ? signature : restaurant.dishes;
+    return restaurant.dishes.where((dish) => dish.isSignatureDish).toList();
+  }
+
+  ReviewModel? _latestReviewForDish(List<ReviewModel> reviews, DealDish dish) {
+    for (final review in reviews) {
+      if (review.dishName?.trim().toLowerCase() ==
+          dish.name.trim().toLowerCase()) {
+        return review;
+      }
+    }
+    return null;
   }
 }
 
 class _DashboardHeader extends StatelessWidget {
   final String? avatarUrl;
   final VoidCallback onProfileTap;
-  final VoidCallback onManageTap;
 
-  const _DashboardHeader({
-    required this.avatarUrl,
-    required this.onProfileTap,
-    required this.onManageTap,
-  });
+  const _DashboardHeader({required this.avatarUrl, required this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
@@ -200,29 +298,38 @@ class _DashboardHeader extends StatelessWidget {
         color: AppColors.yellow,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          const AppBrandLogo(width: 82),
-          const Spacer(),
-          IconButton(
-            tooltip: 'Restaurant verwalten',
-            onPressed: onManageTap,
-            icon: const Icon(Icons.storefront_outlined),
-            color: AppColors.primary,
+          const Positioned(
+            right: -8,
+            top: -25,
+            child: _DecorativeImage(
+              asset: AppAssets.homeDecoHerbs,
+              width: 82,
+              opacity: .36,
+              angle: -.12,
+            ),
           ),
-          InkWell(
-            onTap: onProfileTap,
-            borderRadius: BorderRadius.circular(24),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.white,
-              backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                  ? CachedNetworkImageProvider(avatarUrl!)
-                  : null,
-              child: avatarUrl == null || avatarUrl!.isEmpty
-                  ? const Icon(Icons.person, color: AppColors.textGrey)
-                  : null,
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: const AppBrandLogo(width: 82),
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: InkWell(
+              onTap: onProfileTap,
+              borderRadius: BorderRadius.circular(24),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.white,
+                backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
+                    ? CachedNetworkImageProvider(avatarUrl!)
+                    : null,
+                child: avatarUrl == null || avatarUrl!.isEmpty
+                    ? const Icon(Icons.person, color: AppColors.textGrey)
+                    : null,
+              ),
             ),
           ),
         ],
@@ -236,12 +343,18 @@ class _StatsGrid extends StatelessWidget {
   final DealModel restaurant;
   final OwnerRestaurantProvider provider;
   final VoidCallback onReviewsTap;
+  final VoidCallback onRatingsTap;
+  final VoidCallback onCheckInsTap;
+  final VoidCallback onViewersTap;
 
   const _StatsGrid({
     required this.language,
     required this.restaurant,
     required this.provider,
     required this.onReviewsTap,
+    required this.onRatingsTap,
+    required this.onCheckInsTap,
+    required this.onViewersTap,
   });
 
   @override
@@ -250,20 +363,18 @@ class _StatsGrid extends StatelessWidget {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 14,
       crossAxisSpacing: 14,
-      childAspectRatio: 1.42,
+      childAspectRatio: 1.58,
       children: [
         _StatCard(
           icon: Icons.star,
           iconColor: AppColors.orangeAccent,
-          label: language.text(
-            'Durchschnittliche Bewertung',
-            'Average rating',
-          ),
+          label: language.text('Durchschnittliche Bewertung', 'Average rating'),
           value: restaurant.rating.toStringAsFixed(1),
-          onTap: onReviewsTap,
+          onTap: onRatingsTap,
         ),
         _StatCard(
           icon: Icons.reviews,
@@ -281,12 +392,14 @@ class _StatsGrid extends StatelessWidget {
                 ? stats.totalCheckIns
                 : restaurant.totalCheckIns,
           ),
+          onTap: onCheckInsTap,
         ),
         _StatCard(
           icon: Icons.visibility_outlined,
           iconColor: const Color(0xFF8B2CFF),
           label: language.text('Gesamtzuschauer', 'Total viewers'),
           value: _compactNumber(stats.totalCustomers),
+          onTap: onViewersTap,
         ),
       ],
     );
@@ -358,11 +471,15 @@ class _OwnerDishCard extends StatelessWidget {
   final DealModel restaurant;
   final DealDish dish;
   final AppLanguageProvider language;
+  final ReviewModel? review;
+  final VoidCallback onReviewsTap;
 
   const _OwnerDishCard({
     required this.restaurant,
     required this.dish,
     required this.language,
+    required this.review,
+    required this.onReviewsTap,
   });
 
   @override
@@ -386,16 +503,34 @@ class _OwnerDishCard extends StatelessWidget {
           children: [
             Stack(
               children: [
+                const Positioned.fill(
+                  child: ColoredBox(color: Color(0xFFF8FAFC)),
+                ),
                 CachedNetworkImage(
                   imageUrl: imageUrl,
                   width: double.infinity,
                   height: 264,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   errorWidget: (_, _, _) => Container(
                     height: 264,
                     color: Colors.grey.shade200,
                     child: const Center(
                       child: Icon(Icons.restaurant_menu, size: 48),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 72,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black54],
+                      ),
                     ),
                   ),
                 ),
@@ -411,9 +546,23 @@ class _OwnerDishCard extends StatelessWidget {
                       color: Colors.black54,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Text(
-                      dish.name,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.restaurant_outlined,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          dish.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -446,47 +595,170 @@ class _OwnerDishCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    dish.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (dish.description.isNotEmpty) ...[
-                    const SizedBox(height: 7),
-                    Text(
-                      dish.description,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        height: 1.35,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Text(
-                        '${dish.price.toStringAsFixed(2)} €',
+                        language.text('Rezensionen', 'Reviews'),
                         style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       const Spacer(),
-                      Text(
-                        '${restaurant.reviewCount} ${language.text('Bewertungen', 'reviews')}',
-                        style: const TextStyle(fontSize: 11.5),
+                      InkWell(
+                        onTap: onReviewsTap,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(
+                            language.text('Alle anzeigen', 'View all'),
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 7),
+                  if (review == null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        language.text(
+                          'Noch keine Rezensionen für dieses Gericht.',
+                          'No reviews for this dish yet.',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    )
+                  else
+                    _ReviewPreview(review: review!, language: language),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewPreview extends StatelessWidget {
+  final ReviewModel review;
+  final AppLanguageProvider language;
+
+  const _ReviewPreview({required this.review, required this.language});
+
+  @override
+  Widget build(BuildContext context) {
+    final days = DateTime.now()
+        .difference(review.createdAt)
+        .inDays
+        .clamp(0, 999);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 17,
+              backgroundColor: const Color(0xFFF1F3F5),
+              backgroundImage:
+                  review.user.avatar != null && review.user.avatar!.isNotEmpty
+                  ? CachedNetworkImageProvider(review.user.avatar!)
+                  : null,
+              child: review.user.avatar == null || review.user.avatar!.isEmpty
+                  ? const Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: AppColors.textGrey,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    review.user.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    language.text('vor $days Tagen', '$days days ago'),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                5,
+                (index) => Icon(
+                  index < review.ratings.round()
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
+                  size: 14,
+                  color: AppColors.orangeAccent,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (review.reviewComment.trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            review.reviewComment,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11.5,
+              height: 1.4,
+              color: AppColors.textGrey,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _DecorativeImage extends StatelessWidget {
+  final String asset;
+  final double width;
+  final double opacity;
+  final double angle;
+
+  const _DecorativeImage({
+    required this.asset,
+    required this.width,
+    required this.opacity,
+    this.angle = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Opacity(
+        opacity: opacity,
+        child: Transform.rotate(
+          angle: angle,
+          child: Image.asset(asset, width: width, fit: BoxFit.contain),
         ),
       ),
     );
@@ -516,10 +788,7 @@ class _NoRestaurantDashboard extends StatelessWidget {
   final String message;
   final VoidCallback onOpen;
 
-  const _NoRestaurantDashboard({
-    required this.message,
-    required this.onOpen,
-  });
+  const _NoRestaurantDashboard({required this.message, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {

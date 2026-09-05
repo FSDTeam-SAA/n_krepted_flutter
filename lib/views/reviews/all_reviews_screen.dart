@@ -59,9 +59,8 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => WriteReviewScreen(
-                          dealId: widget.dealId,
-                        ),
+                        builder: (_) =>
+                            WriteReviewScreen(dealId: widget.dealId),
                       ),
                     );
                   },
@@ -70,24 +69,26 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
             : null,
       ),
       body: reviewProvider.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : reviewProvider.reviews.isEmpty
-              ? Center(
-                  child: Text(
-                    language.text(
-                      'Keine Bewertungen vorhanden.',
-                      'No reviews yet.',
-                    ),
-                    style: const TextStyle(color: AppColors.textGrey),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: reviewProvider.reviews.length,
-                  itemBuilder: (context, index) {
-                    return ReviewCard(review: reviewProvider.reviews[index]);
-                  },
+          ? Center(
+              child: Text(
+                language.text(
+                  'Keine Bewertungen vorhanden.',
+                  'No reviews yet.',
                 ),
+                style: const TextStyle(color: AppColors.textGrey),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: reviewProvider.reviews.length,
+              itemBuilder: (context, index) {
+                return ReviewCard(review: reviewProvider.reviews[index]);
+              },
+            ),
     );
   }
 }

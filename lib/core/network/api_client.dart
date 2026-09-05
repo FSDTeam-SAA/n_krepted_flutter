@@ -77,10 +77,6 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
   }) async {
-    return await dio.delete(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-    );
+    return await dio.delete(path, data: data, queryParameters: queryParameters);
   }
 }

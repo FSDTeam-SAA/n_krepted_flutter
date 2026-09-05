@@ -57,7 +57,7 @@ class _CreateEditRestaurantScreenState
     );
     _descController = TextEditingController(text: r?.description ?? '');
     _priceController = TextEditingController(
-      text: r?.price != null ? r!.price.toStringAsFixed(2) : '15.00',
+      text: r?.price != null ? r!.price.toStringAsFixed(2) : '0.00',
     );
     _existingImages = List<String>.from(r?.images ?? const <String>[]);
     _addressController = TextEditingController(text: r?.location.address ?? '');
@@ -209,7 +209,7 @@ class _CreateEditRestaurantScreenState
           ? _shortDescController.text.trim()
           : _titleController.text.trim(),
       'description': _descController.text.trim(),
-      'price': double.tryParse(_priceController.text.trim()) ?? 15.0,
+      'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
       'existingImages': List<String>.from(_existingImages),
       'imageFiles': List<XFile>.from(_newImages),
       'location': {

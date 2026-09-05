@@ -40,10 +40,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
       // IndexedStack so each tab keeps its scroll position — a cross-fade here
       // would rebuild the subtree and throw that away, so the motion lives in
       // the nav item instead.
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -111,7 +108,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 260),
         curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 18 : 10, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 18 : 10,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           // Design uses an outline icon even when active, on a #FFFBE7 pill.
           color: isSelected ? const Color(0xFFFFFBE7) : Colors.transparent,
@@ -126,7 +126,8 @@ class _MainBottomNavState extends State<MainBottomNav> {
               tween: Tween(begin: isSelected ? 0.8 : 1, end: 1),
               duration: const Duration(milliseconds: 320),
               curve: Curves.easeOutBack,
-              builder: (context, value, child) => Transform.scale(scale: value, child: child),
+              builder: (context, value, child) =>
+                  Transform.scale(scale: value, child: child),
               child: Icon(
                 icon,
                 color: isSelected ? AppColors.primary : AppColors.textGrey,

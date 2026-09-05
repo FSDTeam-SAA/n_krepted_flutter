@@ -57,10 +57,8 @@ class DishCard extends StatelessWidget {
                     height: 120,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 120,
-                      color: Colors.grey[200],
-                    ),
+                    placeholder: (context, url) =>
+                        Container(height: 120, color: Colors.grey[200]),
                     errorWidget: (context, url, error) => Container(
                       height: 120,
                       color: Colors.grey[200],
@@ -70,17 +68,18 @@ class DishCard extends StatelessWidget {
                 ),
 
                 // Top-Left SD Badge
-                const Positioned(
-                  top: 8,
-                  left: 8,
-                  child: RatingBadge(rating: 4.5, isSdBadge: true),
-                ),
+                if (deal.sdRating > 0)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: RatingBadge(rating: deal.sdRating, isSdBadge: true),
+                  ),
 
                 // Top-Right User Rating Badge
-                const Positioned(
+                Positioned(
                   top: 8,
                   right: 8,
-                  child: RatingBadge(rating: 4.5, isSdBadge: false),
+                  child: RatingBadge(rating: deal.rating, isSdBadge: false),
                 ),
               ],
             ),
@@ -93,7 +92,11 @@ class DishCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.restaurant_menu, color: AppColors.primary, size: 14),
+                      const Icon(
+                        Icons.restaurant_menu,
+                        color: AppColors.primary,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -114,7 +117,7 @@ class DishCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '${deal.price.toStringAsFixed(2).replaceAll('.', ',')} \$',
+                        '€${deal.price.toStringAsFixed(2).replaceAll('.', ',')}',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -126,7 +129,9 @@ class DishCard extends StatelessWidget {
                           onTap: () => savedProvider.toggleSave(deal),
                           child: Icon(
                             isSaved ? Icons.favorite : Icons.favorite_border,
-                            color: isSaved ? AppColors.primary : AppColors.textGrey,
+                            color: isSaved
+                                ? AppColors.primary
+                                : AppColors.textGrey,
                             size: 18,
                           ),
                         ),

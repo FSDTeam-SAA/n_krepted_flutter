@@ -46,43 +46,50 @@ class _HomeScreenState extends State<HomeScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SearchScreen()),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.cardBorder),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.search, color: AppColors.textGrey, size: 20),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Finde dein Gericht, Restaurants und Bars',
-                            style: TextStyle(
-                              color: AppColors.textLightGrey,
-                              fontSize: 13,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SearchScreen()),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 13,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.cardBorder),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(
+                            Icons.search,
+                            color: AppColors.textGrey,
+                            size: 20,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Finde dein Gericht, Restaurants und Bars',
+                              style: TextStyle(
+                                color: AppColors.textLightGrey,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 ).fadeSlideUp(delay: Motion.step(1)),
 
                 SizedBox(height: 14.h),
@@ -105,7 +112,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(12),
@@ -145,48 +155,49 @@ class _HomeScreenState extends State<HomeScreen> {
           // Main Feed of Restaurants
           Expanded(
             child: dealProvider.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    )
-                  : dealProvider.deals.isEmpty
-                      ? ListView(
-                          children: const [
-                            SizedBox(height: 100),
-                            Center(
-                              child: Text(
-                                'Keine Restaurants gefunden.',
-                                style: TextStyle(color: AppColors.textGrey),
-                              ),
-                            ),
-                          ],
-                        )
-                      : ListView.builder(
-                          padding: EdgeInsets.fromLTRB(20.w, 6.h, 20.w, 20.h),
-                          itemCount: dealProvider.deals.length,
-                          itemBuilder: (context, index) {
-                            final deal = dealProvider.deals[index];
-                            // Cards ease in as the feed fills.
-                            return RestaurantCard(
-                              deal: deal,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => RestaurantDetailsScreen(deal: deal),
-                                  ),
-                                );
-                              },
-                              onDishTap: (d) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => DishDetailsScreen(deal: d),
-                                  ),
-                                );
-                              },
-                            ).fadeSlideUp(delay: Motion.step(index, ms: 70, max: 5));
-                          },
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
+                : dealProvider.deals.isEmpty
+                ? ListView(
+                    children: const [
+                      SizedBox(height: 100),
+                      Center(
+                        child: Text(
+                          'Keine Restaurants gefunden.',
+                          style: TextStyle(color: AppColors.textGrey),
                         ),
+                      ),
+                    ],
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.fromLTRB(20.w, 6.h, 20.w, 20.h),
+                    itemCount: dealProvider.deals.length,
+                    itemBuilder: (context, index) {
+                      final deal = dealProvider.deals[index];
+                      // Cards ease in as the feed fills.
+                      return RestaurantCard(
+                        deal: deal,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  RestaurantDetailsScreen(deal: deal),
+                            ),
+                          );
+                        },
+                        onDishTap: (d) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DishDetailsScreen(deal: d),
+                            ),
+                          );
+                        },
+                      ).fadeSlideUp(delay: Motion.step(index, ms: 70, max: 5));
+                    },
+                  ),
           ),
         ],
       ),
@@ -202,7 +213,9 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFFFF9E6) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: AppColors.orangeAccent.withValues(alpha: 0.5)) : null,
+          border: isSelected
+              ? Border.all(color: AppColors.orangeAccent.withValues(alpha: 0.5))
+              : null,
         ),
         child: Text(
           label,

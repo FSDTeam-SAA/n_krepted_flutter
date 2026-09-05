@@ -94,7 +94,10 @@ class _FilterModalState extends State<FilterModal> {
                   },
                   child: const Text(
                     'Zurücksetzen',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -105,7 +108,11 @@ class _FilterModalState extends State<FilterModal> {
 
             const Text(
               'Standort',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -113,7 +120,10 @@ class _FilterModalState extends State<FilterModal> {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: 'Stadt oder Land eingeben',
-                prefixIcon: const Icon(Icons.location_on_outlined, color: AppColors.primary),
+                prefixIcon: const Icon(
+                  Icons.location_on_outlined,
+                  color: AppColors.primary,
+                ),
                 filled: true,
                 fillColor: const Color(0xFFF8FAFC),
                 border: OutlineInputBorder(
@@ -130,11 +140,19 @@ class _FilterModalState extends State<FilterModal> {
               children: [
                 const Text(
                   'Entfernung',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
                 ),
                 Text(
                   '${_distance.toInt()} km',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),
@@ -152,7 +170,11 @@ class _FilterModalState extends State<FilterModal> {
             // Rating Filter
             const Text(
               'Bewertung',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -163,9 +185,14 @@ class _FilterModalState extends State<FilterModal> {
                   onTap: () => setState(() => _selectedRating = rating),
                   child: Container(
                     margin: const EdgeInsets.only(right: 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : const Color(0xFFF1F5F9),
+                      color: isSelected
+                          ? AppColors.primary
+                          : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -173,7 +200,9 @@ class _FilterModalState extends State<FilterModal> {
                         Text(
                           '$rating',
                           style: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.textDark,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textDark,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -182,7 +211,9 @@ class _FilterModalState extends State<FilterModal> {
                         Icon(
                           Icons.star,
                           size: 14,
-                          color: isSelected ? Colors.white : AppColors.orangeAccent,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.orangeAccent,
                         ),
                       ],
                     ),
@@ -196,7 +227,11 @@ class _FilterModalState extends State<FilterModal> {
             // Cuisine Category
             const Text(
               'Kategorie',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -205,20 +240,32 @@ class _FilterModalState extends State<FilterModal> {
               children: _cuisines.map((cuisine) {
                 final isSelected = _selectedCuisine == cuisine;
                 return GestureDetector(
-                  onTap: () => setState(() =>
-                      _selectedCuisine = isSelected ? '' : cuisine),
+                  onTap: () => setState(
+                    () => _selectedCuisine = isSelected ? '' : cuisine,
+                  ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFFF9E6) : const Color(0xFFF1F5F9),
+                      color: isSelected
+                          ? const Color(0xFFFFF9E6)
+                          : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(12),
-                      border: isSelected ? Border.all(color: AppColors.orangeAccent) : null,
+                      border: isSelected
+                          ? Border.all(color: AppColors.orangeAccent)
+                          : null,
                     ),
                     child: Text(
                       cuisine,
                       style: TextStyle(
-                        color: isSelected ? AppColors.textDark : AppColors.textGrey,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? AppColors.textDark
+                            : AppColors.textGrey,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         fontSize: 12.5,
                       ),
                     ),
@@ -234,11 +281,11 @@ class _FilterModalState extends State<FilterModal> {
               text: 'Filter anwenden',
               onPressed: () async {
                 await context.read<DealProvider>().applyFilters(
-                      location: _locationController.text,
-                      radiusKm: _distance,
-                      minimumRating: _selectedRating,
-                      cuisine: _selectedCuisine,
-                    );
+                  location: _locationController.text,
+                  radiusKm: _distance,
+                  minimumRating: _selectedRating,
+                  cuisine: _selectedCuisine,
+                );
                 if (context.mounted) Navigator.pop(context);
               },
             ),

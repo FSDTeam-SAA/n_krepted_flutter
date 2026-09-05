@@ -5,6 +5,7 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_language_provider.dart';
+import '../../core/widgets/owner_page_background.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -91,88 +92,106 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                CustomTextField(
-                  controller: _currentPasswordController,
-                  hintText: language.text(
-                    'Aktuelles Passwort',
-                    'Current password',
-                  ),
-                  labelText: language.text(
-                    'Aktuelles Passwort',
-                    'Current password',
-                  ),
-                  isPassword: true,
-                  validator: (v) => (v == null || v.isEmpty)
-                      ? language.text(
-                          'Bitte aktuelles Passwort eingeben',
-                          'Enter your current password',
-                        )
-                      : null,
+      body: OwnerPageBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 32,
                 ),
+                child: IntrinsicHeight(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        CustomTextField(
+                          controller: _currentPasswordController,
+                          hintText: language.text(
+                            'Aktuelles Passwort',
+                            'Current password',
+                          ),
+                          labelText: language.text(
+                            'Aktuelles Passwort',
+                            'Current password',
+                          ),
+                          isPassword: true,
+                          validator: (v) => (v == null || v.isEmpty)
+                              ? language.text(
+                                  'Bitte aktuelles Passwort eingeben',
+                                  'Enter your current password',
+                                )
+                              : null,
+                        ),
 
-                const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                CustomTextField(
-                  controller: _newPasswordController,
-                  hintText: language.text('Neues Passwort', 'New password'),
-                  labelText: language.text('Neues Passwort', 'New password'),
-                  isPassword: true,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
-                      return language.text(
-                        'Bitte neues Passwort eingeben',
-                        'Enter a new password',
-                      );
-                    }
-                    if (v.length < 6) {
-                      return language.text(
-                        'Mindestens 6 Zeichen erforderlich',
-                        'At least 6 characters are required',
-                      );
-                    }
-                    return null;
-                  },
-                ),
+                        CustomTextField(
+                          controller: _newPasswordController,
+                          hintText: language.text(
+                            'Neues Passwort',
+                            'New password',
+                          ),
+                          labelText: language.text(
+                            'Neues Passwort',
+                            'New password',
+                          ),
+                          isPassword: true,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return language.text(
+                                'Bitte neues Passwort eingeben',
+                                'Enter a new password',
+                              );
+                            }
+                            if (v.length < 6) {
+                              return language.text(
+                                'Mindestens 6 Zeichen erforderlich',
+                                'At least 6 characters are required',
+                              );
+                            }
+                            return null;
+                          },
+                        ),
 
-                const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                CustomTextField(
-                  controller: _confirmPasswordController,
-                  hintText: language.text(
-                    'Passwort bestätigen',
-                    'Confirm password',
+                        CustomTextField(
+                          controller: _confirmPasswordController,
+                          hintText: language.text(
+                            'Passwort bestätigen',
+                            'Confirm password',
+                          ),
+                          labelText: language.text(
+                            'Passwort bestätigen',
+                            'Confirm password',
+                          ),
+                          isPassword: true,
+                          validator: (v) {
+                            if (v != _newPasswordController.text) {
+                              return language.text(
+                                'Passwörter stimmen nicht überein',
+                                'Passwords do not match',
+                              );
+                            }
+                            return null;
+                          },
+                        ),
+
+                        const Spacer(),
+                        const SizedBox(height: 30),
+
+                        CustomButton(
+                          text: language.text('Speichern', 'Save'),
+                          isLoading: authProvider.isLoading,
+                          onPressed: _handleSave,
+                        ),
+                      ],
+                    ),
                   ),
-                  labelText: language.text(
-                    'Passwort bestätigen',
-                    'Confirm password',
-                  ),
-                  isPassword: true,
-                  validator: (v) {
-                    if (v != _newPasswordController.text) {
-                      return language.text(
-                        'Passwörter stimmen nicht überein',
-                        'Passwords do not match',
-                      );
-                    }
-                    return null;
-                  },
                 ),
-
-                const SizedBox(height: 36),
-
-                CustomButton(
-                  text: language.text('Speichern', 'Save'),
-                  isLoading: authProvider.isLoading,
-                  onPressed: _handleSave,
-                ),
-              ],
+              ),
             ),
           ),
         ),

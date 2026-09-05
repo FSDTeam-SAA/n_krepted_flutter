@@ -55,15 +55,15 @@ class _SignInScreenState extends State<SignInScreen> {
     if (success) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (_) => const AuthenticatedLandingScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const AuthenticatedLandingScreen()),
         (route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Anmeldung fehlgeschlagen.'),
+          content: Text(
+            authProvider.errorMessage ?? 'Anmeldung fehlgeschlagen.',
+          ),
           backgroundColor: AppColors.badgeRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -108,8 +108,9 @@ class _SignInScreenState extends State<SignInScreen> {
                   controller: _emailController,
                   hintText: 'E-Mail',
                   keyboardType: TextInputType.emailAddress,
-                  validator: (val) =>
-                      (val == null || val.trim().isEmpty) ? 'Bitte geben Sie Ihre E-Mail ein' : null,
+                  validator: (val) => (val == null || val.trim().isEmpty)
+                      ? 'Bitte geben Sie Ihre E-Mail ein'
+                      : null,
                 ).fadeSlideUp(delay: Motion.step(3)),
 
                 SizedBox(height: 12.h),
@@ -117,8 +118,9 @@ class _SignInScreenState extends State<SignInScreen> {
                   controller: _passwordController,
                   hintText: 'Passwort',
                   isPassword: true,
-                  validator: (val) =>
-                      (val == null || val.isEmpty) ? 'Bitte geben Sie Ihr Passwort ein' : null,
+                  validator: (val) => (val == null || val.isEmpty)
+                      ? 'Bitte geben Sie Ihr Passwort ein'
+                      : null,
                 ).fadeSlideUp(delay: Motion.step(4)),
 
                 SizedBox(height: 15.h),
@@ -136,15 +138,23 @@ class _SignInScreenState extends State<SignInScreen> {
                             width: 14.w,
                             height: 14.w,
                             decoration: BoxDecoration(
-                              color: _rememberMe ? AppColors.primary : Colors.transparent,
+                              color: _rememberMe
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(3.w),
                               border: Border.all(
-                                color: _rememberMe ? AppColors.primary : AppColors.textLightGrey,
+                                color: _rememberMe
+                                    ? AppColors.primary
+                                    : AppColors.textLightGrey,
                                 width: 1.2,
                               ),
                             ),
                             child: _rememberMe
-                                ? Icon(Icons.check, size: 10.w, color: Colors.white)
+                                ? Icon(
+                                    Icons.check,
+                                    size: 10.w,
+                                    color: Colors.white,
+                                  )
                                 : null,
                           ),
                           SizedBox(width: 8.w),
@@ -158,7 +168,9 @@ class _SignInScreenState extends State<SignInScreen> {
                     GestureDetector(
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordScreen(),
+                        ),
                       ),
                       child: Text(
                         'Passwort vergessen?',

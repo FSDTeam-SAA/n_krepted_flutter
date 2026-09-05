@@ -41,7 +41,11 @@ class FramePositioned extends StatelessWidget {
     double opacity = 1,
     Widget Function(Widget child)? effect,
   }) {
-    Widget image = Image.asset(asset, fit: BoxFit.fill, filterQuality: FilterQuality.medium);
+    Widget image = Image.asset(
+      asset,
+      fit: BoxFit.fill,
+      filterQuality: FilterQuality.medium,
+    );
     if (mirrored) {
       image = Transform(
         alignment: Alignment.center,

@@ -18,6 +18,7 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
+  late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _cityController;
   File? _pickedImage;
@@ -28,13 +29,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     final user = context.read<AuthProvider>().currentUser;
     _nameController = TextEditingController(text: user?.name ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
-    _cityController = TextEditingController(text: user?.cityState ?? 'München, Deutschland');
+    _cityController = TextEditingController(text: user?.cityState ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
     super.dispose();
@@ -104,7 +107,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          language.text('Profil bearbeiten', 'Edit profile'),
+          user?.isRestaurantOwner == true
+              ? language.text('Inhaberprofil bearbeiten', 'Edit owner profile')
+              : language.text('Profil bearbeiten', 'Edit profile'),
           style: const TextStyle(
             color: AppColors.textDark,
             fontSize: 18,
@@ -129,10 +134,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         backgroundImage: _pickedImage != null
                             ? FileImage(_pickedImage!)
                             : (user?.avatar != null
-                                ? CachedNetworkImageProvider(user!.avatar!)
-                                : null) as ImageProvider?,
+                                      ? CachedNetworkImageProvider(
+                                          user!.avatar!,
+                                        )
+                                      : null)
+                                  as ImageProvider?,
                         child: _pickedImage == null && user?.avatar == null
-                            ? const Icon(Icons.person, size: 48, color: AppColors.primary)
+                            ? const Icon(
+                                Icons.person,
+                                size: 48,
+                                color: AppColors.primary,
+                              )
                             : null,
                       ),
                       Positioned(
@@ -144,7 +156,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ],
@@ -158,6 +174,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _nameController,
                 hintText: language.text('Vollständiger Name', 'Full name'),
                 labelText: language.text('Name', 'Name'),
+              ),
+
+              const SizedBox(height: 16),
+
+              CustomTextField(
+                controller: _emailController,
+                hintText: 'name@example.com',
+                labelText: language.text('E-Mail-Konto', 'Account email'),
+                keyboardType: TextInputType.emailAddress,
+                readOnly: true,
+                suffixIcon: const Icon(
+                  Icons.lock_outline,
+                  size: 17,
+                  color: AppColors.textGrey,
+                ),
               ),
 
               const SizedBox(height: 16),

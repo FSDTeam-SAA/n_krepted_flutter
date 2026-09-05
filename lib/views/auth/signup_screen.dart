@@ -56,9 +56,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (_joinAsRestaurantOwner) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (_) => const AuthenticatedLandingScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const AuthenticatedLandingScreen()),
           (route) => false,
         );
         return;

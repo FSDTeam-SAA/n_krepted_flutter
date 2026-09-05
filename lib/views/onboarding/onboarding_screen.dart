@@ -63,7 +63,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 450),
-        pageBuilder: (context, animation, secondary) => const LocationPermissionScreen(),
+        pageBuilder: (context, animation, secondary) =>
+            const LocationPermissionScreen(),
         transitionsBuilder: (context, animation, secondary, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
@@ -97,18 +98,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Positioned(
             top: AppSizes.topInset + 8.h,
             right: 12.w,
-            child: TextButton(
-              onPressed: _complete,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                'Überspringen',
-                style: AppTextStyles.body(size: 14, color: AppColors.textMuted),
-              ),
-            ).fadeSlideUp(delay: const Duration(milliseconds: 250), offset: -0.3),
+            child:
+                TextButton(
+                  onPressed: _complete,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 6.h,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Überspringen',
+                    style: AppTextStyles.body(
+                      size: 14,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ).fadeSlideUp(
+                  delay: const Duration(milliseconds: 250),
+                  offset: -0.3,
+                ),
           ),
 
           // ---- page dots: 8px tall, first dot at x=20, baseline y=809 ---------
@@ -163,7 +174,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       duration: const Duration(milliseconds: 320),
                       curve: Curves.easeOutCubic,
                       scale: isLast ? 22 / 27 : 1,
-                      child: Icon(Icons.arrow_forward, color: Colors.white, size: 27.w),
+                      child: Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                        size: 27.w,
+                      ),
                     ),
                   ),
                   Positioned(
@@ -205,49 +220,57 @@ class _TopDecoration extends StatelessWidget {
     final toLeaf = (page - 1).clamp(0.0, 1.0);
 
     return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Slide 1: wave at (0, 0). Slide 2: same wave mirrored against the right
-        // edge. Sliding it across reads as one shape travelling with the pages.
-        Opacity(
-          opacity: 1 - toLeaf,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (toRight < 1)
-                FramePositioned.art(
-                  AppAssets.waveTop,
-                  left: 0,
-                  top: 0,
-                  width: AppAssets.waveW,
-                  height: AppAssets.waveH,
-                  opacity: 1 - toRight,
-                ),
-              if (toRight > 0)
-                FramePositioned.art(
-                  AppAssets.waveTop,
-                  right: 0,
-                  top: 0,
-                  width: AppAssets.waveW,
-                  height: AppAssets.waveH,
-                  mirrored: true,
-                  opacity: toRight,
-                ),
-            ],
-          ),
-        ),
-        // Slide 3: rounded leaf, 143 x 241 at (0, 2).
-        if (toLeaf > 0)
-          FramePositioned.art(
-            AppAssets.blobLeaf,
-            left: 0,
-            top: 2,
-            width: AppAssets.blobLeafW,
-            height: AppAssets.blobLeafH,
-            opacity: toLeaf,
-          ),
-      ],
-    ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.15, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
+          fit: StackFit.expand,
+          children: [
+            // Slide 1: wave at (0, 0). Slide 2: same wave mirrored against the right
+            // edge. Sliding it across reads as one shape travelling with the pages.
+            Opacity(
+              opacity: 1 - toLeaf,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (toRight < 1)
+                    FramePositioned.art(
+                      AppAssets.waveTop,
+                      left: 0,
+                      top: 0,
+                      width: AppAssets.waveW,
+                      height: AppAssets.waveH,
+                      opacity: 1 - toRight,
+                    ),
+                  if (toRight > 0)
+                    FramePositioned.art(
+                      AppAssets.waveTop,
+                      right: 0,
+                      top: 0,
+                      width: AppAssets.waveW,
+                      height: AppAssets.waveH,
+                      mirrored: true,
+                      opacity: toRight,
+                    ),
+                ],
+              ),
+            ),
+            // Slide 3: rounded leaf, 143 x 241 at (0, 2).
+            if (toLeaf > 0)
+              FramePositioned.art(
+                AppAssets.blobLeaf,
+                left: 0,
+                top: 2,
+                width: AppAssets.blobLeafW,
+                height: AppAssets.blobLeafH,
+                opacity: toLeaf,
+              ),
+          ],
+        )
+        .animate()
+        .fadeIn(duration: 600.ms)
+        .slideY(
+          begin: -0.15,
+          end: 0,
+          duration: 600.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
@@ -305,8 +328,8 @@ class _Slide extends StatelessWidget {
           top: index == 0
               ? 300
               : index == 1
-                  ? 366
-                  : 338,
+              ? 366
+              : 338,
           child: Transform.translate(
             offset: Offset(_parallax(28.w), 0),
             child: Text(
@@ -325,14 +348,18 @@ class _Slide extends StatelessWidget {
           top: index == 0
               ? 398
               : index == 1
-                  ? 467
-                  : 438,
+              ? 467
+              : 438,
           child: Transform.translate(
             offset: Offset(_parallax(18.w), 0),
             child: Text(
               copy.body,
               textAlign: copy.alignRight ? TextAlign.right : TextAlign.left,
-              style: AppTextStyles.body(size: 13.5, color: AppColors.textMuted, height: 1.556),
+              style: AppTextStyles.body(
+                size: 13.5,
+                color: AppColors.textMuted,
+                height: 1.556,
+              ),
             ).fadeSlideUp(delay: const Duration(milliseconds: 220)),
           ),
         ),
@@ -354,8 +381,11 @@ class _Slide extends StatelessWidget {
     int seconds = 5,
     double from = 0,
   }) {
-    Widget child = Image.asset(asset, fit: BoxFit.fill, filterQuality: FilterQuality.medium)
-        .drift(dy: dy, seconds: seconds);
+    Widget child = Image.asset(
+      asset,
+      fit: BoxFit.fill,
+      filterQuality: FilterQuality.medium,
+    ).drift(dy: dy, seconds: seconds);
 
     child = from == 0
         ? child.fadeSoft(delay: const Duration(milliseconds: 350))
@@ -379,28 +409,92 @@ class _Slide extends StatelessWidget {
     switch (index) {
       case 0:
         return [
-          _art1(AppAssets.onb1Coffee,
-              left: 193, top: 114, width: 200, height: 233, parallax: 64.w, dy: 7, from: 0.25),
-          _art1(AppAssets.onb1Beef,
-              left: 0, top: 503, width: 185, height: 276, parallax: 46.w, seconds: 6, from: -0.25),
-          _art1(AppAssets.onb1Spice,
-              left: 280, top: 486, width: 113, height: 109, parallax: 88.w, dy: 5, seconds: 4),
+          _art1(
+            AppAssets.onb1Coffee,
+            left: 193,
+            top: 114,
+            width: 200,
+            height: 233,
+            parallax: 64.w,
+            dy: 7,
+            from: 0.25,
+          ),
+          _art1(
+            AppAssets.onb1Beef,
+            left: 0,
+            top: 503,
+            width: 185,
+            height: 276,
+            parallax: 46.w,
+            seconds: 6,
+            from: -0.25,
+          ),
+          _art1(
+            AppAssets.onb1Spice,
+            left: 280,
+            top: 486,
+            width: 113,
+            height: 109,
+            parallax: 88.w,
+            dy: 5,
+            seconds: 4,
+          ),
         ];
       case 1:
         return [
-          _art1(AppAssets.onb2Pan,
-              left: 0, top: 108, width: 211, height: 276, parallax: 64.w, dy: 7, from: -0.25),
-          _art1(AppAssets.onb2Skewers,
-              left: 0, top: 554, width: 193, height: 221, parallax: 46.w, seconds: 6, from: -0.25),
+          _art1(
+            AppAssets.onb2Pan,
+            left: 0,
+            top: 108,
+            width: 211,
+            height: 276,
+            parallax: 64.w,
+            dy: 7,
+            from: -0.25,
+          ),
+          _art1(
+            AppAssets.onb2Skewers,
+            left: 0,
+            top: 554,
+            width: 193,
+            height: 221,
+            parallax: 46.w,
+            seconds: 6,
+            from: -0.25,
+          ),
         ];
       default:
         return [
-          _art1(AppAssets.onb3Shake,
-              left: 238, top: 77, width: 155, height: 271, parallax: 64.w, dy: 7, from: 0.25),
-          _art1(AppAssets.onb3Pancakes,
-              left: 0, top: 550, width: 190, height: 219, parallax: 46.w, seconds: 6, from: -0.25),
-          _art1(AppAssets.onb3Garnish,
-              left: 298, top: 498, width: 95, height: 100, parallax: 88.w, dy: 5, seconds: 4),
+          _art1(
+            AppAssets.onb3Shake,
+            left: 238,
+            top: 77,
+            width: 155,
+            height: 271,
+            parallax: 64.w,
+            dy: 7,
+            from: 0.25,
+          ),
+          _art1(
+            AppAssets.onb3Pancakes,
+            left: 0,
+            top: 550,
+            width: 190,
+            height: 219,
+            parallax: 46.w,
+            seconds: 6,
+            from: -0.25,
+          ),
+          _art1(
+            AppAssets.onb3Garnish,
+            left: 298,
+            top: 498,
+            width: 95,
+            height: 100,
+            parallax: 88.w,
+            dy: 5,
+            seconds: 4,
+          ),
         ];
     }
   }

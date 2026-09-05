@@ -66,16 +66,25 @@ class OwnerRestaurantRepository {
 
   Future<FormData> _dishFormData(Map<String, dynamic> payload) async {
     final fields = Map<String, dynamic>.from(payload);
-    final imageFile = fields.remove('imageFile');
-    if (fields['existingImage'] == null) fields.remove('existingImage');
+    final imageFiles =
+        (fields.remove('imageFiles') as List?)?.whereType<XFile>().toList() ??
+        const <XFile>[];
+    fields['existingImages'] = jsonEncode(
+      (fields['existingImages'] as List?)?.whereType<String>().toList() ??
+          const <String>[],
+    );
+    fields['ingredients'] = jsonEncode(
+      (fields['ingredients'] as List?)?.whereType<String>().toList() ??
+          const <String>[],
+    );
     final formData = FormData.fromMap(fields);
-    if (imageFile is XFile) {
+    for (final image in imageFiles) {
       formData.files.add(
         MapEntry(
-          'image',
+          'images',
           MultipartFile.fromBytes(
-            await imageFile.readAsBytes(),
-            filename: imageFile.name,
+            await image.readAsBytes(),
+            filename: image.name,
           ),
         ),
       );

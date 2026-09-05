@@ -32,7 +32,9 @@ class CategoriesScreen extends StatelessWidget {
         ),
       ),
       body: categoryProvider.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : GridView.builder(
               padding: const EdgeInsets.all(20),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -50,7 +52,8 @@ class CategoriesScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => AllDishesScreen(categoryName: cat.categoryName),
+                        builder: (_) =>
+                            AllDishesScreen(categoryName: cat.categoryName),
                       ),
                     );
                   },

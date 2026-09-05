@@ -1,10 +1,12 @@
 import 'deal_model.dart';
+import 'user_model.dart';
 
 class CheckInModel {
   final String id;
   final String userId;
   final String restaurantId;
   final DealModel? restaurant;
+  final UserModel? user;
   final DateTime checkedInAt;
   final int partySize;
   final double distanceMeters;
@@ -15,6 +17,7 @@ class CheckInModel {
     required this.userId,
     required this.restaurantId,
     this.restaurant,
+    this.user,
     required this.checkedInAt,
     required this.partySize,
     required this.distanceMeters,
@@ -34,6 +37,9 @@ class CheckInModel {
           : rawRestaurant?.toString() ?? '',
       restaurant: rawRestaurant is Map<String, dynamic>
           ? DealModel.fromJson(rawRestaurant)
+          : null,
+      user: rawUser is Map<String, dynamic>
+          ? UserModel.fromJson(rawUser)
           : null,
       checkedInAt:
           DateTime.tryParse(json['checkedInAt']?.toString() ?? '') ??

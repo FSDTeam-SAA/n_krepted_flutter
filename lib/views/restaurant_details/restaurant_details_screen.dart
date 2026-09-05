@@ -20,27 +20,24 @@ class RestaurantDetailsScreen extends StatefulWidget {
 }
 
 class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
-  String _selectedCategory = 'Deutsche Küche';
-
-  final List<String> _categories = [
-    'Deutsche Küche',
-    'Burger',
-    'Pizza',
-    'Erfrischungsgetränke',
-  ];
-
-  final List<String> _diningPhotos = [
-    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=600&auto=format&fit=crop&q=80',
-  ];
+  String _selectedCategory = '';
 
   @override
   Widget build(BuildContext context) {
     final deal = widget.deal;
     final savedProvider = context.watch<SavedProvider>();
     final isSaved = savedProvider.isSaved(deal.id);
+    final diningPhotos = deal.images.skip(1).toList();
+    final categories = deal.dishes
+        .map((dish) => dish.category.trim())
+        .where((category) => category.isNotEmpty)
+        .toSet()
+        .toList();
+    final visibleDishes = _selectedCategory.isEmpty
+        ? deal.dishes
+        : deal.dishes
+              .where((dish) => dish.category == _selectedCategory)
+              .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -125,14 +122,16 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                               ),
                             ),
                           ),
-                          Text(
-                            deal.category?.categoryName ?? 'Italian',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                          if (deal.category?.categoryName.trim().isNotEmpty ==
+                              true)
+                            Text(
+                              deal.category!.categoryName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
                             ),
-                          ),
                         ],
                       ),
 
@@ -157,79 +156,29 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 6),
-
-                      // Distance & Time
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.directions_walk,
-                            color: AppColors.textGrey,
-                            size: 15,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${deal.distance}  •  ${deal.duration}',
-                            style: const TextStyle(
-                              fontSize: 12.5,
+                      if (deal.distance.isNotEmpty ||
+                          deal.duration.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.directions_walk,
                               color: AppColors.textGrey,
+                              size: 15,
                             ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Operating hours
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.access_time,
-                            color: AppColors.primary,
-                            size: 15,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Montag bis Samstag (9 bis 20 Uhr)',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: AppColors.textDark,
-                              fontWeight: FontWeight.w500,
+                            const SizedBox(width: 4),
+                            Text(
+                              [deal.distance, deal.duration]
+                                  .where((value) => value.isNotEmpty)
+                                  .join('  •  '),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppColors.textGrey,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Contact & Phone
-                      Row(
-                        children: const [
-                          Icon(Icons.call, color: AppColors.textGrey, size: 15),
-                          SizedBox(width: 6),
-                          Text(
-                            '+49 151 23456789',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
-                          SizedBox(width: 14),
-                          Icon(
-                            Icons.email_outlined,
-                            color: AppColors.textGrey,
-                            size: 15,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'restaurantjan@gmail.com',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
 
                       const SizedBox(height: 8),
 
@@ -253,55 +202,54 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 24),
-
-                      // Bilder Der Location (Dining Gallery)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            'Bilder Der Location',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textDark,
-                            ),
-                          ),
-                          Text(
-                            'Alle anzeigen',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      SizedBox(
-                        height: 90,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _diningPhotos.length,
-                          itemBuilder: (context, index) {
-                            return Container(
-                              width: 110,
-                              margin: const EdgeInsets.only(right: 10),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                image: DecorationImage(
-                                  image: CachedNetworkImageProvider(
-                                    _diningPhotos[index],
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
+                      if (diningPhotos.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: const [
+                            Text(
+                              'Bilder Der Location',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textDark,
                               ),
-                            );
-                          },
+                            ),
+                            Text(
+                              'Alle anzeigen',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 90,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: diningPhotos.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                width: 110,
+                                margin: const EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  image: DecorationImage(
+                                    image: CachedNetworkImageProvider(
+                                      diningPhotos[index],
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
 
                       const SizedBox(height: 24),
 
@@ -326,15 +274,6 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                                 const SizedBox(height: 20),
                               ],
                             ),
-                      ] else ...[
-                        _buildSignatureDishBigCard(
-                          title: 'Signature Dish',
-                          dishName: deal.dishName,
-                          image: deal.firstImage,
-                          description: deal.description,
-                          price: deal.price,
-                        ),
-                        const SizedBox(height: 24),
                       ],
 
                       // Alle Gerichte Category Filter
@@ -349,48 +288,49 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
                       const SizedBox(height: 12),
 
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _categories.map((cat) {
-                            final isSel = _selectedCategory == cat;
-                            return GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedCategory = cat),
-                              child: Container(
-                                margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSel
-                                      ? const Color(0xFFFFF9E6)
-                                      : const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: isSel
-                                      ? Border.all(
-                                          color: AppColors.orangeAccent,
-                                        )
-                                      : null,
-                                ),
-                                child: Text(
-                                  cat,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: isSel
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                      if (categories.isNotEmpty)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: categories.map((cat) {
+                              final isSel = _selectedCategory == cat;
+                              return GestureDetector(
+                                onTap: () =>
+                                    setState(() => _selectedCategory = cat),
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: isSel
-                                        ? AppColors.textDark
-                                        : AppColors.textGrey,
+                                        ? const Color(0xFFFFF9E6)
+                                        : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: isSel
+                                        ? Border.all(
+                                            color: AppColors.orangeAccent,
+                                          )
+                                        : null,
+                                  ),
+                                  child: Text(
+                                    cat,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSel
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSel
+                                          ? AppColors.textDark
+                                          : AppColors.textGrey,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            }).toList(),
+                          ),
                         ),
-                      ),
 
                       const SizedBox(height: 16),
 
@@ -402,23 +342,11 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
                         childAspectRatio: 0.95,
-                        children: deal.dishes.isNotEmpty
-                            ? deal.dishes
-                                  .map(
-                                    (dish) => _buildGridDishItem(
-                                      dish.name,
-                                      dish.image.isNotEmpty
-                                          ? dish.image
-                                          : deal.firstImage,
-                                    ),
-                                  )
+                        children: visibleDishes.isNotEmpty
+                            ? visibleDishes
+                                  .map((dish) => _buildGridDishItem(dish))
                                   .toList()
-                            : [
-                                _buildGridDishItem(
-                                  'Schnitzel',
-                                  deal.firstImage,
-                                ),
-                              ],
+                            : const [],
                       ),
 
                       const SizedBox(height: 90),
@@ -540,15 +468,22 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       fit: BoxFit.cover,
                     ),
                     // Badges
-                    const Positioned(
-                      top: 12,
-                      left: 12,
-                      child: RatingBadge(rating: 4.5, isSdBadge: true),
-                    ),
-                    const Positioned(
+                    if (dish?.isSignatureDish == true)
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: RatingBadge(
+                          rating: widget.deal.sdRating,
+                          isSdBadge: true,
+                        ),
+                      ),
+                    Positioned(
                       top: 12,
                       right: 12,
-                      child: RatingBadge(rating: 4.5, isSdBadge: false),
+                      child: RatingBadge(
+                        rating: widget.deal.rating,
+                        isSdBadge: false,
+                      ),
                     ),
                     // Einchecken Button Overlay
                     Positioned(
@@ -631,16 +566,16 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${price.toStringAsFixed(2).replaceAll('.', ',')} \$',
+                            '€${price.toStringAsFixed(2).replaceAll('.', ',')}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textDark,
                             ),
                           ),
-                          const Text(
-                            '12 Bewertungen',
-                            style: TextStyle(
+                          Text(
+                            '${widget.deal.reviewCount} Bewertungen',
+                            style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.primary,
                               fontWeight: FontWeight.w600,
@@ -659,63 +594,76 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     );
   }
 
-  Widget _buildGridDishItem(String name, String image) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+  Widget _buildGridDishItem(DealDish dish) {
+    final image = dish.image.isNotEmpty ? dish.image : widget.deal.firstImage;
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DishDetailsScreen(deal: widget.deal, dish: dish),
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          CachedNetworkImage(
-            imageUrl: image,
-            height: double.infinity,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
-          const Positioned(
-            top: 8,
-            left: 8,
-            child: RatingBadge(rating: 4.5, isSdBadge: true),
-          ),
-          const Positioned(
-            top: 8,
-            right: 8,
-            child: RatingBadge(rating: 4.5, isSdBadge: false),
-          ),
-          Positioned(
-            bottom: 8,
-            left: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.65),
-                borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            CachedNetworkImage(
+              imageUrl: image,
+              height: double.infinity,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+            if (dish.isSignatureDish)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: RatingBadge(
+                  rating: widget.deal.sdRating,
+                  isSdBadge: true,
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.restaurant_menu,
-                    color: Colors.white,
-                    size: 12,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    name,
-                    style: const TextStyle(
+            Positioned(
+              top: 8,
+              right: 8,
+              child: RatingBadge(rating: widget.deal.rating, isSdBadge: false),
+            ),
+            Positioned(
+              bottom: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.restaurant_menu,
                       color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                      size: 12,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Text(
+                      dish.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

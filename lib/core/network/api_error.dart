@@ -8,7 +8,10 @@ import 'package:dio/dio.dart';
 /// `validateStatus` explanation and a link to MDN. That was being pushed
 /// straight into the sign-up error banner. The server already sends a usable
 /// `message` field, so prefer it and fall back to something plain.
-String friendlyApiError(Object error, {String fallback = 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.'}) {
+String friendlyApiError(
+  Object error, {
+  String fallback = 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.',
+}) {
   if (error is DioException) {
     final data = error.response?.data;
 

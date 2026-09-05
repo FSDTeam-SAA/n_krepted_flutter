@@ -21,30 +21,34 @@ class AppTextStyles {
   static const String serifFamily = 'Lora';
   static const String sansFamily = 'Urbanist';
 
-  static List<FontVariation> _wght(FontWeight w) => [FontVariation('wght', w.value.toDouble())];
+  static List<FontVariation> _wght(FontWeight w) => [
+    FontVariation('wght', w.value.toDouble()),
+  ];
 
   /// Onboarding headline. Measured: 2 lines, 36px line pitch, #0097B0.
-  static TextStyle script({double size = 24, Color color = AppColors.primary}) => TextStyle(
-        fontFamily: scriptFamily,
-        fontSize: size.sp,
-        color: color,
-        height: 1.5,
-      );
+  static TextStyle script({
+    double size = 24,
+    Color color = AppColors.primary,
+  }) => TextStyle(
+    fontFamily: scriptFamily,
+    fontSize: size.sp,
+    color: color,
+    height: 1.5,
+  );
 
   /// Bold serif heading, e.g. "Willkommen bei Signature Dish".
   static TextStyle heading({
     double size = 18,
     Color color = AppColors.textDark,
     FontWeight weight = FontWeight.w600,
-  }) =>
-      TextStyle(
-        fontFamily: serifFamily,
-        fontSize: size.sp,
-        fontWeight: weight,
-        fontVariations: _wght(weight),
-        color: color,
-        height: 1.25,
-      );
+  }) => TextStyle(
+    fontFamily: serifFamily,
+    fontSize: size.sp,
+    fontWeight: weight,
+    fontVariations: _wght(weight),
+    color: color,
+    height: 1.25,
+  );
 
   /// Paragraph copy — 14px over a 21px line, #858585.
   static TextStyle body({
@@ -52,15 +56,14 @@ class AppTextStyles {
     Color color = AppColors.textGrey,
     FontWeight weight = FontWeight.w400,
     double height = 1.5,
-  }) =>
-      TextStyle(
-        fontFamily: sansFamily,
-        fontSize: size.sp,
-        color: color,
-        fontWeight: weight,
-        fontVariations: _wght(weight),
-        height: height,
-      );
+  }) => TextStyle(
+    fontFamily: sansFamily,
+    fontSize: size.sp,
+    color: color,
+    fontWeight: weight,
+    fontVariations: _wght(weight),
+    height: height,
+  );
 
   /// Labels, buttons, links.
   static TextStyle label({
@@ -68,14 +71,13 @@ class AppTextStyles {
     Color color = AppColors.textDark,
     FontWeight weight = FontWeight.w500,
     TextDecoration? decoration,
-  }) =>
-      TextStyle(
-        fontFamily: sansFamily,
-        fontSize: size.sp,
-        color: color,
-        fontWeight: weight,
-        fontVariations: _wght(weight),
-        decoration: decoration,
-        height: 1.3,
-      );
+  }) => TextStyle(
+    fontFamily: sansFamily,
+    fontSize: size.sp,
+    color: color,
+    fontWeight: weight,
+    fontVariations: _wght(weight),
+    decoration: decoration,
+    height: 1.3,
+  );
 }

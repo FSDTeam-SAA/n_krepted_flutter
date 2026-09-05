@@ -47,16 +47,12 @@ class RestaurantCard extends StatelessWidget {
             Stack(
               children: [
                 CachedNetworkImage(
-                  imageUrl: deal.images.length > 1
-                      ? deal.images[1]
-                      : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80',
+                  imageUrl: deal.firstImage,
                   height: 170,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    height: 170,
-                    color: Colors.grey[200],
-                  ),
+                  placeholder: (context, url) =>
+                      Container(height: 170, color: Colors.grey[200]),
                   errorWidget: (context, url, error) => Container(
                     height: 170,
                     color: Colors.grey[200],
@@ -89,7 +85,9 @@ class RestaurantCard extends StatelessWidget {
                         onTap: () => savedProvider.toggleSave(deal),
                         child: Icon(
                           isSaved ? Icons.favorite : Icons.favorite_border,
-                          color: isSaved ? AppColors.primary : AppColors.textGrey,
+                          color: isSaved
+                              ? AppColors.primary
+                              : AppColors.textGrey,
                           size: 22,
                         ),
                       ),
@@ -101,7 +99,11 @@ class RestaurantCard extends StatelessWidget {
                   // Location
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: AppColors.badgeRed, size: 14),
+                      const Icon(
+                        Icons.location_on,
+                        color: AppColors.badgeRed,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${deal.location.city}, ${deal.location.country}',
@@ -122,7 +124,11 @@ class RestaurantCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.directions_walk, color: AppColors.textGrey, size: 14),
+                          const Icon(
+                            Icons.directions_walk,
+                            color: AppColors.textGrey,
+                            size: 14,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${deal.distance}  •  ${deal.duration}',
@@ -133,46 +139,42 @@ class RestaurantCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Text(
-                        deal.category?.categoryName ?? 'Italian',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                      if (deal.category?.categoryName.trim().isNotEmpty == true)
+                        Text(
+                          deal.category!.categoryName,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
                     ],
                   ),
 
                   const SizedBox(height: 14),
 
                   // Signature Dishes 1, 2, 3 Preview Row matching design
-                  Row(
-                    children: [
-                      _buildSignatureDishPreview(
-                        label: 'Signature Dish 1',
-                        image: deal.firstImage,
-                        title: deal.dishName,
-                        onTap: () => onDishTap?.call(deal),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildSignatureDishPreview(
-                        label: 'Signature Dish 2',
-                        image: deal.images.length > 1
-                            ? deal.images[0]
-                            : 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&auto=format&fit=crop&q=80',
-                        title: 'Schnitzel',
-                        onTap: () => onDishTap?.call(deal),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildSignatureDishPreview(
-                        label: 'Signature Dish 3',
-                        image: deal.firstImage,
-                        title: 'Schnitzel',
-                        onTap: () => onDishTap?.call(deal),
-                      ),
-                    ],
-                  ),
+                  if (deal.dishes.any((dish) => dish.isSignatureDish))
+                    Row(
+                      children: deal.dishes
+                          .where((dish) => dish.isSignatureDish)
+                          .take(3)
+                          .toList()
+                          .asMap()
+                          .entries
+                          .expand<Widget>(
+                            (entry) => [
+                              if (entry.key > 0) const SizedBox(width: 10),
+                              _buildSignatureDishPreview(
+                                label: 'Signature Dish ${entry.key + 1}',
+                                image: entry.value.image,
+                                title: entry.value.name,
+                                onTap: () => onDishTap?.call(deal),
+                              ),
+                            ],
+                          )
+                          .toList(),
+                    ),
                 ],
               ),
             ),
@@ -219,16 +221,24 @@ class RestaurantCard extends StatelessWidget {
                     height: 64,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: Colors.grey[200]),
+                    placeholder: (context, url) =>
+                        Container(color: Colors.grey[200]),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 4,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.restaurant_menu, color: AppColors.primary, size: 10),
+                            const Icon(
+                              Icons.restaurant_menu,
+                              color: AppColors.primary,
+                              size: 10,
+                            ),
                             const SizedBox(width: 2),
                             Expanded(
                               child: Text(
@@ -250,11 +260,19 @@ class RestaurantCard extends StatelessWidget {
                           children: const [
                             Text(
                               '4,5 ★',
-                              style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.orangeAccent),
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.orangeAccent,
+                              ),
                             ),
                             Text(
                               'SD 4,5 ★',
-                              style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.badgeRed),
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.badgeRed,
+                              ),
                             ),
                           ],
                         ),

@@ -14,7 +14,8 @@ class LocationPermissionScreen extends StatefulWidget {
   const LocationPermissionScreen({super.key});
 
   @override
-  State<LocationPermissionScreen> createState() => _LocationPermissionScreenState();
+  State<LocationPermissionScreen> createState() =>
+      _LocationPermissionScreenState();
 }
 
 class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
@@ -43,100 +44,114 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
         const IgnorePointer(child: SignUpScreen()),
 
         // Scrim
-        Container(color: Colors.black.withValues(alpha: 0.45))
-            .animate()
-            .fadeIn(duration: 320.ms),
+        Container(
+          color: Colors.black.withValues(alpha: 0.45),
+        ).animate().fadeIn(duration: 320.ms),
 
         Center(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 30.w),
             // The sheet is its own Material: the radio rows use InkWell, and
             // this screen sits above another Scaffold rather than owning one.
-            child: Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16.w),
-            clipBehavior: Clip.antiAlias,
-            child: Padding(
-            padding: EdgeInsets.fromLTRB(24.w, 26.h, 24.w, 24.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(child: _PinBadge()),
-                SizedBox(height: 22.h),
-                Text(
-                  'Standortzugriff erlauben?',
-                  style: AppTextStyles.body(
-                    size: 19,
-                    color: AppColors.textDark,
-                    weight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 18.h),
-                ...List.generate(_options.length, (i) {
-                  final selected = _selected == i;
-                  return InkWell(
-                    onTap: () => setState(() => _selected = i),
-                    borderRadius: BorderRadius.circular(8.w),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 7.h),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: EdgeInsets.only(top: 2.h),
-                            width: 15.w,
-                            height: 15.w,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: selected ? AppColors.primary : AppColors.cyan,
-                                width: 1.4,
+            child:
+                Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.w),
+                      clipBehavior: Clip.antiAlias,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(24.w, 26.h, 24.w, 24.h),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Center(child: _PinBadge()),
+                            SizedBox(height: 22.h),
+                            Text(
+                              'Standortzugriff erlauben?',
+                              style: AppTextStyles.body(
+                                size: 19,
+                                color: AppColors.textDark,
+                                weight: FontWeight.w500,
                               ),
                             ),
-                            child: Center(
-                              child: AnimatedScale(
-                                scale: selected ? 1 : 0,
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeOutBack,
-                                child: Container(
-                                  width: 7.w,
-                                  height: 7.w,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
+                            SizedBox(height: 18.h),
+                            ...List.generate(_options.length, (i) {
+                              final selected = _selected == i;
+                              return InkWell(
+                                onTap: () => setState(() => _selected = i),
+                                borderRadius: BorderRadius.circular(8.w),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 7.h),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        margin: EdgeInsets.only(top: 2.h),
+                                        width: 15.w,
+                                        height: 15.w,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: selected
+                                                ? AppColors.primary
+                                                : AppColors.cyan,
+                                            width: 1.4,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: AnimatedScale(
+                                            scale: selected ? 1 : 0,
+                                            duration: const Duration(
+                                              milliseconds: 200,
+                                            ),
+                                            curve: Curves.easeOutBack,
+                                            child: Container(
+                                              width: 7.w,
+                                              height: 7.w,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.primary,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 10.w),
+                                      Expanded(
+                                        child: Text(
+                                          _options[i],
+                                          style: AppTextStyles.body(
+                                            size: 13,
+                                            height: 1.45,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
+                              );
+                            }),
+                            SizedBox(height: 24.h),
+                            CustomButton(
+                              text: 'Weitermachen',
+                              onPressed: _proceed,
                             ),
-                          ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: Text(
-                              _options[i],
-                              style: AppTextStyles.body(size: 13, height: 1.45),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 300.ms, delay: 120.ms)
+                    .scale(
+                      begin: const Offset(0.94, 0.94),
+                      end: const Offset(1, 1),
+                      duration: 380.ms,
+                      curve: Curves.easeOutBack,
                     ),
-                  );
-                }),
-                SizedBox(height: 24.h),
-                CustomButton(text: 'Weitermachen', onPressed: _proceed),
-              ],
-            ),
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms, delay: 120.ms)
-              .scale(
-                begin: const Offset(0.94, 0.94),
-                end: const Offset(1, 1),
-                duration: 380.ms,
-                curve: Curves.easeOutBack,
-              ),
           ),
         ),
       ],
@@ -155,13 +170,18 @@ class _PinBadge extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Container(
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-            ),
-          )
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+              )
               .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scaleXY(begin: 0.9, end: 1.06, duration: 1800.ms, curve: Curves.easeInOut),
+              .scaleXY(
+                begin: 0.9,
+                end: 1.06,
+                duration: 1800.ms,
+                curve: Curves.easeInOut,
+              ),
           Container(
             width: 58.w,
             height: 58.w,
@@ -177,7 +197,11 @@ class _PinBadge extends StatelessWidget {
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.location_on_outlined, color: Colors.white, size: 22.w),
+            child: Icon(
+              Icons.location_on_outlined,
+              color: Colors.white,
+              size: 22.w,
+            ),
           ),
         ],
       ),

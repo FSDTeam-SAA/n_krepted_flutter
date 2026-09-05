@@ -12,6 +12,8 @@ import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
 import 'my_check_ins_screen.dart';
 import '../restaurant_owner/create_edit_restaurant_screen.dart';
+import '../restaurant_owner/owner_workspace_screen.dart';
+import '../restaurant_details/restaurant_details_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -43,9 +45,7 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Column(
             children: [
-              // User Profile Banner Card
-              if (user?.isRestaurantOwner != true)
-                Container(
+              Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
@@ -61,10 +61,10 @@ class ProfileScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor: Colors.white,
-                      backgroundImage: user?.avatar != null
+                      backgroundImage: user?.avatar?.isNotEmpty == true
                           ? CachedNetworkImageProvider(user!.avatar!)
                           : null,
-                      child: user?.avatar == null
+                      child: user?.avatar?.isNotEmpty != true
                           ? const Icon(
                               Icons.person,
                               size: 30,
@@ -81,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  user?.name ?? 'Vicky Jams',
+                                  user?.name ?? '',
                                   style: const TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.bold,
@@ -106,9 +106,9 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                    child: Text(
-                                      language.text('Inhaber', 'Owner'),
-                                      style: const TextStyle(
+                                  child: Text(
+                                    language.text('Inhaber', 'Owner'),
+                                    style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.primary,
@@ -119,7 +119,7 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            user?.email ?? 'vickyjams@gmail.com',
+                            user?.email ?? '',
                             style: const TextStyle(
                               fontSize: 12.5,
                               color: AppColors.textGrey,
@@ -138,6 +138,56 @@ class ProfileScreen extends StatelessWidget {
               _buildSectionBox(
                 title: language.text('Konto', 'Account'),
                 children: [
+                  if (user?.isRestaurantOwner == true &&
+                      ownerProvider.restaurant != null) ...[
+                    _buildListTile(
+                      icon: Icons.storefront_outlined,
+                      title: language.text(
+                        'Restaurantverwaltung',
+                        'Restaurant management',
+                      ),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OwnerWorkspaceScreen(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppColors.divider),
+                    _buildListTile(
+                      icon: Icons.preview_outlined,
+                      title: language.text(
+                        'Restaurantdetails ansehen',
+                        'View restaurant details',
+                      ),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RestaurantDetailsScreen(
+                            deal: ownerProvider.restaurant!,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppColors.divider),
+                    _buildListTile(
+                      icon: Icons.edit_note_outlined,
+                      title: language.text(
+                        'Restaurant bearbeiten',
+                        'Edit restaurant',
+                      ),
+                      subtitle: ownerProvider.restaurant?.title,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateEditRestaurantScreen(
+                            restaurant: ownerProvider.restaurant,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1, color: AppColors.divider),
+                  ],
                   if (user?.role == 'user') ...[
                     _buildListTile(
                       icon: Icons.location_on_outlined,
@@ -155,17 +205,17 @@ class ProfileScreen extends StatelessWidget {
                   ],
                   _buildListTile(
                     icon: Icons.person_outline,
-                    title: language.text('Profil bearbeiten', 'Edit profile'),
+                    title: user?.isRestaurantOwner == true
+                        ? language.text(
+                            'Inhaberprofil bearbeiten',
+                            'Edit owner profile',
+                          )
+                        : language.text('Profil bearbeiten', 'Edit profile'),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => user?.isRestaurantOwner == true &&
-                                  ownerProvider.restaurant != null
-                              ? CreateEditRestaurantScreen(
-                                  restaurant: ownerProvider.restaurant,
-                                )
-                              : const EditProfileScreen(),
+                          builder: (_) => const EditProfileScreen(),
                         ),
                       );
                     },
@@ -181,17 +231,17 @@ class ProfileScreen extends StatelessWidget {
                           builder: (_) => const ChangePasswordScreen(),
                         ),
                       );
-                      },
-                    ),
-                    const Divider(height: 1, color: AppColors.divider),
-                    _buildListTile(
-                      icon: Icons.language_outlined,
-                      title: language.text('Sprache', 'Language'),
-                      subtitle: language.languageName,
-                      onTap: () => _showLanguageSheet(context),
-                    ),
-                  ],
-                ),
+                    },
+                  ),
+                  const Divider(height: 1, color: AppColors.divider),
+                  _buildListTile(
+                    icon: Icons.language_outlined,
+                    title: language.text('Sprache', 'Language'),
+                    subtitle: language.languageName,
+                    onTap: () => _showLanguageSheet(context),
+                  ),
+                ],
+              ),
 
               const SizedBox(height: 16),
 
@@ -337,14 +387,8 @@ class ProfileScreen extends StatelessWidget {
                 },
                 child: const Column(
                   children: [
-                    RadioListTile<String>(
-                      value: 'de',
-                      title: Text('Deutsch'),
-                    ),
-                    RadioListTile<String>(
-                      value: 'en',
-                      title: Text('English'),
-                    ),
+                    RadioListTile<String>(value: 'de', title: Text('Deutsch')),
+                    RadioListTile<String>(value: 'en', title: Text('English')),
                   ],
                 ),
               ),

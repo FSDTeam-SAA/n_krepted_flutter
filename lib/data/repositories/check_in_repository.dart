@@ -42,4 +42,16 @@ class CheckInRepository {
     }
     return [];
   }
+
+  Future<List<CheckInModel>> getOwnerCheckIns() async {
+    final response = await apiClient.get('${ApiConstants.checkIns}/owner');
+    final items = response.data?['data'];
+    if (items is List) {
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(CheckInModel.fromJson)
+          .toList();
+    }
+    return [];
+  }
 }

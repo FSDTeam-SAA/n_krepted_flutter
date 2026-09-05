@@ -26,10 +26,13 @@ class _DishFormSheetState extends State<DishFormSheet> {
   late final TextEditingController _priceController;
   late final TextEditingController _categoryController;
   late final TextEditingController _descController;
+  late final TextEditingController _specialtyController;
+  late final TextEditingController _ingredientsController;
+  late final TextEditingController _preparationController;
   late bool _isSignatureDish;
   final ImagePicker _imagePicker = ImagePicker();
-  XFile? _newImage;
-  String? _existingImage;
+  final List<XFile> _newImages = [];
+  final List<String> _existingImages = [];
 
   @override
   void initState() {
@@ -37,13 +40,28 @@ class _DishFormSheetState extends State<DishFormSheet> {
     final d = widget.dish;
     _nameController = TextEditingController(text: d?.name ?? '');
     _priceController = TextEditingController(
-      text: d != null ? d.price.toStringAsFixed(2) : '12.00',
+      text: d != null ? d.price.toStringAsFixed(2) : '0.00',
     );
-    _categoryController = TextEditingController(
-      text: d?.category ?? 'Hauptspeise',
+    _categoryController = TextEditingController(text: d?.category ?? '');
+    _existingImages.addAll(
+      d == null
+          ? const <String>[]
+          : d.images.isNotEmpty
+          ? d.images
+          : d.image.isNotEmpty
+          ? [d.image]
+          : const <String>[],
     );
-    _existingImage = d?.image.isNotEmpty == true ? d!.image : null;
     _descController = TextEditingController(text: d?.description ?? '');
+    _specialtyController = TextEditingController(
+      text: d?.specialtyDescription ?? '',
+    );
+    _ingredientsController = TextEditingController(
+      text: d?.ingredients.join('\n') ?? '',
+    );
+    _preparationController = TextEditingController(
+      text: d?.preparationProcess ?? '',
+    );
     _isSignatureDish = d?.isSignatureDish ?? false;
   }
 
@@ -53,27 +71,57 @@ class _DishFormSheetState extends State<DishFormSheet> {
     _priceController.dispose();
     _categoryController.dispose();
     _descController.dispose();
+    _specialtyController.dispose();
+    _ingredientsController.dispose();
+    _preparationController.dispose();
     super.dispose();
   }
 
-  bool get _hasImage => _newImage != null || _existingImage != null;
+  int get _imageCount => _newImages.length + _existingImages.length;
+  bool get _hasImage => _imageCount > 0;
 
-  Future<void> _pickImage() async {
+  void _closeSheet() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+
+  Future<void> _pickImages() async {
+    final available = 4 - _imageCount;
+    if (available <= 0) return;
+    final selected = await _imagePicker.pickMultiImage(
+      imageQuality: 85,
+      maxWidth: 1800,
+    );
+    if (!mounted || selected.isEmpty) return;
+    setState(() => _newImages.addAll(selected.take(available)));
+  }
+
+  Future<void> _replaceMainImage() async {
     final selected = await _imagePicker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
       maxWidth: 1800,
     );
     if (!mounted || selected == null) return;
-    setState(() => _newImage = selected);
-  }
-
-  void _removeImage() {
     setState(() {
-      _newImage = null;
-      _existingImage = null;
+      if (_newImages.isNotEmpty) {
+        _newImages[0] = selected;
+      } else if (_existingImages.isNotEmpty) {
+        _existingImages.removeAt(0);
+        _newImages.insert(0, selected);
+      } else {
+        _newImages.add(selected);
+      }
     });
   }
+
+  void _removeImage(int index) => setState(() {
+    if (index < _newImages.length) {
+      _newImages.removeAt(index);
+    } else {
+      _existingImages.removeAt(index - _newImages.length);
+    }
+  });
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -91,11 +139,18 @@ class _DishFormSheetState extends State<DishFormSheet> {
 
     final payload = {
       'name': _nameController.text.trim(),
-      'price': double.tryParse(_priceController.text.trim()) ?? 12.0,
+      'price': double.tryParse(_priceController.text.trim()) ?? 0,
       'category': _categoryController.text.trim(),
-      'existingImage': _existingImage,
-      'imageFile': _newImage,
+      'existingImages': _existingImages,
+      'imageFiles': _newImages,
       'description': _descController.text.trim(),
+      'specialtyDescription': _specialtyController.text.trim(),
+      'ingredients': _ingredientsController.text
+          .split(RegExp(r'[\n,]'))
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList(),
+      'preparationProcess': _preparationController.text.trim(),
       'isSignatureDish': _isSignatureDish,
     };
 
@@ -154,23 +209,33 @@ class _DishFormSheetState extends State<DishFormSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    isEditing
-                        ? 'Gericht bearbeiten'
-                        : 'Neues Gericht hinzufügen',
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                  Expanded(
+                    child: Text(
+                      isEditing
+                          ? 'Gericht bearbeiten'
+                          : 'Neues Gericht hinzufügen',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => Navigator.pop(context),
+                    tooltip: 'Close',
+                    icon: const Icon(Icons.close_rounded, size: 22),
+                    onPressed: _closeSheet,
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFF4F7F8),
+                      foregroundColor: AppColors.textDark,
+                      minimumSize: const Size(42, 42),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const Divider(height: 22, color: Color(0xFFE8ECEE)),
 
               _buildFieldLabel('Gerichtname'),
               CustomTextField(
@@ -227,29 +292,39 @@ class _DishFormSheetState extends State<DishFormSheet> {
               TextFormField(
                 controller: _descController,
                 maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Zutaten und Zubereitung kurz beschreiben...',
-                  hintStyle: AppTextStyles.body(
-                    size: 13,
-                    color: AppColors.textGrey,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.all(12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.inputBorder,
-                      width: 1.2,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 1.5,
-                    ),
-                  ),
+                decoration: _areaDecoration(
+                  'Zutaten und Zubereitung kurz beschreiben...',
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              _buildFieldLabel('Spezialität des Gerichts'),
+              TextFormField(
+                controller: _specialtyController,
+                maxLines: 3,
+                decoration: _areaDecoration(
+                  'Was macht dieses Gericht besonders?',
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              _buildFieldLabel('Zubereitungsmethode'),
+              TextFormField(
+                controller: _ingredientsController,
+                minLines: 3,
+                maxLines: 5,
+                decoration: _areaDecoration(
+                  'Hauptzutaten – eine Zutat pro Zeile',
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              _buildFieldLabel('Herstellungsprozess'),
+              TextFormField(
+                controller: _preparationController,
+                maxLines: 4,
+                decoration: _areaDecoration(
+                  'Zubereitung des Gerichts beschreiben...',
                 ),
               ),
 
@@ -327,71 +402,150 @@ class _DishFormSheetState extends State<DishFormSheet> {
   }
 
   Widget _buildImagePicker() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        height: 165,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.primary, width: 1.2),
-        ),
-        child: !_hasImage
-            ? const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Color(0xFFF4F6F6),
-                    child: Icon(Icons.add, color: AppColors.primary, size: 25),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Hauptfoto hinzuf\u00fcgen',
-                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
-                  ),
-                ],
-              )
-            : ClipRRect(
-                borderRadius: BorderRadius.circular(13),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _newImage != null
-                        ? Image.file(
-                            File(_newImage!.path),
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) =>
-                                const _DishBrokenImage(),
-                          )
-                        : Image.network(
-                            _existingImage!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) =>
-                                const _DishBrokenImage(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+          onTap: _hasImage ? _replaceMainImage : _pickImages,
+          child: Container(
+            height: 165,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.primary, width: 1.2),
+            ),
+            child: !_hasImage
+                ? const _DishImagePlaceholder(label: 'Hauptfoto hinzufügen')
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(13),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _buildImageAt(0),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: _DishImageAction(
+                            icon: Icons.edit_outlined,
+                            onTap: _replaceMainImage,
                           ),
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: _DishImageAction(
-                        icon: Icons.edit_outlined,
-                        onTap: _pickImage,
-                      ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          bottom: 8,
+                          child: _DishImageAction(
+                            icon: Icons.delete_outline,
+                            onTap: () => _removeImage(0),
+                          ),
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      right: 8,
-                      bottom: 8,
-                      child: _DishImageAction(
-                        icon: Icons.delete_outline,
-                        onTap: _removeImage,
-                      ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: List.generate(3, (slot) {
+            final index = slot + 1;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: slot == 0 ? 0 : 8),
+                child: GestureDetector(
+                  onTap: index < _imageCount ? null : _pickImages,
+                  child: Container(
+                    height: 92,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary),
                     ),
-                  ],
+                    child: index >= _imageCount
+                        ? const _DishImagePlaceholder(label: 'Weitere Bilder')
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(11),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                _buildImageAt(index),
+                                Positioned(
+                                  right: 4,
+                                  top: 4,
+                                  child: _DishImageAction(
+                                    icon: Icons.close,
+                                    onTap: () => _removeImage(index),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
                 ),
               ),
-      ),
+            );
+          }),
+        ),
+      ],
     );
   }
+
+  Widget _buildImageAt(int index) {
+    if (index < _newImages.length) {
+      return Image.file(
+        File(_newImages[index].path),
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => const _DishBrokenImage(),
+      );
+    }
+    return Image.network(
+      _existingImages[index - _newImages.length],
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const _DishBrokenImage(),
+    );
+  }
+
+  InputDecoration _areaDecoration(String hint) => InputDecoration(
+    hintText: hint,
+    hintStyle: AppTextStyles.body(size: 13, color: AppColors.textGrey),
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.all(12),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.2),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.2),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+    ),
+  );
+}
+
+class _DishImagePlaceholder extends StatelessWidget {
+  final String label;
+
+  const _DishImagePlaceholder({required this.label});
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      const CircleAvatar(
+        radius: 17,
+        backgroundColor: Color(0xFFF4F6F6),
+        child: Icon(Icons.add, color: AppColors.primary, size: 22),
+      ),
+      const SizedBox(height: 7),
+      Text(
+        label,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 10.5, color: AppColors.textGrey),
+      ),
+    ],
+  );
 }
 
 class _DishImageAction extends StatelessWidget {
