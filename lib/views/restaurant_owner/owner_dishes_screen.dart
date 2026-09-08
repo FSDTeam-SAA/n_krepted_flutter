@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
 import '../dish_details/dish_details_screen.dart';
@@ -358,7 +359,7 @@ class _SignatureCard extends StatelessWidget {
                 ],
                 const SizedBox(height: 9),
                 Text(
-                  '€${dish.price.toStringAsFixed(2)}',
+                  formatEuro(context, dish.price),
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,

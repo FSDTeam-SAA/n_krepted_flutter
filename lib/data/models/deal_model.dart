@@ -8,8 +8,8 @@ class DealLocation {
   final double? longitude;
 
   DealLocation({
-    this.country = 'Deutschland',
-    this.city = 'München',
+    this.country = '',
+    this.city = '',
     this.address = '',
     this.latitude,
     this.longitude,
@@ -18,11 +18,11 @@ class DealLocation {
   factory DealLocation.fromJson(dynamic json) {
     if (json is Map<String, dynamic>) {
       return DealLocation(
-        country: json['country'] ?? 'Deutschland',
-        city: json['city'] ?? 'München',
+        country: json['country'] ?? '',
+        city: json['city'] ?? '',
         address: json['address'] ?? '',
-        latitude: (json['latitude'] as num?)?.toDouble(),
-        longitude: (json['longitude'] as num?)?.toDouble(),
+        latitude: double.tryParse('${json['latitude']}'),
+        longitude: double.tryParse('${json['longitude']}'),
       );
     }
     return DealLocation();
@@ -35,6 +35,16 @@ class DealLocation {
     'latitude': latitude,
     'longitude': longitude,
   };
+
+  bool get hasCoordinates =>
+      latitude != null &&
+      longitude != null &&
+      latitude!.isFinite &&
+      longitude!.isFinite &&
+      latitude!.abs() <= 90 &&
+      longitude!.abs() <= 180;
+  String get label =>
+      [city, country].where((value) => value.isNotEmpty).join(', ');
 }
 
 class DealDish {
@@ -50,6 +60,8 @@ class DealDish {
   final String preparationProcess;
   final bool isSignatureDish;
   final bool isActive;
+  final double rating;
+  final int reviewCount;
 
   const DealDish({
     required this.id,
@@ -64,6 +76,8 @@ class DealDish {
     this.preparationProcess = '',
     required this.isSignatureDish,
     required this.isActive,
+    this.rating = 0,
+    this.reviewCount = 0,
   });
 
   factory DealDish.fromJson(Map<String, dynamic> json) {
@@ -94,6 +108,8 @@ class DealDish {
       preparationProcess: json['preparationProcess'] ?? '',
       isSignatureDish: json['isSignatureDish'] ?? false,
       isActive: json['isActive'] ?? true,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -122,6 +138,12 @@ class DealModel {
   final List<String> ingredients;
   final String preparationProcess;
   final List<DealDish> dishes;
+  final double? distanceKm;
+  final DateTime? opensAt;
+  final String openingHours;
+  final String contactEmail;
+  final String contactPhone;
+  final bool? reservationRequired;
 
   DealModel({
     required this.id,
@@ -137,7 +159,7 @@ class DealModel {
     this.rejectionReason,
     this.owner,
     this.category,
-    this.time = 45,
+    this.time = 0,
     this.rating = 0,
     this.sdRating = 0,
     this.reviewCount = 0,
@@ -147,6 +169,12 @@ class DealModel {
     this.ingredients = const [],
     this.preparationProcess = '',
     this.dishes = const [],
+    this.distanceKm,
+    this.opensAt,
+    this.openingHours = '',
+    this.contactEmail = '',
+    this.contactPhone = '',
+    this.reservationRequired,
   });
 
   factory DealModel.fromJson(Map<String, dynamic> json) {
@@ -182,11 +210,17 @@ class DealModel {
       rejectionReason: json['rejectionReason'],
       owner: ownerId.isNotEmpty ? ownerId : null,
       category: cat,
-      time: json['time'] ?? 45,
+      time: json['time'] ?? 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
       sdRating: (json['sdRating'] as num?)?.toDouble() ?? 0,
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       totalCheckIns: (json['totalCheckIns'] as num?)?.toInt() ?? 0,
+      distanceKm: (json['distanceKm'] as num?)?.toDouble(),
+      opensAt: DateTime.tryParse('${json['opensAt']}'),
+      openingHours: json['openingHours']?.toString() ?? '',
+      contactEmail: json['contactEmail']?.toString() ?? '',
+      contactPhone: json['contactPhone']?.toString() ?? '',
+      reservationRequired: json['reservationRequired'] as bool?,
       dishes: json['dishes'] is List
           ? (json['dishes'] as List)
                 .whereType<Map<String, dynamic>>()
@@ -201,18 +235,26 @@ class DealModel {
   bool get isRejected => approvalStatus == 'rejected';
 
   String get restaurantName {
-    if (title.contains('-')) {
-      return title.split('-').first.trim();
-    }
     return title;
   }
 
   String get dishName {
-    if (title.contains('-')) {
-      return title.split('-').last.trim();
-    }
-    return title;
+    return featuredDish?.name ?? '';
   }
+
+  List<DealDish> get activeDishes =>
+      dishes.where((dish) => dish.isActive).toList();
+  DealDish? get featuredDish {
+    final active = activeDishes;
+    for (final dish in active) {
+      if (dish.isSignatureDish) return dish;
+    }
+    return active.isEmpty ? null : active.first;
+  }
+
+  String get discoveryImage =>
+      featuredDish?.image.isNotEmpty == true ? featuredDish!.image : firstImage;
+  bool get isUpcoming => opensAt?.isAfter(DateTime.now()) == true;
 
   String get firstImage => images.isNotEmpty ? images.first : '';
 }

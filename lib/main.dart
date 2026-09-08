@@ -20,6 +20,7 @@ import 'providers/check_in_provider.dart';
 import 'providers/saved_provider.dart';
 import 'providers/owner_restaurant_provider.dart';
 import 'providers/app_language_provider.dart';
+import 'providers/location_provider.dart';
 import 'views/splash/splash_screen.dart';
 
 void main() async {
@@ -47,6 +48,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppLanguageProvider()),
+        ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(authRepository: authRepository),
         ),
@@ -62,8 +64,9 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => CheckInProvider(repository: checkInRepository),
         ),
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AuthProvider, SavedProvider>(
           create: (_) => SavedProvider(dealRepository: dealRepository),
+          update: (_, auth, saved) => saved!..bindUser(auth.currentUser?.id),
         ),
         ChangeNotifierProvider(
           create: (_) =>
@@ -100,11 +103,19 @@ class SignatureDishApp extends StatelessWidget {
           surface: AppColors.background,
         ),
         fontFamily: AppTextStyles.sansFamily,
+        chipTheme: ChipThemeData(
+          backgroundColor: const Color(0xFFF4F3F3),
+          selectedColor: const Color(0xFFFFF6D4),
+          showCheckmark: false,
+          side: BorderSide.none,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          labelStyle: const TextStyle(fontSize: 12, color: AppColors.textDark),
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          iconTheme: IconThemeData(color: AppColors.textDark),
+          foregroundColor: AppColors.textDark,
         ),
         // Same soft slide on every pushed route, on both platforms.
         pageTransitionsTheme: const PageTransitionsTheme(

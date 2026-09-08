@@ -49,6 +49,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final reviews = context.watch<ReviewProvider>().reviews;
     final auth = context.watch<AuthProvider>();
     final restaurant = provider.restaurant;
+    final dashboardDishes = restaurant == null
+        ? const <DealDish>[]
+        : _dashboardDishes(restaurant);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEF8),
@@ -177,7 +180,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                 ),
               ),
-              if (_dashboardDishes(restaurant).isEmpty)
+              if (dashboardDishes.isEmpty)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   sliver: SliverToBoxAdapter(
@@ -203,10 +206,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
                   sliver: SliverList.separated(
-                    itemCount: _dashboardDishes(restaurant).length,
+                    itemCount: dashboardDishes.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 22),
                     itemBuilder: (context, index) {
-                      final dish = _dashboardDishes(restaurant)[index];
+                      final dish = dashboardDishes[index];
                       return Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -269,13 +272,24 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   List<DealDish> _dashboardDishes(DealModel restaurant) {
-    return restaurant.dishes.where((dish) => dish.isSignatureDish).toList();
+    final activeDishes = restaurant.dishes
+        .where((dish) => dish.isActive)
+        .toList();
+    final signatureDishes = activeDishes
+        .where((dish) => dish.isSignatureDish)
+        .toList();
+
+    // Older dishes and regular owner-created dishes may not carry the
+    // signature flag. The dashboard should still show what this account has
+    // created instead of incorrectly rendering the empty state.
+    return signatureDishes.isNotEmpty ? signatureDishes : activeDishes;
   }
 
   ReviewModel? _latestReviewForDish(List<ReviewModel> reviews, DealDish dish) {
     for (final review in reviews) {
-      if (review.dishName?.trim().toLowerCase() ==
-          dish.name.trim().toLowerCase()) {
+      if ((review.dishId != null && review.dishId == dish.id) ||
+          review.dishName?.trim().toLowerCase() ==
+              dish.name.trim().toLowerCase()) {
         return review;
       }
     }
@@ -510,7 +524,7 @@ class _OwnerDishCard extends StatelessWidget {
                   imageUrl: imageUrl,
                   width: double.infinity,
                   height: 264,
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                   errorWidget: (_, _, _) => Container(
                     height: 264,
                     color: Colors.grey.shade200,
@@ -591,7 +605,7 @@ class _OwnerDishCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(13),
+              padding: const EdgeInsets.fromLTRB(13, 16, 13, 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -624,7 +638,7 @@ class _OwnerDishCard extends StatelessWidget {
                   const SizedBox(height: 7),
                   if (review == null)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.only(top: 5),
                       child: Text(
                         language.text(
                           'Noch keine Rezensionen für dieses Gericht.',
@@ -724,7 +738,7 @@ class _ReviewPreview extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             review.reviewComment,
-            maxLines: 3,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 11.5,

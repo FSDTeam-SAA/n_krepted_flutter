@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,216 +6,203 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
+import '../../core/widgets/owner_page_background.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_language_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
-
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneController;
-  late TextEditingController _cityController;
-  File? _pickedImage;
-  final ImagePicker _picker = ImagePicker();
-
+  final _form = GlobalKey<FormState>();
+  late final TextEditingController _name, _email, _phone, _address;
+  Uint8List? _avatar;
+  String? _avatarName;
   @override
   void initState() {
     super.initState();
     final user = context.read<AuthProvider>().currentUser;
-    _nameController = TextEditingController(text: user?.name ?? '');
-    _emailController = TextEditingController(text: user?.email ?? '');
-    _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
-    _cityController = TextEditingController(text: user?.cityState ?? '');
+    _name = TextEditingController(text: user?.name);
+    _email = TextEditingController(text: user?.email);
+    _phone = TextEditingController(text: user?.phoneNumber);
+    _address = TextEditingController(text: user?.cityState);
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _cityController.dispose();
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _address.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() => _pickedImage = File(image.path));
+    try {
+      final file = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      if (mounted) {
+        setState(() {
+          _avatar = bytes;
+          _avatarName = file.name;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bild konnte nicht geladen werden.')),
+        );
+      }
     }
   }
 
-  Future<void> _handleSave() async {
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.updateProfile(
-      name: _nameController.text.trim(),
-      phoneNumber: _phoneController.text.trim(),
-      cityState: _cityController.text.trim(),
-      avatarFile: _pickedImage,
+  Future<void> _save() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.isLoading || !_form.currentState!.validate()) return;
+    final success = await auth.updateProfile(
+      name: _name.text.trim(),
+      phoneNumber: _phone.text.trim(),
+      cityState: _address.text.trim(),
+      avatarBytes: _avatar,
+      avatarName: _avatarName,
     );
-
     if (!mounted) return;
-
-    if (success) {
-      final language = context.read<AppLanguageProvider>();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            language.text(
-              'Profil erfolgreich aktualisiert!',
-              'Profile updated successfully!',
-            ),
-          ),
-          backgroundColor: AppColors.successGreen,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? context.read<AppLanguageProvider>().text(
+                  'Profil gespeichert.',
+                  'Profile saved.',
+                )
+              : auth.errorMessage ?? 'Speichern fehlgeschlagen.',
         ),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            authProvider.errorMessage ??
-                context.read<AppLanguageProvider>().text(
-                  'Fehler beim Speichern.',
-                  'Failed to save changes.',
-                ),
-          ),
-          backgroundColor: AppColors.badgeRed,
-        ),
-      );
-    }
+      ),
+    );
+    if (success) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
+    final auth = context.watch<AuthProvider>();
     final language = context.watch<AppLanguageProvider>();
-    final user = authProvider.currentUser;
-
+    final avatarUrl = auth.currentUser?.avatar;
+    final ImageProvider? image = _avatar != null
+        ? MemoryImage(_avatar!)
+        : avatarUrl?.isNotEmpty == true
+        ? CachedNetworkImageProvider(avatarUrl!)
+        : null;
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Text(
-          user?.isRestaurantOwner == true
-              ? language.text('Inhaberprofil bearbeiten', 'Edit owner profile')
-              : language.text('Profil bearbeiten', 'Edit profile'),
-          style: const TextStyle(
-            color: AppColors.textDark,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          language.text('Profil bearbeiten', 'Edit profile'),
+          style: const TextStyle(fontSize: 18),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            children: [
-              // Avatar Pick Section
-              Center(
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 46,
-                        backgroundColor: Colors.white,
-                        backgroundImage: _pickedImage != null
-                            ? FileImage(_pickedImage!)
-                            : (user?.avatar != null
-                                      ? CachedNetworkImageProvider(
-                                          user!.avatar!,
-                                        )
-                                      : null)
-                                  as ImageProvider?,
-                        child: _pickedImage == null && user?.avatar == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 48,
-                                color: AppColors.primary,
-                              )
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 16,
+      body: OwnerPageBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 40,
+                ),
+                child: IntrinsicHeight(
+                  child: Form(
+                    key: _form,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 18),
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 44,
+                                backgroundColor: const Color(0xFFF1F1F1),
+                                backgroundImage: image,
+                                child: image == null
+                                    ? const Icon(
+                                        Icons.person,
+                                        color: AppColors.textGrey,
+                                      )
+                                    : null,
+                              ),
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFFFFF9DF),
+                                  ),
+                                  child: const Icon(
+                                    Icons.add,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 38),
+                        CustomTextField(
+                          controller: _name,
+                          hintText: language.text('Benutzer', 'Name'),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? language.text(
+                                  'Name eingeben.',
+                                  'Enter your name.',
+                                )
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _email,
+                          hintText: 'E-Mail',
+                          readOnly: true,
+                          suffixIcon: const Icon(
+                            Icons.lock_outline,
+                            size: 16,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _phone,
+                          hintText: language.text('Telefon', 'Phone'),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _address,
+                          hintText: language.text('Adresse', 'Address'),
+                        ),
+                        const Spacer(),
+                        const SizedBox(height: 32),
+                        CustomButton(
+                          text: language.text('Speichern', 'Save'),
+                          isLoading: auth.isLoading,
+                          onPressed: _save,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-
-              const SizedBox(height: 32),
-
-              CustomTextField(
-                controller: _nameController,
-                hintText: language.text('Vollständiger Name', 'Full name'),
-                labelText: language.text('Name', 'Name'),
-              ),
-
-              const SizedBox(height: 16),
-
-              CustomTextField(
-                controller: _emailController,
-                hintText: 'name@example.com',
-                labelText: language.text('E-Mail-Konto', 'Account email'),
-                keyboardType: TextInputType.emailAddress,
-                readOnly: true,
-                suffixIcon: const Icon(
-                  Icons.lock_outline,
-                  size: 17,
-                  color: AppColors.textGrey,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              CustomTextField(
-                controller: _phoneController,
-                hintText: '+49 151 23456789',
-                labelText: language.text('Telefonnummer', 'Phone number'),
-                keyboardType: TextInputType.phone,
-              ),
-
-              const SizedBox(height: 16),
-
-              CustomTextField(
-                controller: _cityController,
-                hintText: 'München, Deutschland',
-                labelText: language.text('Stadt / Region', 'City / region'),
-              ),
-
-              const SizedBox(height: 36),
-
-              CustomButton(
-                text: language.text('Speichern', 'Save'),
-                isLoading: authProvider.isLoading,
-                onPressed: _handleSave,
-              ),
-            ],
+            ),
           ),
         ),
       ),

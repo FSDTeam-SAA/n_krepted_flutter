@@ -19,17 +19,13 @@ class MainBottomNav extends StatefulWidget {
 class _MainBottomNavState extends State<MainBottomNav> {
   late int _currentIndex;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    ExploreMapScreen(),
-    SavedDishesScreen(),
-    ProfileScreen(),
-  ];
+  final Set<int> _visited = {};
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    _visited.add(_currentIndex);
   }
 
   @override
@@ -40,7 +36,27 @@ class _MainBottomNavState extends State<MainBottomNav> {
       // IndexedStack so each tab keeps its scroll position — a cross-fade here
       // would rebuild the subtree and throw that away, so the motion lives in
       // the nav item instead.
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          if (_visited.contains(0))
+            const HomeScreen()
+          else
+            const SizedBox.shrink(),
+          if (_visited.contains(1))
+            ExploreMapScreen(active: _currentIndex == 1)
+          else
+            const SizedBox.shrink(),
+          if (_visited.contains(2))
+            SavedDishesScreen(active: _currentIndex == 2)
+          else
+            const SizedBox.shrink(),
+          if (_visited.contains(3))
+            const ProfileScreen()
+          else
+            const SizedBox.shrink(),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -102,7 +118,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
     return GestureDetector(
       onTap: () {
         if (_currentIndex == index) return;
-        setState(() => _currentIndex = index);
+        setState(() {
+          _currentIndex = index;
+          _visited.add(index);
+        });
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(

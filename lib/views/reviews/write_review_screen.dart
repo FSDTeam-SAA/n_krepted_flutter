@@ -1,352 +1,323 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
+import '../../core/widgets/discovery_widgets.dart';
+import '../../core/widgets/owner_page_background.dart';
+import '../../core/network/api_error.dart';
+import '../../data/models/review_model.dart';
 import '../../providers/review_provider.dart';
+import '../../providers/deal_provider.dart';
+import '../booking_checkin/checkin_screen.dart';
 
 class WriteReviewScreen extends StatefulWidget {
   final String dealId;
-
-  const WriteReviewScreen({super.key, required this.dealId});
-
+  final String? dishId;
+  const WriteReviewScreen({super.key, required this.dealId, this.dishId});
   @override
   State<WriteReviewScreen> createState() => _WriteReviewScreenState();
 }
 
 class _WriteReviewScreenState extends State<WriteReviewScreen> {
-  double _rating = 5;
-  String? _selectedDishId;
-  final _commentController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
+  int _rating = 0;
+  String? _dishId, _error;
+  ReviewEligibility? _eligibility;
+  bool _loading = true, _saving = false;
+  final _comment = TextEditingController();
+  final _form = GlobalKey<FormState>();
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ReviewProvider>().fetchEligibility(widget.dealId);
-    });
+    _dishId = widget.dishId;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
   @override
   void dispose() {
-    _commentController.dispose();
+    _comment.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
-    final provider = context.read<ReviewProvider>();
-    final eligibility = provider.eligibility;
-    final checkInId = eligibility?.checkIn?.id;
-    if (eligibility?.eligible != true ||
-        checkInId == null ||
-        checkInId.isEmpty) {
-      _showError('Bitte checken Sie zuerst vor Ort im Restaurant ein.');
-      return;
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final result = await context
+          .read<ReviewProvider>()
+          .reviewRepository
+          .getEligibility(widget.dealId);
+      if (!mounted) return;
+      setState(() {
+        _eligibility = result;
+        if (!result.dishes.any((d) => d.id == _dishId)) _dishId = null;
+      });
+    } catch (error) {
+      if (mounted) setState(() => _error = friendlyApiError(error));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-    if (eligibility!.dishes.isNotEmpty && _selectedDishId == null) {
-      _showError('Bitte wählen Sie das verzehrte Gericht aus.');
-      return;
-    }
-
-    final success = await provider.addReview(
-      dealId: widget.dealId,
-      checkInId: checkInId,
-      dishId: _selectedDishId,
-      ratings: _rating,
-      reviewComment: _commentController.text.trim(),
-    );
-    if (!mounted) return;
-    if (!success) {
-      _showError(
-        provider.errorMessage ??
-            'Die Bewertung konnte nicht gespeichert werden.',
-      );
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Vielen Dank für Ihre Bewertung!'),
-        backgroundColor: AppColors.successGreen,
-      ),
-    );
-    Navigator.pop(context, true);
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.badgeRed,
-        behavior: SnackBarBehavior.floating,
-      ),
+  Future<void> _checkIn() async {
+    final restaurant = await context.read<DealProvider>().getDealDetails(
+      widget.dealId,
     );
+    if (!mounted) return;
+    if (restaurant == null) {
+      _message('Restaurant konnte nicht geladen werden.');
+      return;
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CheckinScreen(deal: restaurant)),
+    );
+    if (mounted) _load();
+  }
+
+  void _message(String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(message)));
+  Future<void> _submit() async {
+    if (_saving || !_form.currentState!.validate()) return;
+    if (_rating < 1) {
+      _message('Bitte eine Bewertung auswählen.');
+      return;
+    }
+    final checkIn = _eligibility?.checkIn;
+    if (checkIn == null) return;
+    setState(() => _saving = true);
+    final provider = context.read<ReviewProvider>();
+    final success = await provider.addReview(
+      dealId: widget.dealId,
+      checkInId: checkIn.id,
+      dishId: _dishId,
+      ratings: _rating.toDouble(),
+      reviewComment: _comment.text.trim(),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (success) {
+      _message('Vielen Dank für Ihre Bewertung!');
+      Navigator.pop(context, true);
+    } else {
+      _message(
+        provider.errorMessage ?? 'Bewertung konnte nicht gespeichert werden.',
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<ReviewProvider>();
-    final eligibility = provider.eligibility;
-
+    final visit = _eligibility?.checkIn;
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text(
           'Schildern Sie Ihre Erfahrungen',
-          style: TextStyle(
-            color: AppColors.textDark,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18),
         ),
       ),
-      body: SafeArea(
-        child: provider.isEligibilityLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              )
-            : eligibility?.eligible != true
-            ? _NotEligibleState(
-                message: provider.errorMessage ?? eligibility?.message,
-                onRetry: () => provider.fetchEligibility(widget.dealId),
-              )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
+      body: OwnerPageBackground(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? DataState(_error!, onRetry: _load)
+            : _eligibility?.eligible != true || visit == null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _SectionCard(
-                        title: 'Bewertung',
-                        child: Center(
-                          child: RatingBar.builder(
-                            initialRating: _rating,
-                            minRating: 1,
-                            allowHalfRating: false,
-                            itemCount: 5,
-                            itemPadding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                            ),
-                            itemBuilder: (_, _) => const Icon(
-                              Icons.star_border,
-                              color: AppColors.orangeAccent,
-                            ),
-                            onRatingUpdate: (rating) =>
-                                setState(() => _rating = rating),
-                          ),
-                        ),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 48,
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(height: 14),
-                      _VisitCard(
-                        checkedInAt: eligibility!.checkIn!.checkedInAt,
-                        partySize: eligibility.checkIn!.partySize,
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Checken Sie zuerst vor Ort ein, um Ihren Besuch zu bewerten.',
+                        textAlign: TextAlign.center,
                       ),
-                      if (eligibility.dishes.isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        _SectionCard(
-                          title: 'Verzehrtes Gericht',
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _selectedDishId,
-                            decoration: _fieldDecoration('Gericht auswählen'),
-                            items: eligibility.dishes
-                                .map(
-                                  (dish) => DropdownMenuItem(
-                                    value: dish.id,
-                                    child: Text(dish.name),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) =>
-                                setState(() => _selectedDishId = value),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 14),
-                      _SectionCard(
-                        title: 'Ihre Bewertung',
-                        child: CustomTextField(
-                          controller: _commentController,
-                          hintText: 'Hier schreiben!',
-                          maxLines: 5,
-                          validator: (value) =>
-                              value == null || value.trim().isEmpty
-                              ? 'Bitte geben Sie einen Bewertungstext ein'
-                              : null,
-                        ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _checkIn,
+                        icon: const Icon(Icons.my_location),
+                        label: const Text('Jetzt einchecken'),
                       ),
-                      const SizedBox(height: 28),
-                      CustomButton(
-                        text: 'Bestätigen',
-                        isLoading: provider.isLoading,
-                        onPressed: _handleSubmit,
+                      TextButton(
+                        onPressed: _load,
+                        child: const Text('Erneut prüfen'),
                       ),
                     ],
                   ),
+                ),
+              )
+            : Form(
+                key: _form,
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    _section(
+                      'Bewertung',
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(
+                          5,
+                          (i) => IconButton(
+                            tooltip: '${i + 1} Sterne',
+                            onPressed: () => setState(() => _rating = i + 1),
+                            icon: Icon(
+                              i < _rating ? Icons.star : Icons.star_border,
+                              color: AppColors.orangeAccent,
+                              size: 34,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _section(
+                      'Datum des Besuchs',
+                      Row(
+                        children: [
+                          for (final part in ['dd', 'MM', 'yyyy'])
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: _value(
+                                  DateFormat(
+                                    part,
+                                  ).format(visit.checkedInAt.toLocal()),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    _section(
+                      'Uhrzeit des Besuchs',
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _value(
+                              DateFormat(
+                                'hh:mm',
+                              ).format(visit.checkedInAt.toLocal()),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width: 95,
+                            child: _value(
+                              DateFormat(
+                                'a',
+                              ).format(visit.checkedInAt.toLocal()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_eligibility!.dishes.isNotEmpty)
+                      _section(
+                        'Verzehrtes Gericht',
+                        DropdownButtonFormField<String>(
+                          initialValue: _dishId,
+                          isExpanded: true,
+                          decoration: _decoration(),
+                          hint: const Text('Gericht auswählen'),
+                          items: _eligibility!.dishes
+                              .map(
+                                (dish) => DropdownMenuItem(
+                                  value: dish.id,
+                                  child: Text(
+                                    dish.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) => setState(() => _dishId = value),
+                          validator: (value) =>
+                              value == null ? 'Bitte Gericht auswählen.' : null,
+                        ),
+                      ),
+                    _section(
+                      'Anzahl der Personen',
+                      _value('${visit.partySize} Personen'),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'Datum, Uhrzeit und Personen stammen aus Ihrem verifizierten Check-in.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ),
+                    _section(
+                      'Ihre Bewertung',
+                      TextFormField(
+                        controller: _comment,
+                        maxLines: 4,
+                        maxLength: 4000,
+                        decoration: _decoration().copyWith(
+                          hintText: 'Hier schreiben!',
+                        ),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Bitte Bewertung eingeben.'
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    CustomButton(
+                      text: 'Bestätigen',
+                      isLoading: _saving,
+                      onPressed: _submit,
+                    ),
+                  ],
                 ),
               ),
       ),
     );
   }
 
-  InputDecoration _fieldDecoration(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
+  InputDecoration _decoration() => InputDecoration(
+    contentPadding: const EdgeInsets.all(12),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: AppColors.inputBorder),
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.cyan),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: AppColors.inputBorder),
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.cyan),
     ),
   );
-}
-
-class _VisitCard extends StatelessWidget {
-  final DateTime checkedInAt;
-  final int partySize;
-
-  const _VisitCard({required this.checkedInAt, required this.partySize});
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      title: 'Verifizierter Besuch',
-      child: Row(
-        children: [
-          Expanded(
-            child: _VisitValue(
-              icon: Icons.calendar_today_outlined,
-              label: DateFormat('dd.MM.yyyy').format(checkedInAt.toLocal()),
-            ),
-          ),
-          Expanded(
-            child: _VisitValue(
-              icon: Icons.access_time,
-              label: DateFormat('HH:mm').format(checkedInAt.toLocal()),
-            ),
-          ),
-          Expanded(
-            child: _VisitValue(
-              icon: Icons.people_outline,
-              label: '$partySize Personen',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VisitValue extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _VisitValue({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Icon(icon, size: 18, color: AppColors.primary),
-      const SizedBox(height: 5),
-      Text(
-        label,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 11.5, color: AppColors.textDark),
-      ),
-    ],
+  Widget _value(String text) => InputDecorator(
+    decoration: _decoration(),
+    child: Text(text, style: const TextStyle(color: AppColors.textGrey)),
   );
-}
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _SectionCard({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
+  Widget _section(String title, Widget child) => Container(
+    margin: const EdgeInsets.only(bottom: 14),
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: AppColors.cardBorder),
+      borderRadius: BorderRadius.circular(14),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 12),
         child,
       ],
-    ),
-  );
-}
-
-class _NotEligibleState extends StatelessWidget {
-  final String? message;
-  final VoidCallback onRetry;
-
-  const _NotEligibleState({this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.location_off_outlined,
-            size: 56,
-            color: AppColors.primary,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Noch kein bewertbarer Check-in',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message ??
-                'Checken Sie zuerst vor Ort im Restaurant ein. Danach können Sie Ihren Besuch bewerten.',
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textGrey,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Erneut prüfen'),
-          ),
-        ],
-      ),
     ),
   );
 }

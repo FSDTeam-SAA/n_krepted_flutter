@@ -19,8 +19,21 @@ class DealRepository {
     double? radiusKm,
     int page = 1,
     int limit = 20,
+    String sort = 'rating',
+    String availability = 'active',
+    int minimumRating = 0,
+    String? cuisine,
+    String? recommendation,
   }) async {
-    final Map<String, dynamic> query = {'page': page, 'limit': limit};
+    final Map<String, dynamic> query = {
+      'page': page,
+      'limit': limit,
+      'sort': sort,
+      'availability': availability,
+      'minimumRating': minimumRating,
+      if (cuisine?.isNotEmpty == true) 'cuisine': cuisine,
+      'recommendation': ?recommendation,
+    };
     if (categoryId != null && categoryId.isNotEmpty) {
       query['category'] = categoryId;
     }
@@ -62,15 +75,46 @@ class DealRepository {
   }
 
   Future<List<CategoryModel>> getAllCategories() async {
-    try {
-      final response = await apiClient.get(ApiConstants.categories);
-      if (response.data != null && response.data['data'] is List) {
-        return (response.data['data'] as List)
-            .map((item) => CategoryModel.fromJson(item))
-            .toList();
-      }
-    } catch (_) {}
+    final categories = <CategoryModel>[];
+    int page = 1;
+    while (true) {
+      final response = await apiClient.get(
+        ApiConstants.categories,
+        queryParameters: {'limit': 100, 'page': page++},
+      );
+      final items = (response.data['data'] as List)
+          .map((item) => CategoryModel.fromJson(item))
+          .toList();
+      categories.addAll(items);
+      if (items.length < 100) return categories;
+    }
+  }
 
-    return [];
+  Future<List<Map<String, dynamic>>> getSavedItems() async {
+    final response = await apiClient.get('/saved');
+    return (response.data['items'] as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> getDiscoveryOptions() async {
+    final response = await apiClient.get('/discovery/options');
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  Future<void> setSaved(
+    String restaurantId, {
+    String? dishId,
+    required bool saved,
+  }) async {
+    if (saved) {
+      await apiClient.put(
+        '/saved/$restaurantId',
+        data: {'dishId': dishId ?? ''},
+      );
+    } else {
+      await apiClient.delete(
+        '/saved/$restaurantId',
+        queryParameters: {'dishId': dishId ?? ''},
+      );
+    }
   }
 }

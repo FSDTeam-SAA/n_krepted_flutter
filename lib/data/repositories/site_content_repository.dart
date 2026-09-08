@@ -23,4 +23,17 @@ class SiteContentRepository {
       privacyHtml: content['privacyHtml']?.toString() ?? '',
     );
   }
+
+  Future<Map<String, String>> getSocialLinks() async {
+    final response = await apiClient.get('/content/app-settings');
+    final settings = response.data['settings'] as Map;
+    return {
+      for (final entry in {
+        'Instagram': settings['instagramUrl'],
+        'TikTok': settings['tiktokUrl'],
+      }.entries)
+        if (entry.value?.toString().isNotEmpty == true)
+          entry.key: entry.value.toString(),
+    };
+  }
 }

@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
 import 'create_edit_restaurant_screen.dart';
@@ -566,7 +567,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Startpreis: €${restaurant.price.toStringAsFixed(2)}',
+                          'Startpreis: ${formatEuro(context, restaurant.price)}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -824,7 +825,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '€${dish.price.toStringAsFixed(2)} • ${dish.category.isNotEmpty ? dish.category : "Hauptspeise"}',
+                  '${formatEuro(context, dish.price)} • ${dish.category.isNotEmpty ? dish.category : "Hauptspeise"}',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -954,7 +955,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                     const SizedBox(height: 6),
                     _buildSummaryLine(
                       Icons.payments_outlined,
-                      'Ab €${restaurant.price.toStringAsFixed(2)}',
+                      'Ab ${formatEuro(context, restaurant.price)}',
                       valueColor: AppColors.primaryDark,
                     ),
                   ],

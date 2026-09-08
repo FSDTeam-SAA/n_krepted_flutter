@@ -7,6 +7,7 @@ import '../../providers/app_language_provider.dart';
 import '../../providers/owner_restaurant_provider.dart';
 import '../auth/signin_screen.dart';
 import 'edit_profile_screen.dart';
+import 'user_profile_screen.dart';
 import 'change_password_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
@@ -24,6 +25,7 @@ class ProfileScreen extends StatelessWidget {
     final ownerProvider = context.watch<OwnerRestaurantProvider>();
     final language = context.watch<AppLanguageProvider>();
     final user = authProvider.currentUser;
+    if (user?.role == 'user') return const UserProfileScreen();
 
     return Scaffold(
       backgroundColor: AppColors.background,

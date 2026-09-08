@@ -1,147 +1,121 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/widgets/restaurant_card.dart';
+import '../../core/widgets/owner_page_background.dart';
 import '../../providers/deal_provider.dart';
-import '../restaurant_details/restaurant_details_screen.dart';
-import '../dish_details/dish_details_screen.dart';
+import '../../providers/category_provider.dart';
+import 'discovery_feed.dart';
 import 'filter_modal.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
-
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  Widget build(BuildContext context) => ChangeNotifierProvider(
+    create: (_) => DealProvider(
+      dealRepository: context.read<DealProvider>().dealRepository,
+    ),
+    child: const _SearchBody(),
+  );
 }
 
-class _SearchScreenState extends State<SearchScreen> {
-  final _searchController = TextEditingController();
+class _SearchBody extends StatefulWidget {
+  const _SearchBody();
+  @override
+  State<_SearchBody> createState() => _SearchBodyState();
+}
 
+class _SearchBodyState extends State<_SearchBody> {
+  final _search = TextEditingController();
   @override
   void dispose() {
-    _searchController.dispose();
+    _search.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final dealProvider = context.watch<DealProvider>();
-    final results = dealProvider.filteredDeals;
-
+    final provider = context.watch<DealProvider>();
+    final categories = context.watch<CategoryProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
-          onPressed: () {
-            dealProvider.setSearchQuery('');
-            Navigator.pop(context);
-          },
-        ),
-        title: Container(
-          height: 42,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: TextField(
-            controller: _searchController,
-            autofocus: true,
-            onChanged: (val) => dealProvider.setSearchQuery(val),
-            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
-            decoration: InputDecoration(
-              hintText: 'Suchen nach Gericht oder Restaurant...',
-              hintStyle: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textLightGrey,
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppColors.textGrey,
-                size: 18,
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        size: 16,
-                        color: AppColors.textGrey,
+      body: OwnerPageBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 10, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _search,
+                        autofocus: true,
+                        onChanged: provider.setSearchQuery,
+                        decoration: InputDecoration(
+                          hintText: 'Finde dein Gericht, Restaurants und Bars',
+                          prefixIcon: const Icon(Icons.search, size: 18),
+                          filled: true,
+                          fillColor: Colors.white,
+                          suffixIcon: _search.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _search.clear();
+                                    provider.setSearchQuery('');
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.cardBorder,
+                            ),
+                          ),
+                        ),
                       ),
-                      onPressed: () {
-                        _searchController.clear();
-                        dealProvider.setSearchQuery('');
-                      },
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune, color: AppColors.primary),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const FilterModal(),
-              );
-            },
-          ),
-        ],
-      ),
-      body: results.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(
-                    Icons.search_off,
-                    size: 54,
-                    color: AppColors.textLightGrey,
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Keine Ergebnisse gefunden',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textGrey,
                     ),
-                  ),
-                ],
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: results.length,
-              itemBuilder: (context, index) {
-                final deal = results[index];
-                return RestaurantCard(
-                  deal: deal,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => RestaurantDetailsScreen(deal: deal),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => showDiscoveryFilters(context),
+                      icon: const Icon(Icons.tune, size: 16),
+                      label: const Text('Filter'),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Alle'),
+                      selected: provider.selectedCategory == null,
+                      onSelected: (_) => provider.selectCategory(null),
+                    ),
+                    for (final category in categories.categories)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: ChoiceChip(
+                          label: Text(category.categoryName),
+                          selected: provider.selectedCategory == category.id,
+                          onSelected: (_) =>
+                              provider.selectCategory(category.id),
+                        ),
                       ),
-                    );
-                  },
-                  onDishTap: (d) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => DishDetailsScreen(deal: d),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Expanded(child: DiscoveryFeed(compact: true)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

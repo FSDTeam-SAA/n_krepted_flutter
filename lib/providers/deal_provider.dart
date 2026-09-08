@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/network/api_error.dart';
 import '../data/models/deal_model.dart';
@@ -5,22 +6,22 @@ import '../data/repositories/deal_repository.dart';
 
 class DealProvider with ChangeNotifier {
   final DealRepository dealRepository;
-
   List<DealModel> _deals = [];
-  bool _isLoading = false;
-  String? _errorMessage;
-  String? _selectedCategory;
-  String _searchQuery = '';
-  String _locationQuery = '';
-  double _radiusKm = 15;
-  int _minimumRating = 0;
-  String? _cuisine;
+  bool _isLoading = false, _disposed = false, hasMore = true;
+  String? _errorMessage, _selectedCategory, _cuisine;
+  String _searchQuery = '', _locationQuery = '';
+  double _radiusKm = 10;
+  int _minimumRating = 0, _request = 0, _page = 1;
+  double? latitude, longitude;
+  String sort = 'rating', availability = 'active';
+  String? recommendation;
+  Timer? _debounce;
 
-  DealProvider({required this.dealRepository}) {
-    fetchDeals();
+  DealProvider({required this.dealRepository, bool autoLoad = true}) {
+    if (autoLoad) fetchDeals();
   }
-
   List<DealModel> get deals => _deals;
+  List<DealModel> get filteredDeals => _deals;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String? get selectedCategory => _selectedCategory;
@@ -30,72 +31,77 @@ class DealProvider with ChangeNotifier {
   int get minimumRating => _minimumRating;
   String? get cuisine => _cuisine;
 
-  List<DealModel> get filteredDeals {
-    return _deals.where((d) {
-      final searchMatches =
-          _searchQuery.isEmpty ||
-          d.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          d.description.toLowerCase().contains(_searchQuery.toLowerCase());
-      final locationMatches =
-          _locationQuery.isEmpty ||
-          d.location.city.toLowerCase().contains(
-            _locationQuery.toLowerCase(),
-          ) ||
-          d.location.country.toLowerCase().contains(
-            _locationQuery.toLowerCase(),
-          ) ||
-          d.location.address.toLowerCase().contains(
-            _locationQuery.toLowerCase(),
-          );
-      final ratingMatches = d.rating >= _minimumRating;
-      final cuisineMatches =
-          _cuisine == null ||
-          _cuisine!.isEmpty ||
-          d.category?.categoryName.toLowerCase() == _cuisine!.toLowerCase();
-      return searchMatches &&
-          locationMatches &&
-          ratingMatches &&
-          cuisineMatches;
-    }).toList();
-  }
-
   Future<void> fetchDeals({
     String? categoryId,
     String? search,
     String? location,
     double? latitude,
     double? longitude,
+    bool loadMore = false,
   }) async {
+    if (_disposed || (loadMore && (_isLoading || !hasMore))) return;
+    _debounce?.cancel();
+    if (categoryId != null) _selectedCategory = categoryId;
+    if (search != null) _searchQuery = search;
+    if (location != null) _locationQuery = location;
+    if (latitude != null && longitude != null) {
+      this.latitude = latitude;
+      this.longitude = longitude;
+    }
+    final request = ++_request;
+    final page = loadMore ? _page + 1 : 1;
     _isLoading = true;
     _errorMessage = null;
+    if (!loadMore) _deals = [];
     notifyListeners();
-
     try {
-      _deals = await dealRepository.getAllDeals(
-        categoryId: categoryId,
-        search: search,
-        location: location,
-        latitude: latitude,
-        longitude: longitude,
-        radiusKm: latitude != null && longitude != null ? _radiusKm : null,
+      final result = await dealRepository.getAllDeals(
+        categoryId: _selectedCategory,
+        search: _searchQuery,
+        location: _locationQuery,
+        latitude: this.latitude,
+        longitude: this.longitude,
+        radiusKm: _radiusKm,
+        minimumRating: _minimumRating,
+        cuisine: _cuisine,
+        sort: sort,
+        availability: availability,
+        page: page,
+        recommendation: recommendation,
       );
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = friendlyApiError(e);
-      _isLoading = false;
-      notifyListeners();
+      if (_disposed || request != _request) return;
+      _deals = loadMore ? [..._deals, ...result] : result;
+      _page = page;
+      hasMore = result.length == 20;
+    } catch (error) {
+      if (_disposed || request != _request) return;
+      _errorMessage = friendlyApiError(error);
+    } finally {
+      if (!_disposed && request == _request) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
   void selectCategory(String? categoryId) {
     _selectedCategory = categoryId;
-    fetchDeals(categoryId: categoryId, search: _searchQuery);
+    fetchDeals();
+  }
+
+  void setCategoryFilter(String? categoryId) {
+    _selectedCategory = categoryId;
   }
 
   void setSearchQuery(String query) {
     _searchQuery = query;
+    ++_request;
+    _deals = [];
+    _errorMessage = null;
+    _isLoading = true;
     notifyListeners();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), fetchDeals);
   }
 
   Future<void> applyFilters({
@@ -103,31 +109,43 @@ class DealProvider with ChangeNotifier {
     required double radiusKm,
     required int minimumRating,
     String? cuisine,
+    String? sort,
+    double? latitude,
+    double? longitude,
   }) async {
     _locationQuery = location.trim();
     _radiusKm = radiusKm;
     _minimumRating = minimumRating;
     _cuisine = cuisine;
-    await fetchDeals(
-      categoryId: _selectedCategory,
-      search: _searchQuery,
-      location: _locationQuery,
-    );
+    if (sort != null) this.sort = sort;
+    await fetchDeals(latitude: latitude, longitude: longitude);
   }
 
   Future<void> resetFilters() async {
     _locationQuery = '';
-    _radiusKm = 15;
+    _radiusKm = 10;
     _minimumRating = 0;
     _cuisine = null;
-    await fetchDeals(categoryId: _selectedCategory, search: _searchQuery);
+    _selectedCategory = null;
+    latitude = null;
+    longitude = null;
+    sort = 'rating';
+    await fetchDeals();
   }
 
   Future<DealModel?> getDealDetails(String id) async {
     try {
       return await dealRepository.getDealById(id);
-    } catch (e) {
+    } catch (error) {
+      _errorMessage = friendlyApiError(error);
       return null;
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _debounce?.cancel();
+    super.dispose();
   }
 }

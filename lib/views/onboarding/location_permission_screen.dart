@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -27,7 +28,11 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
     'Standort nicht zulassen',
   ];
 
-  void _proceed() {
+  Future<void> _proceed() async {
+    if (_selected != 2) {
+      try { await Geolocator.requestPermission(); } catch (_) { /* Discovery remains available without location. */ }
+    }
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const SignInScreen()),

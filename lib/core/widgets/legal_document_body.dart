@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/site_content_repository.dart';
 import '../constants/app_colors.dart';
+import 'discovery_widgets.dart';
 
 enum LegalDocumentType { terms, privacy }
 
 class LegalDocumentBody extends StatefulWidget {
   final LegalDocumentType type;
-  final String fallbackText;
 
-  const LegalDocumentBody({
-    super.key,
-    required this.type,
-    required this.fallbackText,
-  });
+  const LegalDocumentBody({super.key, required this.type});
 
   @override
   State<LegalDocumentBody> createState() => _LegalDocumentBodyState();
@@ -21,6 +17,7 @@ class LegalDocumentBody extends StatefulWidget {
 
 class _LegalDocumentBodyState extends State<LegalDocumentBody> {
   String? _html;
+  bool _failed = false;
 
   @override
   void initState() {
@@ -29,6 +26,10 @@ class _LegalDocumentBodyState extends State<LegalDocumentBody> {
   }
 
   Future<void> _load() async {
+    setState(() {
+      _html = null;
+      _failed = false;
+    });
     try {
       final content = await SiteContentRepository().getLegalContent();
       final html = widget.type == LegalDocumentType.terms
@@ -36,7 +37,12 @@ class _LegalDocumentBodyState extends State<LegalDocumentBody> {
           : content.privacyHtml;
       if (mounted) setState(() => _html = html.trim());
     } catch (_) {
-      if (mounted) setState(() => _html = '');
+      if (mounted) {
+        setState(() {
+          _html = '';
+          _failed = true;
+        });
+      }
     }
   }
 
@@ -48,16 +54,11 @@ class _LegalDocumentBodyState extends State<LegalDocumentBody> {
       );
     }
     if (_html!.isEmpty) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-        child: Text(
-          widget.fallbackText,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.textGrey,
-            height: 1.5,
-          ),
-        ),
+      return DataState(
+        _failed
+            ? 'Inhalt konnte nicht geladen werden.'
+            : 'Dieser Inhalt wurde noch nicht veröffentlicht.',
+        onRetry: _failed ? _load : null,
       );
     }
     return _RestrictedHtmlDocument(html: _html!);
@@ -97,9 +98,17 @@ class _RestrictedHtmlDocument extends StatelessWidget {
   }
 
   TextStyle _styleFor(String kind) {
-    if (kind == 'h1' || kind == 'h2') {
+    if (kind == 'h1') {
       return const TextStyle(
-        fontSize: 18,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textDark,
+        height: 1.3,
+      );
+    }
+    if (kind == 'h2') {
+      return const TextStyle(
+        fontSize: 19,
         fontWeight: FontWeight.w700,
         color: AppColors.textDark,
         height: 1.35,
@@ -111,6 +120,30 @@ class _RestrictedHtmlDocument extends StatelessWidget {
         fontWeight: FontWeight.w700,
         color: AppColors.textDark,
         height: 1.4,
+      );
+    }
+    if (kind == 'h4') {
+      return const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textDark,
+        height: 1.4,
+      );
+    }
+    if (kind == 'h5') {
+      return const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textDark,
+        height: 1.45,
+      );
+    }
+    if (kind == 'h6') {
+      return const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textDark,
+        height: 1.45,
       );
     }
     if (kind == 'blockquote') {
@@ -130,7 +163,7 @@ class _RestrictedHtmlDocument extends StatelessWidget {
 
   List<_HtmlBlock> _parseBlocks(String source) {
     final matches = RegExp(
-      r'<(h1|h2|h3|p|li|blockquote)\b[^>]*>(.*?)</\1>',
+      r'<(h1|h2|h3|h4|h5|h6|p|li|blockquote)\b[^>]*>(.*?)</\1>',
       caseSensitive: false,
       dotAll: true,
     ).allMatches(source);

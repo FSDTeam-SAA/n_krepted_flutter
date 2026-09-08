@@ -33,8 +33,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.changePassword(
-      _currentPasswordController.text.trim(),
-      _newPasswordController.text.trim(),
+      _currentPasswordController.text,
+      _newPasswordController.text,
     );
 
     if (!mounted) return;

@@ -7,6 +7,13 @@ class ReviewProvider with ChangeNotifier {
   final ReviewRepository reviewRepository;
 
   List<ReviewModel> _reviews = [];
+  final Map<String, List<ReviewModel>> _byDeal = {};
+  final Map<String, int> _requests = {};
+  final Set<String> _loadingDeals = {};
+  final Map<String, String> _errors = {};
+  List<ReviewModel> reviewsForDeal(String id) => _byDeal[id] ?? [];
+  bool isLoadingFor(String id) => _loadingDeals.contains(id);
+  String? errorFor(String id) => _errors[id];
   bool _isLoading = false;
   bool _isEligibilityLoading = false;
   ReviewEligibility? _eligibility;
@@ -39,12 +46,24 @@ class ReviewProvider with ChangeNotifier {
   }
 
   Future<void> fetchReviewsForDeal(String dealId) async {
+    final request = (_requests[dealId] ?? 0) + 1;
+    _requests[dealId] = request;
+    _loadingDeals.add(dealId);
+    _errors.remove(dealId);
     _isLoading = true;
     notifyListeners();
 
     try {
-      _reviews = await reviewRepository.getReviewsByDeal(dealId);
-    } catch (_) {}
+      final result = await reviewRepository.getReviewsByDeal(dealId);
+      if (_requests[dealId] != request) return;
+      _reviews = result;
+      _byDeal[dealId] = result;
+    } catch (error) {
+      if (_requests[dealId] != request) return;
+      _errors[dealId] = friendlyApiError(error);
+    }
+    if (_requests[dealId] != request) return;
+    _loadingDeals.remove(dealId);
 
     _isLoading = false;
     notifyListeners();
@@ -69,7 +88,11 @@ class ReviewProvider with ChangeNotifier {
         ratings: ratings,
         reviewComment: reviewComment,
       );
-      _reviews.insert(0, newReview);
+      _reviews = [
+        newReview,
+        ...reviewsForDeal(dealId).where((r) => r.id != newReview.id),
+      ];
+      _byDeal[dealId] = _reviews;
       _isLoading = false;
       notifyListeners();
       return true;

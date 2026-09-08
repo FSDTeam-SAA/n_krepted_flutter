@@ -1,446 +1,634 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_assets.dart';
+import '../../core/widgets/restaurant_card.dart';
+import '../../core/widgets/restaurant_map_pin.dart';
 import '../../core/widgets/app_brand_logo.dart';
+import '../../core/constants/app_assets.dart';
+import 'package:flutter/services.dart';
+import '../../core/network/api_error.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/deal_provider.dart';
+import '../../providers/location_provider.dart';
 import '../restaurant_details/restaurant_details_screen.dart';
 
 class ExploreMapScreen extends StatefulWidget {
-  const ExploreMapScreen({super.key});
-
+  final bool active;
+  final DealModel? initialRestaurant;
+  const ExploreMapScreen({
+    super.key,
+    this.active = true,
+    this.initialRestaurant,
+  });
   @override
   State<ExploreMapScreen> createState() => _ExploreMapScreenState();
 }
 
-class _ExploreMapScreenState extends State<ExploreMapScreen> {
-  int _selectedFilterTab = 0;
-  String _selectedCategory = 'Deutsch';
-  DealModel? _selectedDeal;
-  bool _isLocating = false;
+class _ExploreMapScreenState extends State<ExploreMapScreen>
+    with WidgetsBindingObserver {
+  final _controller = MapController();
+  StreamSubscription<Position>? _positions;
+  List<DealModel> _restaurants = [];
+  DealModel? _selected;
+  bool _loading = true, _ready = false, _tileError = false;
+  String? _error;
+  String _sort = 'rating';
+  String? _cuisine;
+  List<String> _cuisines = [];
+  bool _optionsFailed = false;
+  int _request = 0, _tileGeneration = 0;
+  late double _radiusKm;
+  bool _returningFromSettings = false;
 
-  final List<String> _categories = [
-    'Deutsch',
-    'Italienisch',
-    'Indisch',
-    'Chinesisch',
-    'Japanisch',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _radiusKm = context.read<DealProvider>().radiusKm;
+    _selected = widget.initialRestaurant;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadOptions();
+      _load(requestLocation: widget.initialRestaurant == null);
+    });
+  }
 
-  Future<void> _locateMe() async {
-    if (_isLocating) return;
-    setState(() => _isLocating = true);
+  @override
+  void didUpdateWidget(covariant ExploreMapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.active) {
+      _positions?.cancel();
+      _positions = null;
+    } else if (!oldWidget.active) {
+      _load();
+    }
+  }
+
+  Future<void> _loadOptions() async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        throw Exception('Bitte aktivieren Sie die Standortdienste.');
+      final data = await context
+          .read<DealProvider>()
+          .dealRepository
+          .getDiscoveryOptions();
+      if (mounted) {
+        setState(() {
+          _cuisines = (data['cuisines'] as List? ?? [])
+              .whereType<String>()
+              .where((value) => value.trim().isNotEmpty)
+              .toSet()
+              .toList();
+          _optionsFailed = false;
+        });
       }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+    } catch (_) {
+      if (mounted) setState(() => _optionsFailed = true);
+    }
+  }
+
+  Future<void> _load({
+    bool requestLocation = false,
+    bool selectFirst = false,
+  }) async {
+    if (!mounted) return;
+    final request = ++_request;
+    final location = context.read<LocationProvider>();
+    final repository = context.read<DealProvider>().dealRepository;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    if (requestLocation) await location.locate();
+    if (!mounted || request != _request) return;
+    final position = location.position;
+    try {
+      final results = <DealModel>[];
+      int page = 1;
+      while (true) {
+        final batch = await repository.getAllDeals(
+          latitude: position?.latitude,
+          longitude: position?.longitude,
+          radiusKm: _radiusKm,
+          sort: _sort,
+          cuisine: _cuisine,
+          limit: 100,
+          page: page++,
+        );
+        if (!mounted || request != _request) return;
+        results.addAll(
+          batch.where((restaurant) => restaurant.location.hasCoordinates),
+        );
+        if (batch.length < 100) break;
       }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        throw Exception('Standortberechtigung wurde nicht erteilt.');
+      if (!mounted || request != _request) return;
+      final initial = widget.initialRestaurant;
+      if (_cuisine == null &&
+          initial != null &&
+          initial.location.hasCoordinates &&
+          !results.any((item) => item.id == initial.id)) {
+        results.add(initial);
       }
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 20),
-        ),
-      );
-      if (!mounted) return;
-      await context.read<DealProvider>().fetchDeals(
-        latitude: position.latitude,
-        longitude: position.longitude,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Restaurants in Ihrer Nähe wurden aktualisiert.'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
+      setState(() {
+        _restaurants = results;
+        _selected = selectFirst
+            ? results.firstOrNull
+            : results.where((item) => item.id == _selected?.id).firstOrNull;
+        _loading = false;
+        if (requestLocation && location.errorMessage != null) {
+          _error = location.errorMessage;
+        }
+      });
+      _fit();
+      if (position != null && widget.active) _track();
     } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: AppColors.badgeRed,
+      if (mounted && request == _request) {
+        setState(() {
+          _loading = false;
+          _error = friendlyApiError(error);
+        });
+      }
+    }
+  }
+
+  void _track() {
+    if (_positions != null) return;
+    _positions =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 25,
+          ),
+        ).listen(
+          (position) {
+            if (mounted && widget.active) {
+              context.read<LocationProvider>().update(position);
+            }
+          },
+          onError: (_) {
+            if (mounted) {
+              setState(
+                () => _error = 'Standort konnte nicht aktualisiert werden.',
+              );
+            }
+          },
+        );
+  }
+
+  void _fit() {
+    if (!_ready || !mounted) return;
+    final position = context.read<LocationProvider>().position;
+    if (_selected?.location.hasCoordinates == true) {
+      _controller.move(
+        LatLng(_selected!.location.latitude!, _selected!.location.longitude!),
+        15,
+      );
+      return;
+    }
+    final points = [
+      if (position != null) LatLng(position.latitude, position.longitude),
+      ..._restaurants.map(
+        (item) => LatLng(item.location.latitude!, item.location.longitude!),
+      ),
+    ];
+    if (points.length == 1) {
+      _controller.move(points.first, 14);
+    } else if (points.length > 1) {
+      _controller.fitCamera(
+        CameraFit.bounds(
+          bounds: LatLngBounds.fromPoints(points),
+          padding: const EdgeInsets.fromLTRB(45, 135, 45, 170),
+          maxZoom: 15,
         ),
       );
-    } finally {
-      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    ++_request;
+    _positions?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _returningFromSettings &&
+        widget.active) {
+      _returningFromSettings = false;
+      _load(requestLocation: true);
+    }
+  }
+
+  Future<void> _openLocationSettings() async {
+    _returningFromSettings = true;
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      await Geolocator.openLocationSettings();
+    } else {
+      await Geolocator.openAppSettings();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final dealProvider = context.watch<DealProvider>();
-    final deals = [...dealProvider.deals];
-    if (_selectedFilterTab == 0) {
-      deals.sort((a, b) => b.rating.compareTo(a.rating));
-    } else if (_selectedFilterTab == 1) {
-      deals.sort((a, b) => a.price.compareTo(b.price));
-    } else {
-      deals.sort((a, b) => b.price.compareTo(a.price));
-    }
-
+    final location = context.watch<LocationProvider>();
+    final position = location.position;
+    final initial = _selected ?? _restaurants.firstOrNull;
+    final center = position != null
+        ? LatLng(position.latitude, position.longitude)
+        : initial?.location.hasCoordinates == true
+        ? LatLng(initial!.location.latitude!, initial.location.longitude!)
+        : const LatLng(
+            0,
+            0,
+          ); // World view until actual coordinates are available.
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // Background Simulated Interactive Map
-          Positioned.fill(
-            child: Image.asset(AppAssets.mapPlaceholder, fit: BoxFit.cover),
-          ),
-
-          // Custom Food Markers Positioned across Map
-          if (deals.isNotEmpty) ...[
-            _buildMapMarker(top: 240, left: 160, deal: deals[0]),
-            if (deals.length > 1)
-              _buildMapMarker(top: 310, right: 80, deal: deals[1]),
-            if (deals.length > 2)
-              _buildMapMarker(top: 420, left: 90, deal: deals[2]),
-            if (deals.length > 3)
-              _buildMapMarker(top: 480, right: 120, deal: deals[3]),
-            if (deals.length > 4)
-              _buildMapMarker(top: 590, left: 60, deal: deals[4]),
-            if (deals.length > 5)
-              _buildMapMarker(top: 660, left: 130, deal: deals[5]),
-          ],
-
-          // Top Header & Controls Stack
-          SafeArea(
-            child: Column(
-              children: [
-                // Top Header Card
-                Container(
-                  color: AppColors.background.withValues(alpha: 0.95),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const AppBrandLogo(width: 78),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              onPressed: _locateMe,
-                              constraints: const BoxConstraints(),
-                              padding: EdgeInsets.zero,
-                              icon: _isLocating
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.primary,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.my_location,
-                                      color: AppColors.textDark,
-                                      size: 20,
-                                    ),
-                            ),
-                          ),
-                        ],
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark,
+        child: Column(
+          children: [
+            _header(),
+            Expanded(
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: _controller,
+                    options: MapOptions(
+                      initialCenter: center,
+                      initialZoom: initial != null || position != null ? 13 : 2,
+                      minZoom: 2,
+                      maxZoom: 19,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                       ),
-
-                      const SizedBox(height: 8),
-
-                      // Tabs: Am besten bewertet / Am günstigsten / Am teuersten
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildTabItem(0, 'Am besten bewertet'),
-                          _buildTabItem(1, 'Am günstigsten'),
-                          _buildTabItem(2, 'Am teuersten'),
+                      onMapReady: () {
+                        _ready = true;
+                        _fit();
+                      },
+                      onTap: (_, _) => setState(() => _selected = null),
+                    ),
+                    children: [
+                      TileLayer(
+                        key: ValueKey(_tileGeneration),
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.n_krepted_flutter',
+                        maxNativeZoom: 19,
+                        errorTileCallback: (_, _, _) {
+                          if (!_tileError) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) setState(() => _tileError = true);
+                            });
+                          }
+                        },
+                      ),
+                      if (position != null)
+                        CircleLayer(
+                          circles: [
+                            CircleMarker(
+                              point: LatLng(
+                                position.latitude,
+                                position.longitude,
+                              ),
+                              radius: _radiusKm * 1000,
+                              useRadiusInMeter: true,
+                              color: Colors.red.withValues(alpha: .06),
+                              borderColor: Colors.red.withValues(alpha: .3),
+                              borderStrokeWidth: 1,
+                            ),
+                            CircleMarker(
+                              point: LatLng(
+                                position.latitude,
+                                position.longitude,
+                              ),
+                              radius: position.accuracy,
+                              useRadiusInMeter: true,
+                              color: Colors.red.withValues(alpha: .15),
+                            ),
+                          ],
+                        ),
+                      MarkerLayer(
+                        markers: [
+                          for (final restaurant in _restaurants)
+                            Marker(
+                              point: LatLng(
+                                restaurant.location.latitude!,
+                                restaurant.location.longitude!,
+                              ),
+                              alignment: Alignment.bottomCenter,
+                              width: 56,
+                              height: 70,
+                              child: Semantics(
+                                label: restaurant.restaurantName,
+                                button: true,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() => _selected = restaurant);
+                                    _controller.move(
+                                      LatLng(
+                                        restaurant.location.latitude!,
+                                        restaurant.location.longitude!,
+                                      ),
+                                      _controller.camera.zoom,
+                                    );
+                                  },
+                                  child: RestaurantMapPin(
+                                    imageUrl: restaurant.firstImage,
+                                    selected: _selected?.id == restaurant.id,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (position != null)
+                            Marker(
+                              point: LatLng(
+                                position.latitude,
+                                position.longitude,
+                              ),
+                              width: 42,
+                              height: 42,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.red.withValues(alpha: .2),
+                                ),
+                                padding: const EdgeInsets.all(11),
+                                child: const DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Horizontal Category Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: _categories.map((cat) {
-                      final isSel = _selectedCategory == cat;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedCategory = cat),
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSel
-                                ? const Color(0xFFFFF9E6)
-                                : Colors.white.withValues(alpha: 0.92),
-                            borderRadius: BorderRadius.circular(16),
-                            border: isSel
-                                ? Border.all(color: AppColors.orangeAccent)
-                                : null,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 6,
+                  Positioned(top: 0, left: 0, right: 0, child: _filters()),
+                  if (_loading || location.isLoading)
+                    const Positioned(
+                      top: 93,
+                      left: 24,
+                      right: 24,
+                      child: LinearProgressIndicator(),
+                    ),
+                  Positioned(
+                    right: 16,
+                    top: 106,
+                    child: Column(
+                      children: [
+                        _control(
+                          Icons.add,
+                          () => _zoomMap(1),
+                          tooltip: 'Vergrößern',
+                        ),
+                        const SizedBox(height: 8),
+                        _control(
+                          Icons.remove,
+                          () => _zoomMap(-1),
+                          tooltip: 'Verkleinern',
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!_loading &&
+                      (_error != null || _tileError || _restaurants.isEmpty))
+                    Positioned(
+                      top: 106,
+                      left: 20,
+                      right: 76,
+                      child: Material(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            children: [
+                              Text(
+                                _error ??
+                                    (_tileError
+                                        ? 'Kartenkacheln konnten nicht geladen werden.'
+                                        : 'Keine Restaurants mit Standort gefunden.'),
+                                textAlign: TextAlign.center,
                               ),
+                              if (_tileError)
+                                TextButton(
+                                  onPressed: () => setState(() {
+                                    _tileError = false;
+                                    _tileGeneration++;
+                                  }),
+                                  child: const Text('Karte neu laden'),
+                                ),
+                              if (location.errorMessage != null)
+                                TextButton.icon(
+                                  onPressed: _openLocationSettings,
+                                  icon: const Icon(Icons.settings_outlined),
+                                  label: const Text('Standort aktivieren'),
+                                ),
                             ],
                           ),
-                          child: Text(
-                            cat,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: isSel
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isSel
-                                  ? AppColors.textDark
-                                  : AppColors.textBody,
-                            ),
+                        ),
+                      ),
+                    ),
+                  if (_selected != null)
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      bottom: 28,
+                      child: RestaurantCard(
+                        deal: _selected!,
+                        compact: true,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                RestaurantDetailsScreen(deal: _selected!),
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Bottom Popup Card when marker is tapped
-          if (_selectedDeal != null)
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: _buildPlacePreviewCard(_selectedDeal!),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabItem(int index, String title) {
-    final isSel = _selectedFilterTab == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedFilterTab = index),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-              color: isSel ? AppColors.textDark : AppColors.textGrey,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            height: 2.5,
-            width: 48,
-            color: isSel ? AppColors.primary : Colors.transparent,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMapMarker({
-    double? top,
-    double? bottom,
-    double? left,
-    double? right,
-    required DealModel deal,
-  }) {
-    final isSelected = _selectedDeal?.id == deal.id;
-
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedDeal = deal),
-        child: AnimatedScale(
-          scale: isSelected ? 1.25 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      ),
                     ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: deal.firstImage,
-                    width: 38,
-                    height: 38,
-                    fit: BoxFit.cover,
+                  Positioned(
+                    bottom: 3,
+                    right: 4,
+                    child: Container(
+                      color: Colors.white.withValues(alpha: .9),
+                      padding: const EdgeInsets.all(3),
+                      child: const Text(
+                        '© OpenStreetMap contributors',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              CustomPaint(
-                size: const Size(12, 8),
-                painter: _PinTrianglePainter(color: const Color(0xFF22C55E)),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildPlacePreviewCard(DealModel deal) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+  Widget _header() => Container(
+    decoration: const BoxDecoration(
+      color: AppColors.yellow,
+      borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: Stack(
+      children: [
+        Positioned(
+          right: -8,
+          top: -14,
+          child: Opacity(
+            opacity: .65,
+            child: Image.asset(AppAssets.decoHerbs, width: 110),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: CachedNetworkImage(
-              imageUrl: deal.firstImage,
-              width: 74,
-              height: 74,
-              fit: BoxFit.cover,
+        ),
+        SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: 88,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  if (Navigator.canPop(context))
+                    IconButton(
+                      tooltip: 'Zurück',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  const AppBrandLogo(width: 78),
+                  const Spacer(),
+                  _control(
+                    Icons.my_location,
+                    () => _load(requestLocation: true),
+                    tooltip: 'Mein Standort',
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  deal.restaurantName,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${deal.location.city}, ${deal.location.country}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.star,
-                      color: AppColors.orangeAccent,
-                      size: 14,
+        ),
+      ],
+    ),
+  );
+
+  Widget _filters() => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Material(
+        color: Colors.white.withValues(alpha: .87),
+        child: Row(
+          children: [
+            for (final option in const [
+              ('rating', 'Am besten bewertet'),
+              ('priceAsc', 'Am günstigsten'),
+              ('priceDesc', 'Am teuersten'),
+            ])
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _sort = option.$1);
+                    _load(selectFirst: true);
+                  },
+                  child: Container(
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _sort == option.$1
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 3),
-                    const Text(
-                      '4.8',
+                    child: Text(
+                      option.$2,
+                      maxLines: 1,
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: _sort == option.$1
+                            ? AppColors.textDark
+                            : AppColors.textGrey,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${deal.price.toStringAsFixed(2)} \$',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.primary,
-              size: 16,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => RestaurantDetailsScreen(deal: deal),
-                ),
-              );
-            },
-          ),
-        ],
+              ),
+          ],
+        ),
       ),
+      SizedBox(
+        height: 52,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          children: [
+            for (final cuisine in [null, ..._cuisines])
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(
+                    cuisine ?? 'Alle',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  selected: _cuisine == cuisine,
+                  showCheckmark: false,
+                  selectedColor: const Color(0xFFFFF5CF),
+                  backgroundColor: const Color(0xFFF4F3F2),
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onSelected: (_) {
+                    setState(() {
+                      _cuisine = cuisine;
+                      _selected = null;
+                    });
+                    _load();
+                  },
+                ),
+              ),
+            if (_optionsFailed)
+              ActionChip(
+                label: const Text('Filter neu laden'),
+                onPressed: _loadOptions,
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
+
+  void _zoomMap(double step) {
+    if (!_ready) return;
+    _controller.move(
+      _controller.camera.center,
+      (_controller.camera.zoom + step).clamp(2.0, 19.0),
     );
   }
-}
 
-class _PinTrianglePainter extends CustomPainter {
-  final Color color;
-  _PinTrianglePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget _control(IconData icon, VoidCallback onTap, {String? tooltip}) =>
+      Material(
+        color: Colors.white,
+        shape: const CircleBorder(),
+        elevation: 2,
+        child: IconButton(
+          tooltip: tooltip,
+          icon: Icon(icon, color: AppColors.textDark),
+          onPressed: onTap,
+        ),
+      );
 }

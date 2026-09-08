@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../utils/currency_formatter.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/saved_provider.dart';
 import 'app_motion.dart';
@@ -56,7 +57,7 @@ class DishCard extends StatelessWidget {
                     imageUrl: deal.firstImage,
                     height: 120,
                     width: double.infinity,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     placeholder: (context, url) =>
                         Container(height: 120, color: Colors.grey[200]),
                     errorWidget: (context, url, error) => Container(
@@ -117,7 +118,7 @@ class DishCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '€${deal.price.toStringAsFixed(2).replaceAll('.', ',')}',
+                        formatEuro(context, deal.price),
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

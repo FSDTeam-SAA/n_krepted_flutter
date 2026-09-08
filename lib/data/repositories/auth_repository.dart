@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';
@@ -149,6 +150,8 @@ class AuthRepository {
     String? country,
     String? cityState,
     File? avatarFile,
+    Uint8List? avatarBytes,
+    String? avatarName,
   }) async {
     final map = <String, dynamic>{'userId': userId};
     if (name != null) map['name'] = name;
@@ -158,7 +161,17 @@ class AuthRepository {
 
     FormData formData = FormData.fromMap(map);
 
-    if (avatarFile != null) {
+    if (avatarBytes != null) {
+      formData.files.add(
+        MapEntry(
+          'avatar',
+          MultipartFile.fromBytes(
+            avatarBytes,
+            filename: avatarName ?? 'avatar.jpg',
+          ),
+        ),
+      );
+    } else if (avatarFile != null) {
       formData.files.add(
         MapEntry(
           'avatar',

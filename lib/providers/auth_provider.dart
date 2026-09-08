@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../core/services/storage_service.dart';
 import '../data/models/user_model.dart';
@@ -53,7 +55,17 @@ class AuthProvider with ChangeNotifier {
       _currentUser = await authRepository.getSingleUser(user.id);
       notifyListeners();
       return true;
-    } catch (_) {
+    } catch (error) {
+      // A 401 means the persisted JWT is expired, malformed, or was signed
+      // with an old server secret. Do not keep retrying protected endpoints
+      // with credentials the server has already rejected.
+      if (error is DioException && error.response?.statusCode == 401) {
+        await StorageService.clearAuth();
+        _currentUser = null;
+        notifyListeners();
+        return false;
+      }
+
       // Keep the locally restored session during temporary network failures.
       return false;
     }
@@ -191,6 +203,8 @@ class AuthProvider with ChangeNotifier {
     String? country,
     String? cityState,
     File? avatarFile,
+    Uint8List? avatarBytes,
+    String? avatarName,
   }) async {
     if (_currentUser == null) return false;
     _setLoading(true);
@@ -204,6 +218,8 @@ class AuthProvider with ChangeNotifier {
         country: country,
         cityState: cityState,
         avatarFile: avatarFile,
+        avatarBytes: avatarBytes,
+        avatarName: avatarName,
       );
       _currentUser = updatedUser;
       _setLoading(false);

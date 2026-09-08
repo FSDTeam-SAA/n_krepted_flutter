@@ -1,288 +1,221 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
-import '../constants/app_colors.dart';
+import 'package:intl/intl.dart';
 import '../../data/models/deal_model.dart';
-import '../../providers/saved_provider.dart';
-import 'app_motion.dart';
+import '../constants/app_colors.dart';
+import 'discovery_widgets.dart';
+import 'rating_badge.dart';
 
+/// The same database restaurant/dish pair is used in Home, Search, Saved and Map.
 class RestaurantCard extends StatelessWidget {
   final DealModel deal;
+  final DealDish? dish;
   final VoidCallback? onTap;
-  final Function(DealModel)? onDishTap;
-
+  final ValueChanged<DealDish>? onDishTap;
+  final bool compact;
+  final bool showMore;
   const RestaurantCard({
     super.key,
     required this.deal,
+    this.dish,
     this.onTap,
     this.onDishTap,
+    this.compact = false,
+    this.showMore = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final savedProvider = context.watch<SavedProvider>();
-    final isSaved = savedProvider.isSaved(deal.id);
-
-    return Pressable(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.cardBorder, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+    final featured = dish ?? deal.featuredDish;
+    final upcoming = deal.isUpcoming;
+    final photo = upcoming
+        ? deal.firstImage
+        : featured?.image ?? deal.firstImage;
+    final image = Stack(
+      fit: StackFit.expand,
+      children: [
+        RemotePhoto(photo, fit: BoxFit.contain),
+        if (!upcoming && featured != null) ...[
+          Positioned(
+            top: compact ? 5 : 8,
+            right: compact ? 5 : 8,
+            child: RatingBadge(rating: featured.rating),
+          ),
+          Positioned(
+            left: compact ? 4 : 10,
+            right: compact ? 4 : 10,
+            bottom: compact ? 4 : 8,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: .42),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.restaurant_menu,
+                      color: Colors.white,
+                      size: 13,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        featured.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: compact ? 10 : 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Restaurant Dining Image
-            Stack(
-              children: [
-                CachedNetworkImage(
-                  imageUrl: deal.firstImage,
-                  height: 170,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      Container(height: 170, color: Colors.grey[200]),
-                  errorWidget: (context, url, error) => Container(
-                    height: 170,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.store, color: Colors.grey),
+          ),
+        ],
+      ],
+    );
+    final info = Padding(
+      padding: EdgeInsets.all(compact ? 8 : 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  deal.restaurantName,
+                  maxLines: compact ? 2 : 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Lora',
+                    fontWeight: FontWeight.w700,
+                    fontSize: compact ? 14 : 19,
                   ),
                 ),
-              ],
-            ),
-
+              ),
+              SaveButton(restaurant: deal, dishId: dish?.id, compact: compact),
+            ],
+          ),
+          if (deal.location.label.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: EdgeInsets.only(bottom: compact ? 4 : 7),
+              child: Row(
                 children: [
-                  // Title & Heart
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          deal.restaurantName,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => savedProvider.toggleSave(deal),
-                        child: Icon(
-                          isSaved ? Icons.favorite : Icons.favorite_border,
-                          color: isSaved
-                              ? AppColors.primary
-                              : AppColors.textGrey,
-                          size: 22,
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    Icons.location_on,
+                    size: compact ? 11 : 15,
+                    color: Colors.red,
                   ),
-
-                  const SizedBox(height: 6),
-
-                  // Location
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: AppColors.badgeRed,
-                        size: 14,
+                  const SizedBox(width: 3),
+                  Expanded(
+                    child: Text(
+                      deal.location.label,
+                      maxLines: compact ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: compact ? 10 : 13,
+                        color: AppColors.textGrey,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${deal.location.city}, ${deal.location.country}',
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // Distance, Time & Cuisine Tag
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.directions_walk,
-                            color: AppColors.textGrey,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${deal.distance}  •  ${deal.duration}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (deal.category?.categoryName.trim().isNotEmpty == true)
-                        Text(
-                          deal.category!.categoryName,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // Signature Dishes 1, 2, 3 Preview Row matching design
-                  if (deal.dishes.any((dish) => dish.isSignatureDish))
-                    Row(
-                      children: deal.dishes
-                          .where((dish) => dish.isSignatureDish)
-                          .take(3)
-                          .toList()
-                          .asMap()
-                          .entries
-                          .expand<Widget>(
-                            (entry) => [
-                              if (entry.key > 0) const SizedBox(width: 10),
-                              _buildSignatureDishPreview(
-                                label: 'Signature Dish ${entry.key + 1}',
-                                image: entry.value.image,
-                                title: entry.value.name,
-                                onTap: () => onDishTap?.call(deal),
-                              ),
-                            ],
-                          )
-                          .toList(),
                     ),
+                  ),
                 ],
               ),
             ),
+          DistanceLine(deal, compact: compact),
+          SizedBox(height: compact ? 4 : 6),
+          Row(
+            children: [
+              Text(
+                deal.rating.toStringAsFixed(1).replaceAll('.', ','),
+                style: const TextStyle(color: Color(0xFFA4B600), fontSize: 12),
+              ),
+              const Icon(Icons.star, color: Color(0xFFA4B600), size: 13),
+              if (!compact) ...[
+                const SizedBox(width: 5),
+                Text(
+                  '${deal.reviewCount} Bewertungen',
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ],
+            ],
+          ),
+          if (upcoming && deal.opensAt != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                '${DateFormat('dd.MM.yyyy · HH:mm').format(deal.opensAt!.toLocal())} · Demnächst verfügbar',
+                style: const TextStyle(color: AppColors.primary, fontSize: 12),
+              ),
+            ),
+          if (!compact && showMore && !upcoming) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: OutlinedButton(
+                onPressed: onTap,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.cyan),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Mehr anzeigen'),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
-  }
-
-  Widget _buildSignatureDishPreview({
-    required String label,
-    required String image,
-    required String title,
-    VoidCallback? onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cardBorder),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  CachedNetworkImage(
-                    imageUrl: image,
-                    height: 64,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                        Container(color: Colors.grey[200]),
+    return Padding(
+      padding: EdgeInsets.only(bottom: compact ? 20 : 22),
+      child: Material(
+        color: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black26,
+        borderRadius: BorderRadius.circular(10),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: compact
+              ? LayoutBuilder(
+                  builder: (context, constraints) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: (constraints.maxWidth * .43).clamp(100.0, 152.0),
+                        height: 118,
+                        child: image,
+                      ),
+                      Expanded(child: info),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 4,
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 4 / 3,
+                      child: GestureDetector(
+                        onTap: featured != null && onDishTap != null
+                            ? () => onDishTap!(featured)
+                            : onTap,
+                        child: image,
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.restaurant_menu,
-                              color: AppColors.primary,
-                              size: 10,
-                            ),
-                            const SizedBox(width: 2),
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: const TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text(
-                              '4,5 ★',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.orangeAccent,
-                              ),
-                            ),
-                            Text(
-                              'SD 4,5 ★',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.badgeRed,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+                    info,
+                  ],
+                ),
         ),
       ),
     );

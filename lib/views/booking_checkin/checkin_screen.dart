@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import '../../data/models/check_in_model.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/check_in_provider.dart';
+import '../../providers/location_provider.dart';
 
 class CheckinScreen extends StatefulWidget {
   final DealModel deal;
@@ -19,53 +21,75 @@ class CheckinScreen extends StatefulWidget {
 
 class _CheckinScreenState extends State<CheckinScreen> {
   int _guestCount = 1;
+  bool _locating = false;
 
   Future<Position?> _getCurrentPosition() async {
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      _showError(
-        'Bitte aktivieren Sie die Standortdienste und versuchen Sie es erneut.',
-      );
-      return null;
-    }
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied) {
-      _showError(
-        'Die Standortberechtigung ist für einen Check-in erforderlich.',
-      );
-      return null;
-    }
-    if (permission == LocationPermission.deniedForever) {
-      _showError(
-        'Bitte erlauben Sie den Standortzugriff in den App-Einstellungen.',
-      );
-      return null;
-    }
-
     try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _showError(
+          'Bitte aktivieren Sie die Standortdienste und versuchen Sie es erneut.',
+          settings: Geolocator.openLocationSettings,
+        );
+        return null;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied) {
+        _showError(
+          'Die Standortberechtigung ist für einen Check-in erforderlich.',
+        );
+        return null;
+      }
+      if (permission == LocationPermission.deniedForever) {
+        _showError(
+          'Bitte erlauben Sie den Standortzugriff in den App-Einstellungen.',
+          settings: Geolocator.openAppSettings,
+        );
+        return null;
+      }
+
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 20),
+          timeLimit: Duration(seconds: 30),
         ),
       );
+    } on TimeoutException {
+      _showError(
+        'Kein aktuelles GPS-Signal. Bitte im Freien mit genauem Standort erneut versuchen.',
+        settings: Geolocator.openLocationSettings,
+      );
+      return null;
     } catch (_) {
-      _showError('Ihr aktueller Standort konnte nicht ermittelt werden.');
+      _showError(
+        'Ihr aktueller Standort konnte nicht ermittelt werden. Bitte Standort und App-Berechtigung prüfen.',
+        settings: Geolocator.openAppSettings,
+      );
       return null;
     }
   }
 
   Future<void> _handleCheckin() async {
+    if (_locating || context.read<CheckInProvider>().isLoading) return;
     if (context.read<AuthProvider>().currentUser == null) {
       _showError('Bitte melden Sie sich zuerst an.');
       return;
     }
+    if (!widget.deal.location.hasCoordinates) {
+      _showError(
+        'Für dieses Restaurant fehlt der Kartenstandort. Der Betreiber muss zuerst die Koordinaten hinterlegen.',
+      );
+      return;
+    }
 
+    setState(() => _locating = true);
     final position = await _getCurrentPosition();
+    if (mounted) setState(() => _locating = false);
     if (!mounted || position == null) return;
+    context.read<LocationProvider>().update(position);
 
     final checkIn = await context.read<CheckInProvider>().checkIn(
       restaurantId: widget.deal.id,
@@ -86,10 +110,20 @@ class _CheckinScreenState extends State<CheckinScreen> {
     _showSuccessDialog(checkIn);
   }
 
-  void _showError(String message) {
+  void _showError(String message, {Future<bool> Function()? settings}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: const Duration(seconds: 8),
+        action: settings == null
+            ? null
+            : SnackBarAction(
+                label: 'Einstellungen',
+                textColor: Colors.white,
+                onPressed: () async {
+                  await settings();
+                },
+              ),
         content: Text(message),
         backgroundColor: AppColors.badgeRed,
         behavior: SnackBarBehavior.floating,
@@ -319,10 +353,18 @@ class _CheckinScreenState extends State<CheckinScreen> {
                 ),
               ),
               const SizedBox(height: 36),
+              if (!deal.location.hasCoordinates)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'Check-in noch nicht verfügbar: Der Betreiber muss zuerst den Kartenstandort dieses Restaurants hinterlegen.',
+                    style: TextStyle(color: AppColors.textGrey),
+                  ),
+                ),
               CustomButton(
                 text: 'Standort prüfen & einchecken',
-                isLoading: checkInProvider.isLoading,
-                onPressed: _handleCheckin,
+                isLoading: checkInProvider.isLoading || _locating,
+                onPressed: deal.location.hasCoordinates ? _handleCheckin : null,
               ),
             ],
           ),
