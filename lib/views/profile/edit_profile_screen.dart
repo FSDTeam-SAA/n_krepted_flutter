@@ -9,6 +9,7 @@ import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/owner_page_background.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_language_provider.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -104,7 +105,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: Text(
           language.text('Profil bearbeiten', 'Edit profile'),
-          style: const TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: AppFontSizes.title),
         ),
       ),
       body: OwnerPageBackground(

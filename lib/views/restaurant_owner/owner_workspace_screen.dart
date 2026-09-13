@@ -9,6 +9,7 @@ import '../../providers/owner_restaurant_provider.dart';
 import 'create_edit_restaurant_screen.dart';
 import 'dish_form_sheet.dart';
 import 'owner_dishes_screen.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class OwnerWorkspaceScreen extends StatefulWidget {
   const OwnerWorkspaceScreen({super.key});
@@ -92,7 +93,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
           'Restaurantverwaltung',
           style: TextStyle(
             color: AppColors.textDark,
-            fontSize: 18,
+            fontSize: AppFontSizes.title,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -165,17 +166,17 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
           'Eigenes Restaurant registrieren',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: AppFontSizes.headingSmall,
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
           ),
         ),
         const SizedBox(height: 10),
         const Text(
-          'Reichen Sie Ihr Restaurant ein, um Spezialitäten, Öffnungszeiten und Signature Dishes für Kunden in Ihrer Nähe sichtbar zu machen.',
+          'Reichen Sie Ihr Restaurant ein, um Spezialitäten, Öffnungszeiten und Signature-Gerichte für Kunden in Ihrer Nähe sichtbar zu machen.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 13.5,
+            fontSize: AppFontSizes.labelMedium,
             color: AppColors.textGrey,
             height: 1.45,
           ),
@@ -186,7 +187,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
           label: const Text(
             'Restaurant jetzt erstellen',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: AppFontSizes.button,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -262,7 +263,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                       Text(
                         'PRÜFUNG LÄUFT',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: AppFontSizes.tiny,
                           letterSpacing: 0.7,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF92400E),
@@ -298,7 +299,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
               const Text(
                 'Ihre Anfrage wird geprüft',
                 style: TextStyle(
-                  fontSize: 19,
+                  fontSize: AppFontSizes.titleLarge,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textDark,
                 ),
@@ -309,7 +310,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 'Nach der Freigabe können Sie Gerichte und Restaurantdetails verwalten.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppFontSizes.smallPlus,
                   color: Color(0xFF7C5A25),
                   height: 1.5,
                 ),
@@ -354,7 +355,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                   backgroundColor: Colors.white.withValues(alpha: 0.72),
                   side: const BorderSide(color: AppColors.primary),
                   textStyle: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSizes.labelSmall,
                     fontWeight: FontWeight.w700,
                   ),
                   shape: RoundedRectangleBorder(
@@ -381,7 +382,10 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
               child: Text(
                 'Sie werden nach der Entscheidung automatisch informiert.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11.5, color: AppColors.textGrey),
+                style: TextStyle(
+                  fontSize: AppFontSizes.caption,
+                  color: AppColors.textGrey,
+                ),
               ),
             ),
           ],
@@ -408,7 +412,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
               Text(
                 'Restaurant wurde abgelehnt',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: AppFontSizes.title,
                   fontWeight: FontWeight.bold,
                   color: Colors.red.shade900,
                 ),
@@ -418,7 +422,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 'Ablehnungsgrund: ${restaurant.rejectionReason ?? "Keine Angabe"}',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSizes.labelSmall,
                   fontWeight: FontWeight.w600,
                   color: Colors.red.shade800,
                   height: 1.4,
@@ -433,7 +437,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
           label: const Text(
             'Überarbeiten und erneut einreichen',
             style: TextStyle(
-              fontSize: 14.5,
+              fontSize: AppFontSizes.bodyLarge,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -514,7 +518,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                               child: Text(
                                 restaurant.title,
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: AppFontSizes.subtitle,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textDark,
                                 ),
@@ -535,7 +539,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                               child: const Text(
                                 'Genehmigt',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSizes.captionSmall,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF065F46),
                                 ),
@@ -556,7 +560,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                               child: Text(
                                 '${restaurant.location.address}, ${restaurant.location.city}',
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: AppFontSizes.small,
                                   color: AppColors.textGrey,
                                 ),
                                 maxLines: 1,
@@ -569,7 +573,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                         Text(
                           'Startpreis: ${formatEuro(context, restaurant.price)}',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: AppFontSizes.small,
                             fontWeight: FontWeight.w600,
                             color: AppColors.primary,
                           ),
@@ -589,7 +593,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 label: const Text(
                   'Restaurantangaben bearbeiten',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppFontSizes.labelSmall,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
@@ -658,7 +662,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 const Text(
                   'Gerichte & Spezialitäten',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: AppFontSizes.titleSmall,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
                   ),
@@ -666,7 +670,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 Text(
                   '${restaurant.dishes.length} Gerichte hinterlegt',
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSizes.small,
                     color: AppColors.textGrey,
                   ),
                 ),
@@ -677,7 +681,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
               label: const Text(
                 'Hinzufügen',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppFontSizes.labelSmall,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -718,16 +722,19 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 Text(
                   'Noch keine Gerichte vorhanden',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppFontSizes.body,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
                   ),
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Fügen Sie Ihre ersten Gerichte und Signature Dishes hinzu.',
+                  'Fügen Sie Ihre ersten Gerichte und Signature-Gerichte hinzu.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: TextStyle(
+                    fontSize: AppFontSizes.small,
+                    color: AppColors.textGrey,
+                  ),
                 ),
               ],
             ),
@@ -788,7 +795,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                       child: Text(
                         dish.name,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: AppFontSizes.body,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textDark,
                         ),
@@ -813,7 +820,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                             Text(
                               'Signature',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: AppFontSizes.tiny,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFFB45309),
                               ),
@@ -827,7 +834,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 Text(
                   '${formatEuro(context, dish.price)} • ${dish.category.isNotEmpty ? dish.category : "Hauptspeise"}',
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: AppFontSizes.small,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
@@ -837,7 +844,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                   Text(
                     dish.description,
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: AppFontSizes.captionSmall,
                       color: AppColors.textGrey,
                     ),
                     maxLines: 1,
@@ -902,7 +909,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
               Text(
                 'Eingereichte Details',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppFontSizes.body,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textDark,
                 ),
@@ -942,7 +949,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: AppFontSizes.subtitle,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textDark,
                       ),
@@ -972,7 +979,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: AppFontSizes.small,
                 height: 1.45,
                 color: AppColors.textGrey,
               ),
@@ -998,7 +1005,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppFontSizes.caption,
               fontWeight: FontWeight.w600,
               color: valueColor,
             ),
@@ -1048,7 +1055,7 @@ class _ApprovalStep extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 10.5,
+            fontSize: AppFontSizes.tinyPlus,
             fontWeight: highlighted ? FontWeight.w700 : FontWeight.w500,
             color: highlighted ? AppColors.textBody : AppColors.textGrey,
           ),

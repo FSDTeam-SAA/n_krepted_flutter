@@ -43,7 +43,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Wenn die E-Mail registriert ist, wurde ein sicherer Reset-Link gesendet.',
+            'Wenn die E-Mail-Adresse registriert ist, wurde ein sicherer Link zum Zurücksetzen gesendet.',
           ),
           backgroundColor: AppColors.successGreen,
         ),
@@ -88,7 +88,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     Text(
                       'Stellen Sie Ihr Konto sicher wieder her und setzen Sie Ihre\nkulinarische Reise fort.',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.body(size: 12.6, height: 1.45),
+                      style: AppTextStyles.body(
+                        size: AppFontSizes.authBody,
+                        height: 1.45,
+                      ),
                     ).fadeSlideUp(delay: Motion.step(1)),
 
                     SizedBox(height: 75.h),
@@ -103,7 +106,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                     SizedBox(height: 72.h),
                     CustomButton(
-                      text: 'OTP senden',
+                      text: 'Bestätigungscode senden',
                       isLoading: authProvider.isLoading,
                       onPressed: _handleSendOtp,
                     ).fadeSlideUp(delay: Motion.step(3)),

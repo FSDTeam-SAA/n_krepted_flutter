@@ -128,7 +128,7 @@ class _DishFormSheetState extends State<DishFormSheet> {
     if (!_hasImage) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Bitte ein Gerichtbild ausw\u00e4hlen.'),
+          content: Text('Bitte wählen Sie ein Gerichtsbild aus.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -217,14 +217,14 @@ class _DishFormSheetState extends State<DishFormSheet> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: AppFontSizes.title,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textDark,
                       ),
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Close',
+                    tooltip: 'Schließen',
                     icon: const Icon(Icons.close_rounded, size: 22),
                     onPressed: _closeSheet,
                     style: IconButton.styleFrom(
@@ -240,7 +240,7 @@ class _DishFormSheetState extends State<DishFormSheet> {
               _buildFieldLabel('Gerichtname'),
               CustomTextField(
                 controller: _nameController,
-                hintText: 'z. B. Signature Truffel Pasta',
+                hintText: 'z. B. Signature-Trüffelpasta',
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Bitte Gerichtname eingeben'
                     : null,
@@ -284,7 +284,7 @@ class _DishFormSheetState extends State<DishFormSheet> {
               ),
 
               const SizedBox(height: 12),
-              _buildFieldLabel('Gerichtbild'),
+              _buildFieldLabel('Gerichtsbild'),
               _buildImagePicker(),
 
               const SizedBox(height: 12),
@@ -348,9 +348,9 @@ class _DishFormSheetState extends State<DishFormSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Signature Dish',
+                            'Signature-Gericht',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: AppFontSizes.labelSmall,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textDark,
                             ),
@@ -358,7 +358,7 @@ class _DishFormSheetState extends State<DishFormSheet> {
                           Text(
                             'Als Hauptspezialität in der App hervorheben',
                             style: TextStyle(
-                              fontSize: 11.5,
+                              fontSize: AppFontSizes.caption,
                               color: AppColors.textGrey,
                             ),
                           ),
@@ -393,7 +393,7 @@ class _DishFormSheetState extends State<DishFormSheet> {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 12,
+          fontSize: AppFontSizes.small,
           fontWeight: FontWeight.w600,
           color: Color(0xFF334155),
         ),
@@ -505,7 +505,10 @@ class _DishFormSheetState extends State<DishFormSheet> {
 
   InputDecoration _areaDecoration(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: AppTextStyles.body(size: 13, color: AppColors.textGrey),
+    hintStyle: AppTextStyles.body(
+      size: AppFontSizes.labelSmall,
+      color: AppColors.textGrey,
+    ),
     filled: true,
     fillColor: Colors.white,
     contentPadding: const EdgeInsets.all(12),
@@ -542,7 +545,10 @@ class _DishImagePlaceholder extends StatelessWidget {
       Text(
         label,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 10.5, color: AppColors.textGrey),
+        style: const TextStyle(
+          fontSize: AppFontSizes.tinyPlus,
+          color: AppColors.textGrey,
+        ),
       ),
     ],
   );

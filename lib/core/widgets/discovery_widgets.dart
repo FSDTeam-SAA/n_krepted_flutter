@@ -7,6 +7,7 @@ import '../../data/models/deal_model.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/saved_provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_text_styles.dart';
 
 class RemotePhoto extends StatelessWidget {
   final String url;
@@ -121,7 +122,10 @@ class DistanceLine extends StatelessWidget {
             const Flexible(
               child: Text(
                 'Entfernung nicht verfügbar',
-                style: TextStyle(fontSize: 9, color: AppColors.textGrey),
+                style: TextStyle(
+                  fontSize: AppFontSizes.micro,
+                  color: AppColors.textGrey,
+                ),
               ),
             ),
           ],
@@ -150,21 +154,27 @@ class DistanceLine extends StatelessWidget {
           Text(
             '${format.format(km)} km',
             style: TextStyle(
-              fontSize: compact ? 9 : 11,
+              fontSize: compact
+                  ? AppFontSizes.micro
+                  : AppFontSizes.captionSmall,
               color: AppColors.textGrey,
             ),
           ),
           Text(
             '•',
             style: TextStyle(
-              fontSize: compact ? 9 : 11,
+              fontSize: compact
+                  ? AppFontSizes.micro
+                  : AppFontSizes.captionSmall,
               color: AppColors.textGrey,
             ),
           ),
           Text(
             '${format.format(km / 1.609344)} $miles',
             style: TextStyle(
-              fontSize: compact ? 9 : 11,
+              fontSize: compact
+                  ? AppFontSizes.micro
+                  : AppFontSizes.captionSmall,
               color: AppColors.textGrey,
             ),
           ),

@@ -8,6 +8,7 @@ import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
 import '../dish_details/dish_details_screen.dart';
 import 'dish_form_sheet.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class OwnerDishesScreen extends StatefulWidget {
   final bool signaturesOnly;
@@ -60,7 +61,7 @@ class _OwnerDishesScreenState extends State<OwnerDishesScreen> {
           widget.signaturesOnly ? 'Spezialitäten' : 'Alle Gerichte',
           style: const TextStyle(
             color: AppColors.textDark,
-            fontSize: 19,
+            fontSize: AppFontSizes.titleLarge,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -203,7 +204,7 @@ class _CategoryChip extends StatelessWidget {
       side: BorderSide.none,
       labelStyle: TextStyle(
         color: selected ? AppColors.textDark : AppColors.textGrey,
-        fontSize: 11.5,
+        fontSize: AppFontSizes.caption,
       ),
     ),
   );
@@ -266,7 +267,10 @@ class _DishGridTile extends StatelessWidget {
               dish.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: AppFontSizes.small,
+              ),
             ),
           ),
           Positioned(
@@ -341,7 +345,7 @@ class _SignatureCard extends StatelessWidget {
                 Text(
                   dish.name,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: AppFontSizes.headingSmall,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -352,7 +356,7 @@ class _SignatureCard extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppFontSizes.caption,
                       color: AppColors.textGrey,
                     ),
                   ),
@@ -361,7 +365,7 @@ class _SignatureCard extends StatelessWidget {
                 Text(
                   formatEuro(context, dish.price),
                   style: const TextStyle(
-                    fontSize: 17,
+                    fontSize: AppFontSizes.titleSmall,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

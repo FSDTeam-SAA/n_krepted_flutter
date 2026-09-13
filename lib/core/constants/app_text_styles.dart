@@ -2,6 +2,38 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_sizes.dart';
 
+/// Central font-size scale for every piece of text in the Flutter app.
+///
+/// Change a value here to update every text style that uses that size. The
+/// extra half-step values preserve the current design while keeping all size
+/// decisions in one place.
+class AppFontSizes {
+  AppFontSizes._();
+
+  static const double micro = 9;
+  static const double tiny = 10;
+  static const double tinyPlus = 10.5;
+  static const double captionSmall = 11;
+  static const double caption = 11.5;
+  static const double small = 12;
+  static const double smallPlus = 12.5;
+  static const double authBody = 12.6;
+  static const double labelSmall = 13;
+  static const double labelMedium = 13.5;
+  static const double body = 14;
+  static const double bodyLarge = 14.5;
+  static const double button = 15;
+  static const double subtitle = 16;
+  static const double titleSmall = 17;
+  static const double title = 18;
+  static const double titleLarge = 19;
+  static const double headingSmall = 20;
+  static const double heading = 22;
+  static const double headingLarge = 23;
+  static const double displaySmall = 24;
+  static const double display = 25;
+}
+
 /// Three faces carry the whole design. Each was picked by rendering candidates
 /// at the width the Figma frames actually measure and keeping the lowest
 /// pixel difference against the exports:
@@ -27,7 +59,7 @@ class AppTextStyles {
 
   /// Onboarding headline. Measured: 2 lines, 36px line pitch, #0097B0.
   static TextStyle script({
-    double size = 24,
+    double size = AppFontSizes.displaySmall,
     Color color = AppColors.primary,
   }) => TextStyle(
     fontFamily: scriptFamily,
@@ -38,7 +70,7 @@ class AppTextStyles {
 
   /// Bold serif heading, e.g. "Willkommen bei Signature Dish".
   static TextStyle heading({
-    double size = 18,
+    double size = AppFontSizes.title,
     Color color = AppColors.textDark,
     FontWeight weight = FontWeight.w600,
   }) => TextStyle(
@@ -52,7 +84,7 @@ class AppTextStyles {
 
   /// Paragraph copy — 14px over a 21px line, #858585.
   static TextStyle body({
-    double size = 14,
+    double size = AppFontSizes.body,
     Color color = AppColors.textGrey,
     FontWeight weight = FontWeight.w400,
     double height = 1.5,
@@ -67,7 +99,7 @@ class AppTextStyles {
 
   /// Labels, buttons, links.
   static TextStyle label({
-    double size = 14,
+    double size = AppFontSizes.body,
     Color color = AppColors.textDark,
     FontWeight weight = FontWeight.w500,
     TextDecoration? decoration,

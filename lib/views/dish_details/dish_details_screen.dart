@@ -13,6 +13,7 @@ import '../../providers/review_provider.dart';
 import '../reviews/all_reviews_screen.dart';
 import '../reviews/write_review_screen.dart';
 import '../home/dessert_suggestion.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class DishDetailsScreen extends StatefulWidget {
   final DealModel deal;
@@ -72,7 +73,10 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
         : [if (dish.image.isNotEmpty) dish.image];
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Signature Dish', style: TextStyle(fontSize: 18)),
+        title: const Text(
+          'Signature-Gericht',
+          style: TextStyle(fontSize: AppFontSizes.title),
+        ),
       ),
       bottomNavigationBar: dish == null || restaurant == null
           ? null
@@ -171,7 +175,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                           child: Text(
                             dish.name,
                             style: const TextStyle(
-                              fontSize: 25,
+                              fontSize: AppFontSizes.display,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -185,7 +189,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                           child: Text(
                             formatEuro(context, dish.price),
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: AppFontSizes.title,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -194,7 +198,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                         const SizedBox(width: 5),
                         Text(
                           '${dish.reviewCount} Bewertungen',
-                          style: const TextStyle(fontSize: 12),
+                          style: const TextStyle(fontSize: AppFontSizes.small),
                         ),
                       ],
                     ),
@@ -211,7 +215,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                       const Text(
                         'Zubereitungsmethode',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: AppFontSizes.button,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -233,7 +237,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                                   child: Text(
                                     '•  $ingredient',
                                     style: const TextStyle(
-                                      fontSize: 13,
+                                      fontSize: AppFontSizes.labelSmall,
                                       color: AppColors.textGrey,
                                     ),
                                   ),
@@ -259,7 +263,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                           child: Text(
                             'Rezensionen',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: AppFontSizes.button,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -306,7 +310,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
   }
 
   static const _bodyStyle = TextStyle(
-    fontSize: 13,
+    fontSize: AppFontSizes.labelSmall,
     color: AppColors.textGrey,
     height: 1.5,
   );
@@ -317,7 +321,10 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontSize: AppFontSizes.button,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 6),
         Text(body, style: _bodyStyle),

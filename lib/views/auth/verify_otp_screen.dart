@@ -103,7 +103,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 children: [
                   SizedBox(height: 284.h - AppSizes.topInset),
                   Text(
-                    'OTP überprüfen',
+                    'Bestätigungscode prüfen',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.heading(),
                   ).fadeSlideUp(),
@@ -112,7 +112,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   Text(
                     'Bestätigen Sie Ihr Konto, um Signature Dish weiter zu\nentdecken.',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.body(size: 12.6, height: 1.45),
+                    style: AppTextStyles.body(
+                      size: AppFontSizes.authBody,
+                      height: 1.45,
+                    ),
                   ).fadeSlideUp(delay: Motion.step(1)),
 
                   SizedBox(height: 75.h),
@@ -206,7 +209,10 @@ class _OtpBoxState extends State<_OtpBox> {
           textInputAction: TextInputAction.next,
           maxLength: 1,
           cursorColor: AppColors.primary,
-          style: AppTextStyles.body(size: 16, color: AppColors.textDark),
+          style: AppTextStyles.body(
+            size: AppFontSizes.subtitle,
+            color: AppColors.textDark,
+          ),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
             TextInputFormatter.withFunction((oldValue, newValue) {

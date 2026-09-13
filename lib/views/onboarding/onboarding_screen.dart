@@ -112,7 +112,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(
                     'Überspringen',
                     style: AppTextStyles.body(
-                      size: 14,
+                      size: AppFontSizes.body,
                       color: AppColors.textMuted,
                     ),
                   ),
@@ -190,7 +190,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Text(
                         'Begonnen',
                         style: AppTextStyles.label(
-                          size: 16,
+                          size: AppFontSizes.subtitle,
                           color: Colors.white,
                           weight: FontWeight.w500,
                         ),
@@ -294,7 +294,7 @@ const List<_SlideCopy> _copy = [
   ),
   _SlideCopy(
     'Vertrauenswürdige Bewertungen\nund echte Erfahrungen',
-    'Lesen Sie vor Ihrer Bestellung detaillierte\nKundenbewertungen und exklusive Empfehlungen\ndes Signature Dish Teams.',
+    'Lesen Sie vor Ihrer Bestellung detaillierte\nKundenbewertungen und exklusive Empfehlungen\ndes Signature-Dish-Teams.',
   ),
 ];
 
@@ -356,7 +356,7 @@ class _Slide extends StatelessWidget {
               copy.body,
               textAlign: copy.alignRight ? TextAlign.right : TextAlign.left,
               style: AppTextStyles.body(
-                size: 13.5,
+                size: AppFontSizes.labelMedium,
                 color: AppColors.textMuted,
                 height: 1.556,
               ),

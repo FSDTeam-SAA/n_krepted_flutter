@@ -6,6 +6,7 @@ import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_language_provider.dart';
 import '../../core/widgets/owner_page_background.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -84,10 +85,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          language.text('Kennwort ändern', 'Change password'),
+          language.text('Passwort ändern', 'Change password'),
           style: const TextStyle(
             color: AppColors.textDark,
-            fontSize: 18,
+            fontSize: AppFontSizes.title,
             fontWeight: FontWeight.bold,
           ),
         ),

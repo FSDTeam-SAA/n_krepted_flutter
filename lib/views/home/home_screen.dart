@@ -10,6 +10,7 @@ import 'search_screen.dart';
 import 'filter_modal.dart';
 import 'categories_screen.dart';
 import 'discovery_feed.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -57,9 +58,9 @@ class HomeScreen extends StatelessWidget {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Finde dein Gericht, Restaurants und Bars',
+                                  'Finde Gerichte, Restaurants und Bars',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: AppFontSizes.small,
                                     color: AppColors.textGrey,
                                   ),
                                 ),

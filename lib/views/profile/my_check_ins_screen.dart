@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/check_in_provider.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class MyCheckInsScreen extends StatefulWidget {
   const MyCheckInsScreen({super.key});
@@ -79,7 +80,7 @@ class _MyCheckInsScreenState extends State<MyCheckInsScreen> {
                             Text(
                               '${DateFormat('dd.MM.yyyy, HH:mm').format(item.checkedInAt.toLocal())} Uhr · ${item.partySize} Personen',
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: AppFontSizes.small,
                                 color: AppColors.textGrey,
                               ),
                             ),
@@ -89,7 +90,7 @@ class _MyCheckInsScreenState extends State<MyCheckInsScreen> {
                       Text(
                         '${item.distanceMeters.round()} m',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: AppFontSizes.small,
                           fontWeight: FontWeight.bold,
                           color: AppColors.successGreen,
                         ),

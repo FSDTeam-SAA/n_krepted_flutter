@@ -77,7 +77,8 @@ class AuthRepository {
     );
     if (response.data?['success'] != true) {
       throw Exception(
-        response.data?['message'] ?? 'Fehler beim Senden des OTP',
+        response.data?['message'] ??
+            'Der Bestätigungscode konnte nicht gesendet werden.',
       );
     }
   }
@@ -99,7 +100,9 @@ class AuthRepository {
       await StorageService.saveUser(user.toJson());
       return user;
     } else {
-      throw Exception(response.data?['message'] ?? 'Ungültiger OTP-Code');
+      throw Exception(
+        response.data?['message'] ?? 'Ungültiger Bestätigungscode',
+      );
     }
   }
 

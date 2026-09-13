@@ -4,6 +4,7 @@ import '../../data/models/deal_model.dart';
 import '../constants/app_colors.dart';
 import 'discovery_widgets.dart';
 import 'rating_badge.dart';
+import '../constants/app_text_styles.dart';
 
 /// The same database restaurant/dish pair is used in Home, Search, Saved and Map.
 class RestaurantCard extends StatelessWidget {
@@ -70,7 +71,9 @@ class RestaurantCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: compact ? 10 : 12,
+                          fontSize: compact
+                              ? AppFontSizes.tiny
+                              : AppFontSizes.small,
                           color: Colors.white,
                         ),
                       ),
@@ -99,7 +102,9 @@ class RestaurantCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Lora',
                     fontWeight: FontWeight.w700,
-                    fontSize: compact ? 14 : 19,
+                    fontSize: compact
+                        ? AppFontSizes.body
+                        : AppFontSizes.titleLarge,
                   ),
                 ),
               ),
@@ -123,7 +128,9 @@ class RestaurantCard extends StatelessWidget {
                       maxLines: compact ? 1 : 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: compact ? 10 : 13,
+                        fontSize: compact
+                            ? AppFontSizes.tiny
+                            : AppFontSizes.labelSmall,
                         color: AppColors.textGrey,
                       ),
                     ),
@@ -137,14 +144,17 @@ class RestaurantCard extends StatelessWidget {
             children: [
               Text(
                 deal.rating.toStringAsFixed(1).replaceAll('.', ','),
-                style: const TextStyle(color: Color(0xFFA4B600), fontSize: 12),
+                style: const TextStyle(
+                  color: Color(0xFFA4B600),
+                  fontSize: AppFontSizes.small,
+                ),
               ),
               const Icon(Icons.star, color: Color(0xFFA4B600), size: 13),
               if (!compact) ...[
                 const SizedBox(width: 5),
                 Text(
                   '${deal.reviewCount} Bewertungen',
-                  style: const TextStyle(fontSize: 11),
+                  style: const TextStyle(fontSize: AppFontSizes.captionSmall),
                 ),
               ],
             ],
@@ -154,7 +164,10 @@ class RestaurantCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 10),
               child: Text(
                 '${DateFormat('dd.MM.yyyy · HH:mm').format(deal.opensAt!.toLocal())} · Demnächst verfügbar',
-                style: const TextStyle(color: AppColors.primary, fontSize: 12),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: AppFontSizes.small,
+                ),
               ),
             ),
           if (!compact && showMore && !upcoming) ...[

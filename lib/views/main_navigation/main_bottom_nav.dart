@@ -6,6 +6,7 @@ import '../home/home_screen.dart';
 import '../map_explore/explore_map_screen.dart';
 import '../saved_bookmarks/saved_dishes_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class MainBottomNav extends StatefulWidget {
   final int initialIndex;
@@ -157,7 +158,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 220),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: AppFontSizes.captionSmall,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected ? AppColors.primary : AppColors.textGrey,
               ),

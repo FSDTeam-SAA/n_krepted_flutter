@@ -15,6 +15,7 @@ import 'my_check_ins_screen.dart';
 import '../restaurant_owner/create_edit_restaurant_screen.dart';
 import '../restaurant_owner/owner_workspace_screen.dart';
 import '../restaurant_details/restaurant_details_screen.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -37,7 +38,7 @@ class ProfileScreen extends StatelessWidget {
           language.text('Profil', 'Profile'),
           style: const TextStyle(
             color: AppColors.textDark,
-            fontSize: 22,
+            fontSize: AppFontSizes.heading,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -85,7 +86,7 @@ class ProfileScreen extends StatelessWidget {
                                 child: Text(
                                   user?.name ?? '',
                                   style: const TextStyle(
-                                    fontSize: 17,
+                                    fontSize: AppFontSizes.titleSmall,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textDark,
                                   ),
@@ -111,7 +112,7 @@ class ProfileScreen extends StatelessWidget {
                                   child: Text(
                                     language.text('Inhaber', 'Owner'),
                                     style: const TextStyle(
-                                      fontSize: 11,
+                                      fontSize: AppFontSizes.captionSmall,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.primary,
                                     ),
@@ -123,7 +124,7 @@ class ProfileScreen extends StatelessWidget {
                           Text(
                             user?.email ?? '',
                             style: const TextStyle(
-                              fontSize: 12.5,
+                              fontSize: AppFontSizes.smallPlus,
                               color: AppColors.textGrey,
                             ),
                           ),
@@ -225,7 +226,7 @@ class ProfileScreen extends StatelessWidget {
                   const Divider(height: 1, color: AppColors.divider),
                   _buildListTile(
                     icon: Icons.vpn_key_outlined,
-                    title: language.text('Kennwort ändern', 'Change password'),
+                    title: language.text('Passwort ändern', 'Change password'),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -234,13 +235,6 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       );
                     },
-                  ),
-                  const Divider(height: 1, color: AppColors.divider),
-                  _buildListTile(
-                    icon: Icons.language_outlined,
-                    title: language.text('Sprache', 'Language'),
-                    subtitle: language.languageName,
-                    onTap: () => _showLanguageSheet(context),
                   ),
                 ],
               ),
@@ -289,7 +283,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildListTile(
                     icon: Icons.shield_outlined,
                     title: language.text(
-                      'Datenschutzrichtlinie',
+                      'Datenschutzerklärung',
                       'Privacy policy',
                     ),
                     onTap: () {
@@ -339,7 +333,7 @@ class ProfileScreen extends StatelessWidget {
                         language.text('Abmelden', 'Log out'),
                         style: const TextStyle(
                           color: AppColors.badgeRed,
-                          fontSize: 14.5,
+                          fontSize: AppFontSizes.bodyLarge,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -349,51 +343,6 @@ class ProfileScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 30),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showLanguageSheet(BuildContext context) {
-    final language = context.read<AppLanguageProvider>();
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    language.text('Sprache auswählen', 'Choose language'),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              RadioGroup<String>(
-                groupValue: language.locale.languageCode,
-                onChanged: (value) async {
-                  if (value == null) return;
-                  await language.setLanguage(value);
-                  if (sheetContext.mounted) Navigator.pop(sheetContext);
-                },
-                child: const Column(
-                  children: [
-                    RadioListTile<String>(value: 'de', title: Text('Deutsch')),
-                    RadioListTile<String>(value: 'en', title: Text('English')),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -419,7 +368,7 @@ class ProfileScreen extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: AppFontSizes.small,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textGrey,
               ),
@@ -448,7 +397,7 @@ class ProfileScreen extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: AppFontSizes.body,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
               ),
@@ -464,7 +413,7 @@ class ProfileScreen extends StatelessWidget {
               child: Text(
                 badge,
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppFontSizes.tinyPlus,
                   fontWeight: FontWeight.bold,
                   color: badgeColor ?? const Color(0xFF065F46),
                 ),
@@ -475,7 +424,10 @@ class ProfileScreen extends StatelessWidget {
       subtitle: subtitle != null
           ? Text(
               subtitle,
-              style: const TextStyle(fontSize: 11.5, color: AppColors.textGrey),
+              style: const TextStyle(
+                fontSize: AppFontSizes.caption,
+                color: AppColors.textGrey,
+              ),
             )
           : null,
       trailing: const Icon(

@@ -7,6 +7,7 @@ import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/review_model.dart';
 import '../../providers/review_provider.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class OwnerRatingsScreen extends StatelessWidget {
   final String restaurantId;
@@ -52,7 +53,7 @@ class _RatingsLoaderState extends State<_RatingsLoader> {
           'Durchschnittliche Bewertungen',
           style: TextStyle(
             color: AppColors.textDark,
-            fontSize: 18,
+            fontSize: AppFontSizes.title,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -184,12 +185,18 @@ class _TrendCard extends StatelessWidget {
         children: [
           const Text(
             'Konsistenz der Bewertung',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: AppFontSizes.subtitle,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 5),
           const Text(
             '30-Tage-Rezensenten-Trend',
-            style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+            style: TextStyle(
+              fontSize: AppFontSizes.small,
+              color: AppColors.textGrey,
+            ),
           ),
           const SizedBox(height: 16),
           Container(
@@ -202,7 +209,7 @@ class _TrendCard extends StatelessWidget {
               '${average.toStringAsFixed(1).replaceAll('.', ',')} ★',
               style: const TextStyle(
                 color: AppColors.orangeAccent,
-                fontSize: 20,
+                fontSize: AppFontSizes.headingSmall,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -227,7 +234,7 @@ class _TrendCard extends StatelessWidget {
 }
 
 const _axisStyle = TextStyle(
-  fontSize: 11,
+  fontSize: AppFontSizes.captionSmall,
   letterSpacing: .8,
   color: AppColors.textGrey,
   fontWeight: FontWeight.w600,

@@ -6,6 +6,7 @@ import '../../core/widgets/owner_page_background.dart';
 import '../../providers/deal_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/location_provider.dart';
+import '../../core/constants/app_text_styles.dart';
 
 Future<void> showDiscoveryFilters(BuildContext context) async {
   final provider = context.read<DealProvider>();
@@ -135,7 +136,7 @@ class _FilterModalState extends State<FilterModal> {
                     contentPadding: EdgeInsets.zero,
                     title: const Text(
                       'In meiner Nähe',
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: AppFontSizes.body),
                     ),
                     value: _useDistance,
                     onChanged: (value) => setState(() => _useDistance = value),
@@ -250,7 +251,10 @@ class _FilterModalState extends State<FilterModal> {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 14, color: AppColors.textGrey),
+          style: const TextStyle(
+            fontSize: AppFontSizes.body,
+            color: AppColors.textGrey,
+          ),
         ),
         const SizedBox(height: 12),
         child,

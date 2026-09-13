@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/site_content_repository.dart';
 import '../constants/app_colors.dart';
 import 'discovery_widgets.dart';
+import '../constants/app_text_styles.dart';
 
 enum LegalDocumentType { terms, privacy }
 
@@ -100,7 +101,7 @@ class _RestrictedHtmlDocument extends StatelessWidget {
   TextStyle _styleFor(String kind) {
     if (kind == 'h1') {
       return const TextStyle(
-        fontSize: 22,
+        fontSize: AppFontSizes.heading,
         fontWeight: FontWeight.w700,
         color: AppColors.textDark,
         height: 1.3,
@@ -108,7 +109,7 @@ class _RestrictedHtmlDocument extends StatelessWidget {
     }
     if (kind == 'h2') {
       return const TextStyle(
-        fontSize: 19,
+        fontSize: AppFontSizes.titleLarge,
         fontWeight: FontWeight.w700,
         color: AppColors.textDark,
         height: 1.35,
@@ -116,7 +117,7 @@ class _RestrictedHtmlDocument extends StatelessWidget {
     }
     if (kind == 'h3') {
       return const TextStyle(
-        fontSize: 16,
+        fontSize: AppFontSizes.subtitle,
         fontWeight: FontWeight.w700,
         color: AppColors.textDark,
         height: 1.4,
@@ -124,7 +125,7 @@ class _RestrictedHtmlDocument extends StatelessWidget {
     }
     if (kind == 'h4') {
       return const TextStyle(
-        fontSize: 15,
+        fontSize: AppFontSizes.button,
         fontWeight: FontWeight.w700,
         color: AppColors.textDark,
         height: 1.4,
@@ -132,7 +133,7 @@ class _RestrictedHtmlDocument extends StatelessWidget {
     }
     if (kind == 'h5') {
       return const TextStyle(
-        fontSize: 14,
+        fontSize: AppFontSizes.body,
         fontWeight: FontWeight.w600,
         color: AppColors.textDark,
         height: 1.45,
@@ -140,7 +141,7 @@ class _RestrictedHtmlDocument extends StatelessWidget {
     }
     if (kind == 'h6') {
       return const TextStyle(
-        fontSize: 13,
+        fontSize: AppFontSizes.labelSmall,
         fontWeight: FontWeight.w600,
         color: AppColors.textDark,
         height: 1.45,
@@ -148,14 +149,14 @@ class _RestrictedHtmlDocument extends StatelessWidget {
     }
     if (kind == 'blockquote') {
       return const TextStyle(
-        fontSize: 14,
+        fontSize: AppFontSizes.body,
         fontStyle: FontStyle.italic,
         color: AppColors.primaryDark,
         height: 1.5,
       );
     }
     return const TextStyle(
-      fontSize: 14,
+      fontSize: AppFontSizes.body,
       color: AppColors.textGrey,
       height: 1.5,
     );

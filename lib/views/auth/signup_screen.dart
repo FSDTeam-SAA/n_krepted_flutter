@@ -106,7 +106,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Text(
                   'Erstellen Sie Ihr Konto und entdecken Sie die besten\nSpezialitäten Ihrer Stadt.',
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.body(size: 12.6, height: 1.45),
+                  style: AppTextStyles.body(
+                    size: AppFontSizes.authBody,
+                    height: 1.45,
+                  ),
                 ).fadeSlideUp(delay: Motion.step(1)),
 
                 SizedBox(height: 73.h),
@@ -192,7 +195,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             Text(
                               'Als Restaurantbesitzer registrieren',
                               style: AppTextStyles.label(
-                                size: 13,
+                                size: AppFontSizes.labelSmall,
                                 color: AppColors.textDark,
                                 weight: FontWeight.w600,
                               ),
@@ -200,7 +203,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             SizedBox(height: 2.h),
                             Text(
                               'Die Freigabe durch einen Administrator ist erforderlich.',
-                              style: AppTextStyles.body(size: 11.5),
+                              style: AppTextStyles.body(
+                                size: AppFontSizes.caption,
+                              ),
                             ),
                           ],
                         ),
@@ -222,14 +227,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     Text(
                       'Sie haben bereits ein Konto? ',
-                      style: AppTextStyles.body(size: 13),
+                      style: AppTextStyles.body(size: AppFontSizes.labelSmall),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Text(
                         'anmelden',
                         style: AppTextStyles.label(
-                          size: 13,
+                          size: AppFontSizes.labelSmall,
                           color: AppColors.primary,
                           weight: FontWeight.w600,
                           decoration: TextDecoration.underline,

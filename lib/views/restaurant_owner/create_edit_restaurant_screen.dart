@@ -281,7 +281,7 @@ class _CreateEditRestaurantScreenState
               : 'Restaurant erstellen',
           style: const TextStyle(
             color: AppColors.textDark,
-            fontSize: 18,
+            fontSize: AppFontSizes.title,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -304,7 +304,7 @@ class _CreateEditRestaurantScreenState
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                  fontSize: AppFontSizes.labelSmall,
                 ),
               ),
             ),
@@ -344,7 +344,7 @@ class _CreateEditRestaurantScreenState
                               Text(
                                 'Grund der Ablehnung durch Admin:',
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: AppFontSizes.smallPlus,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.red.shade900,
                                 ),
@@ -353,7 +353,7 @@ class _CreateEditRestaurantScreenState
                               Text(
                                 widget.restaurant!.rejectionReason!,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: AppFontSizes.small,
                                   color: Colors.red.shade800,
                                 ),
                               ),
@@ -407,7 +407,7 @@ class _CreateEditRestaurantScreenState
                   decoration: InputDecoration(
                     hintText: 'Detaillierte Beschreibung Ihres Restaurants...',
                     hintStyle: AppTextStyles.body(
-                      size: 13,
+                      size: AppFontSizes.labelSmall,
                       color: AppColors.textGrey,
                     ),
                     filled: true,
@@ -455,7 +455,7 @@ class _CreateEditRestaurantScreenState
                           'Adresse suchen oder direkt auf die Karte tippen',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSizes.captionSmall,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -578,7 +578,7 @@ class _CreateEditRestaurantScreenState
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 15,
+        fontSize: AppFontSizes.button,
         fontWeight: FontWeight.bold,
         color: AppColors.textDark,
       ),
@@ -676,7 +676,10 @@ class _CreateEditRestaurantScreenState
         const SizedBox(height: 6),
         Text(
           'Bis zu 4 Bilder. Tippen Sie auf das Hauptbild, um es zu ersetzen.',
-          style: AppTextStyles.body(size: 11, color: AppColors.textGrey),
+          style: AppTextStyles.body(
+            size: AppFontSizes.captionSmall,
+            color: AppColors.textGrey,
+          ),
         ),
       ],
     );
@@ -703,7 +706,7 @@ class _CreateEditRestaurantScreenState
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 12.5,
+          fontSize: AppFontSizes.smallPlus,
           fontWeight: FontWeight.w600,
           color: Color(0xFF334155),
         ),
@@ -736,7 +739,10 @@ class _ImageAddPlaceholder extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, color: AppColors.textGrey),
+          style: const TextStyle(
+            fontSize: AppFontSizes.captionSmall,
+            color: AppColors.textGrey,
+          ),
         ),
       ],
     );

@@ -9,6 +9,7 @@ import '../../data/models/deal_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/check_in_provider.dart';
 import '../../providers/location_provider.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class CheckinScreen extends StatefulWidget {
   final DealModel deal;
@@ -158,7 +159,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
             const Text(
               'Erfolgreich eingecheckt!',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: AppFontSizes.title,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textDark,
               ),
@@ -167,7 +168,10 @@ class _CheckinScreenState extends State<CheckinScreen> {
             const SizedBox(height: 8),
             Text(
               'Ihr Standort bei ${widget.deal.restaurantName} wurde in ${checkIn.distanceMeters.round()} m Entfernung verifiziert. Personen: ${checkIn.partySize}.',
-              style: const TextStyle(fontSize: 13, color: AppColors.textGrey),
+              style: const TextStyle(
+                fontSize: AppFontSizes.labelSmall,
+                color: AppColors.textGrey,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -200,7 +204,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
           'Im Restaurant einchecken',
           style: TextStyle(
             color: AppColors.textDark,
-            fontSize: 18,
+            fontSize: AppFontSizes.title,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -246,7 +250,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                           Text(
                             deal.restaurantName,
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: AppFontSizes.subtitle,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textDark,
                             ),
@@ -258,7 +262,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                               deal.location.city,
                             ].where((value) => value.isNotEmpty).join(', '),
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: AppFontSizes.small,
                               color: AppColors.textGrey,
                             ),
                           ),
@@ -284,7 +288,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                       child: Text(
                         'Der Check-in ist nur vor Ort möglich. Ihr aktueller GPS-Standort muss höchstens 100 Meter vom Restaurant entfernt sein.',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppFontSizes.labelSmall,
                           height: 1.4,
                           color: AppColors.textDark,
                         ),
@@ -297,7 +301,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
               const Text(
                 'Anzahl der Personen',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: AppFontSizes.button,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
                 ),
@@ -334,7 +338,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         Text(
                           '$_guestCount',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: AppFontSizes.subtitle,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

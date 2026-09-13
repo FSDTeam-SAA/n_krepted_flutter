@@ -15,6 +15,7 @@ import '../reviews/write_review_screen.dart';
 import '../reviews/all_reviews_screen.dart';
 import '../map_explore/explore_map_screen.dart';
 import '../home/dessert_suggestion.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class RestaurantDetailsScreen extends StatefulWidget {
   final DealModel deal;
@@ -155,7 +156,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                             restaurant.restaurantName,
                             style: const TextStyle(
                               fontFamily: 'Lora',
-                              fontSize: 20,
+                              fontSize: AppFontSizes.headingSmall,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -177,7 +178,9 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                           const SizedBox(width: 6),
                           Text(
                             '${restaurant.reviewCount} Bewertungen',
-                            style: const TextStyle(fontSize: 12),
+                            style: const TextStyle(
+                              fontSize: AppFontSizes.small,
+                            ),
                           ),
                         ],
                       ),
@@ -285,9 +288,9 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     const SizedBox(height: 24),
                     if (signature.isNotEmpty) ...[
                       const Text(
-                        'Signature Dish',
+                        'Signature-Gerichte',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: AppFontSizes.button,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -296,7 +299,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     ] else
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Noch keine Signature Dishes vorhanden.'),
+                        child: Text('Noch keine Signature-Gerichte vorhanden.'),
                       ),
                     if (!restaurant.isUpcoming && signature.isEmpty)
                       FilledButton.icon(
@@ -313,7 +316,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     const Text(
                       'Alle Gerichte',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: AppFontSizes.button,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -383,7 +386,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           color: Colors.white,
-                                          fontSize: 12,
+                                          fontSize: AppFontSizes.small,
                                         ),
                                       ),
                                     ),
@@ -415,7 +418,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+            style: const TextStyle(
+              fontSize: AppFontSizes.small,
+              color: AppColors.textGrey,
+            ),
           ),
         ),
       ],
@@ -468,7 +474,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         child: Text(
                           dish.name,
                           style: const TextStyle(
-                            fontSize: 23,
+                            fontSize: AppFontSizes.headingLarge,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -482,7 +488,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSizes.small,
                         color: AppColors.textGrey,
                         height: 1.4,
                       ),
@@ -494,7 +500,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         child: Text(
                           formatEuro(context, dish.price),
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: AppFontSizes.title,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -503,7 +509,9 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       const SizedBox(width: 4),
                       Text(
                         '${dish.reviewCount} Bewertungen',
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(
+                          fontSize: AppFontSizes.captionSmall,
+                        ),
                       ),
                     ],
                   ),

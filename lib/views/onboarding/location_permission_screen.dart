@@ -30,7 +30,11 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
 
   Future<void> _proceed() async {
     if (_selected != 2) {
-      try { await Geolocator.requestPermission(); } catch (_) { /* Discovery remains available without location. */ }
+      try {
+        await Geolocator.requestPermission();
+      } catch (_) {
+        /* Discovery remains available without location. */
+      }
     }
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -74,7 +78,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                             Text(
                               'Standortzugriff erlauben?',
                               style: AppTextStyles.body(
-                                size: 19,
+                                size: AppFontSizes.titleLarge,
                                 color: AppColors.textDark,
                                 weight: FontWeight.w500,
                               ),
@@ -130,7 +134,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                                         child: Text(
                                           _options[i],
                                           style: AppTextStyles.body(
-                                            size: 13,
+                                            size: AppFontSizes.labelSmall,
                                             height: 1.45,
                                           ),
                                         ),

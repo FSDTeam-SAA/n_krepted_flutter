@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 import '../../data/models/review_model.dart';
+import '../constants/app_text_styles.dart';
 
 class ReviewCard extends StatelessWidget {
   final ReviewModel review;
@@ -36,11 +37,14 @@ class ReviewCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(review.user.name, style: const TextStyle(fontSize: 14)),
+                  Text(
+                    review.user.name,
+                    style: const TextStyle(fontSize: AppFontSizes.body),
+                  ),
                   Text(
                     DateFormat('dd.MM.yyyy').format(review.createdAt.toLocal()),
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSizes.tiny,
                       color: AppColors.textLightGrey,
                     ),
                   ),
@@ -92,7 +96,7 @@ class ReviewCard extends StatelessWidget {
         Text(
           review.reviewComment,
           style: const TextStyle(
-            fontSize: 12.5,
+            fontSize: AppFontSizes.smallPlus,
             color: AppColors.textGrey,
             height: 1.45,
           ),
@@ -105,7 +109,9 @@ class ReviewCard extends StatelessWidget {
     children: [
       Icon(icon, size: 11, color: AppColors.primary),
       const SizedBox(width: 4),
-      Flexible(child: Text(value, style: const TextStyle(fontSize: 10))),
+      Flexible(
+        child: Text(value, style: const TextStyle(fontSize: AppFontSizes.tiny)),
+      ),
     ],
   );
 }

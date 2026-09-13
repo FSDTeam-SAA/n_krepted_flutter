@@ -7,6 +7,7 @@ import '../../data/models/deal_model.dart';
 import '../../providers/saved_provider.dart';
 import 'app_motion.dart';
 import 'rating_badge.dart';
+import '../constants/app_text_styles.dart';
 
 class DishCard extends StatelessWidget {
   final DealModel deal;
@@ -103,7 +104,7 @@ class DishCard extends StatelessWidget {
                         child: Text(
                           deal.dishName,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: AppFontSizes.labelSmall,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textDark,
                           ),
@@ -120,7 +121,7 @@ class DishCard extends StatelessWidget {
                       Text(
                         formatEuro(context, deal.price),
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: AppFontSizes.labelSmall,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textDark,
                         ),

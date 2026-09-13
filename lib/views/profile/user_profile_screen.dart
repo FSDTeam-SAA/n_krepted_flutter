@@ -13,6 +13,7 @@ import 'change_password_screen.dart';
 import 'terms_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'my_check_ins_screen.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -66,13 +67,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       children: [
                         Text(
                           user?.name ?? '',
-                          style: const TextStyle(fontSize: 15),
+                          style: const TextStyle(fontSize: AppFontSizes.button),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           user?.email ?? '',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: AppFontSizes.captionSmall,
                             color: AppColors.textGrey,
                           ),
                         ),
@@ -91,7 +92,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
               _tile(
                 Icons.key_outlined,
-                language.text('Kennwort ändern', 'Change password'),
+                language.text('Passwort ändern', 'Change password'),
                 () => _open(const ChangePasswordScreen()),
               ),
               _tile(
@@ -125,7 +126,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
               _tile(
                 Icons.shield_outlined,
-                language.text('Datenschutzrichtlinie', 'Privacy policy'),
+                language.text('Datenschutzerklärung', 'Privacy policy'),
                 () => _open(const PrivacyPolicyScreen()),
               ),
             ]),
@@ -169,7 +170,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
           child: Text(
             title,
-            style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+            style: const TextStyle(
+              fontSize: AppFontSizes.small,
+              color: AppColors.textGrey,
+            ),
           ),
         ),
         ...children,
@@ -178,7 +182,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   );
   Widget _tile(IconData icon, String title, VoidCallback action) => ListTile(
     leading: Icon(icon, size: 20),
-    title: Text(title, style: const TextStyle(fontSize: 14)),
+    title: Text(title, style: const TextStyle(fontSize: AppFontSizes.body)),
     trailing: const Icon(Icons.chevron_right, size: 18),
     onTap: action,
   );

@@ -71,7 +71,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.labelText != null) ...[
-          Text(widget.labelText!, style: AppTextStyles.label(size: 13)),
+          Text(
+            widget.labelText!,
+            style: AppTextStyles.label(size: AppFontSizes.labelSmall),
+          ),
           SizedBox(height: 6.h),
         ],
         // A hair of lift on focus — enough to notice, not enough to distract.
@@ -89,12 +92,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
             validator: widget.validator,
             maxLines: widget.maxLines,
             cursorColor: AppColors.primary,
-            style: AppTextStyles.body(size: 14, color: AppColors.textDark),
+            style: AppTextStyles.body(
+              size: AppFontSizes.body,
+              color: AppColors.textDark,
+            ),
             decoration: InputDecoration(
               isDense: true,
               hintText: widget.hintText,
               hintStyle: AppTextStyles.body(
-                size: 14,
+                size: AppFontSizes.body,
                 color: AppColors.textLightGrey,
               ),
               filled: true,
@@ -131,7 +137,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
               errorBorder: _border(AppColors.badgeRed, 1),
               focusedErrorBorder: _border(AppColors.badgeRed, 1.4),
               errorStyle: AppTextStyles.body(
-                size: 11,
+                size: AppFontSizes.captionSmall,
                 color: AppColors.badgeRed,
               ),
             ),

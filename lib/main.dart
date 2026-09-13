@@ -88,7 +88,7 @@ class SignatureDishApp extends StatelessWidget {
       title: 'Signature Dish',
       debugShowCheckedModeBanner: false,
       locale: languageProvider?.locale ?? const Locale('de'),
-      supportedLocales: const [Locale('de'), Locale('en')],
+      supportedLocales: const [Locale('de')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -108,8 +108,13 @@ class SignatureDishApp extends StatelessWidget {
           selectedColor: const Color(0xFFFFF6D4),
           showCheckmark: false,
           side: BorderSide.none,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          labelStyle: const TextStyle(fontSize: 12, color: AppColors.textDark),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          labelStyle: const TextStyle(
+            fontSize: AppFontSizes.small,
+            color: AppColors.textDark,
+          ),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,

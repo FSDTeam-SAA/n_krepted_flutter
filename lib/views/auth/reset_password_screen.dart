@@ -96,7 +96,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   children: [
                     SizedBox(height: 258.h - AppSizes.topInset),
                     Text(
-                      'Kennwort ändern',
+                      'Passwort ändern',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.heading(),
                     ).fadeSlideUp(),
@@ -105,7 +105,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     Text(
                       'Ihr neues Passwort sollte leicht zu merken und schwer zu\nerraten sein.',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.body(size: 12.6, height: 1.45),
+                      style: AppTextStyles.body(
+                        size: AppFontSizes.authBody,
+                        height: 1.45,
+                      ),
                     ).fadeSlideUp(delay: Motion.step(1)),
 
                     SizedBox(height: 72.h),

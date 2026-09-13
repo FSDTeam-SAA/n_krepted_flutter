@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_text_styles.dart';
 
 class RatingBadge extends StatelessWidget {
   final double rating;
@@ -30,7 +31,7 @@ class RatingBadge extends StatelessWidget {
               'SD ${rating.toStringAsFixed(1).replaceAll('.', ',')}',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 10.5,
+                fontSize: AppFontSizes.tinyPlus,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -61,7 +62,7 @@ class RatingBadge extends StatelessWidget {
             rating.toStringAsFixed(1).replaceAll('.', ','),
             style: const TextStyle(
               color: AppColors.textDark,
-              fontSize: 10.5,
+              fontSize: AppFontSizes.tinyPlus,
               fontWeight: FontWeight.bold,
             ),
           ),

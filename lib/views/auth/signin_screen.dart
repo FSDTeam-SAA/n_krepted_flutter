@@ -100,7 +100,10 @@ class _SignInScreenState extends State<SignInScreen> {
                 Text(
                   'Melden Sie sich an, um weiterhin unvergessliche Spezialitäten\nin Ihrer Nähe zu entdecken.',
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.body(size: 12.6, height: 1.2),
+                  style: AppTextStyles.body(
+                    size: AppFontSizes.authBody,
+                    height: 1.2,
+                  ),
                 ).fadeSlideUp(delay: Motion.step(2)),
 
                 SizedBox(height: 74.h),
@@ -160,7 +163,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           SizedBox(width: 8.w),
                           Text(
                             'Erinnere dich an mich',
-                            style: AppTextStyles.body(size: 13),
+                            style: AppTextStyles.body(
+                              size: AppFontSizes.labelSmall,
+                            ),
                           ),
                         ],
                       ),
@@ -175,7 +180,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: Text(
                         'Passwort vergessen?',
                         style: AppTextStyles.label(
-                          size: 13,
+                          size: AppFontSizes.labelSmall,
                           color: AppColors.primary,
                           weight: FontWeight.w600,
                         ),
@@ -197,7 +202,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   children: [
                     Text(
                       'Sie haben noch kein Konto? ',
-                      style: AppTextStyles.body(size: 13),
+                      style: AppTextStyles.body(size: AppFontSizes.labelSmall),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.push(
@@ -207,7 +212,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: Text(
                         'Melden Sie sich an',
                         style: AppTextStyles.label(
-                          size: 13,
+                          size: AppFontSizes.labelSmall,
                           color: AppColors.primary,
                           weight: FontWeight.w600,
                           decoration: TextDecoration.underline,

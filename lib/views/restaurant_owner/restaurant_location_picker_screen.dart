@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class RestaurantLocationSelection {
   final double latitude;
@@ -324,7 +325,7 @@ class _RestaurantLocationPickerScreenState
           'Restaurantstandort auswählen',
           style: TextStyle(
             color: AppColors.textDark,
-            fontSize: 18,
+            fontSize: AppFontSizes.title,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -398,7 +399,9 @@ class _RestaurantLocationPickerScreenState
                         result.displayName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: AppFontSizes.labelSmall,
+                        ),
                       ),
                       onTap: () => _selectSearchResult(result),
                     );
@@ -470,7 +473,10 @@ class _RestaurantLocationPickerScreenState
                       color: Colors.white.withValues(alpha: 0.85),
                       child: const Text(
                         '© OpenStreetMap contributors',
-                        style: TextStyle(fontSize: 9, color: Colors.black87),
+                        style: TextStyle(
+                          fontSize: AppFontSizes.micro,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ),
@@ -497,7 +503,7 @@ class _RestaurantLocationPickerScreenState
                   const Text(
                     'Ausgewählter Standort',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppFontSizes.small,
                       color: AppColors.textGrey,
                       fontWeight: FontWeight.w600,
                     ),
@@ -533,7 +539,7 @@ class _RestaurantLocationPickerScreenState
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 13,
+                                  fontSize: AppFontSizes.labelSmall,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

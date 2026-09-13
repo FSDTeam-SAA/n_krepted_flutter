@@ -7,6 +7,7 @@ import '../../core/constants/app_assets.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/check_in_model.dart';
 import '../../providers/check_in_provider.dart';
+import '../../core/constants/app_text_styles.dart';
 
 enum OwnerActivityType { checkIns, viewers }
 
@@ -51,7 +52,7 @@ class _OwnerActivityScreenState extends State<OwnerActivityScreen> {
           isCheckIns ? 'Einchecken' : 'Zuschauer',
           style: const TextStyle(
             color: AppColors.textDark,
-            fontSize: 19,
+            fontSize: AppFontSizes.titleLarge,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -167,7 +168,7 @@ class _OwnerPersonTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: AppFontSizes.body,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -177,7 +178,7 @@ class _OwnerPersonTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 10.5,
+                      fontSize: AppFontSizes.tinyPlus,
                       color: AppColors.textGrey,
                     ),
                   ),
@@ -191,7 +192,7 @@ class _OwnerPersonTile extends StatelessWidget {
               Text(
                 DateFormat('dd.MM.yyyy').format(item.checkedInAt.toLocal()),
                 style: const TextStyle(
-                  fontSize: 10.5,
+                  fontSize: AppFontSizes.tinyPlus,
                   color: AppColors.textGrey,
                 ),
               ),
@@ -200,7 +201,7 @@ class _OwnerPersonTile extends StatelessWidget {
                 Text(
                   '${item.partySize} Personen',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: AppFontSizes.tiny,
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
                   ),

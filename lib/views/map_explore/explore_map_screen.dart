@@ -15,6 +15,7 @@ import '../../data/models/deal_model.dart';
 import '../../providers/deal_provider.dart';
 import '../../providers/location_provider.dart';
 import '../restaurant_details/restaurant_details_screen.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class ExploreMapScreen extends StatefulWidget {
   final bool active;
@@ -461,7 +462,7 @@ class _ExploreMapScreenState extends State<ExploreMapScreen>
                       padding: const EdgeInsets.all(3),
                       child: const Text(
                         '© OpenStreetMap contributors',
-                        style: TextStyle(fontSize: 10),
+                        style: TextStyle(fontSize: AppFontSizes.tiny),
                       ),
                     ),
                   ),
@@ -558,7 +559,7 @@ class _ExploreMapScreenState extends State<ExploreMapScreen>
                       option.$2,
                       maxLines: 1,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppFontSizes.captionSmall,
                         color: _sort == option.$1
                             ? AppColors.textDark
                             : AppColors.textGrey,
@@ -582,7 +583,7 @@ class _ExploreMapScreenState extends State<ExploreMapScreen>
                 child: ChoiceChip(
                   label: Text(
                     cuisine ?? 'Alle',
-                    style: const TextStyle(fontSize: 11),
+                    style: const TextStyle(fontSize: AppFontSizes.captionSmall),
                   ),
                   selected: _cuisine == cuisine,
                   showCheckmark: false,

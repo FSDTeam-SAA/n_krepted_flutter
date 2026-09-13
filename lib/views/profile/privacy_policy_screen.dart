@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/app_language_provider.dart';
 import '../../core/widgets/owner_page_background.dart';
 import '../../core/widgets/legal_document_body.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -11,10 +12,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
     appBar: AppBar(
       title: Text(
         context.watch<AppLanguageProvider>().text(
-          'Datenschutzrichtlinie',
+          'Datenschutzerklärung',
           'Privacy policy',
         ),
-        style: const TextStyle(fontSize: 18),
+        style: const TextStyle(fontSize: AppFontSizes.title),
       ),
     ),
     body: const OwnerPageBackground(

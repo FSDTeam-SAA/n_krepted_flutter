@@ -18,6 +18,7 @@ import 'owner_workspace_screen.dart';
 import 'owner_activity_screen.dart';
 import 'owner_ratings_screen.dart';
 import 'owner_dishes_screen.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -158,9 +159,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        language.text('Signature Dish', 'Signature Dishes'),
+                        language.text('Signature-Gerichte', 'Signature Dishes'),
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: AppFontSizes.button,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textDark,
                         ),
@@ -188,7 +189,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       text: language.text(
                         restaurant.dishes.isEmpty
                             ? 'Noch keine Gerichte vorhanden.'
-                            : 'Noch kein Signature Dish vorhanden.',
+                            : 'Noch kein Signature-Gericht vorhanden.',
                         restaurant.dishes.isEmpty
                             ? 'No dishes have been added yet.'
                             : 'No signature dish has been added yet.',
@@ -393,14 +394,14 @@ class _StatsGrid extends StatelessWidget {
         _StatCard(
           icon: Icons.reviews,
           iconColor: const Color(0xFF4DB6AC),
-          label: language.text('Gesamtbewertungen', 'Total reviews'),
+          label: language.text('Bewertungen insgesamt', 'Total reviews'),
           value: _compactNumber(stats.totalReviews),
           onTap: onReviewsTap,
         ),
         _StatCard(
           icon: Icons.thumb_up_alt_outlined,
           iconColor: AppColors.primary,
-          label: language.text('Gesamteinchecken', 'Total check-ins'),
+          label: language.text('Check-ins insgesamt', 'Total check-ins'),
           value: _compactNumber(
             stats.totalCheckIns > 0
                 ? stats.totalCheckIns
@@ -411,7 +412,7 @@ class _StatsGrid extends StatelessWidget {
         _StatCard(
           icon: Icons.visibility_outlined,
           iconColor: const Color(0xFF8B2CFF),
-          label: language.text('Gesamtzuschauer', 'Total viewers'),
+          label: language.text('Aufrufe insgesamt', 'Total viewers'),
           value: _compactNumber(stats.totalCustomers),
           onTap: onViewersTap,
         ),
@@ -462,13 +463,16 @@ class _StatCard extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                style: const TextStyle(
+                  fontSize: AppFontSizes.small,
+                  color: AppColors.textGrey,
+                ),
               ),
               const SizedBox(height: 7),
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: AppFontSizes.titleSmall,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textDark,
                 ),
@@ -573,7 +577,7 @@ class _OwnerDishCard extends StatelessWidget {
                           dish.name,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: AppFontSizes.small,
                           ),
                         ),
                       ],
@@ -597,7 +601,7 @@ class _OwnerDishCard extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.orangeAccent,
                         fontWeight: FontWeight.w700,
-                        fontSize: 12,
+                        fontSize: AppFontSizes.small,
                       ),
                     ),
                   ),
@@ -614,7 +618,7 @@ class _OwnerDishCard extends StatelessWidget {
                       Text(
                         language.text('Rezensionen', 'Reviews'),
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: AppFontSizes.body,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -627,7 +631,7 @@ class _OwnerDishCard extends StatelessWidget {
                             language.text('Alle anzeigen', 'View all'),
                             style: const TextStyle(
                               color: AppColors.primary,
-                              fontSize: 11,
+                              fontSize: AppFontSizes.captionSmall,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -645,7 +649,7 @@ class _OwnerDishCard extends StatelessWidget {
                           'No reviews for this dish yet.',
                         ),
                         style: const TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppFontSizes.caption,
                           color: AppColors.textGrey,
                         ),
                       ),
@@ -704,7 +708,7 @@ class _ReviewPreview extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppFontSizes.labelSmall,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -712,7 +716,7 @@ class _ReviewPreview extends StatelessWidget {
                   Text(
                     language.text('vor $days Tagen', '$days days ago'),
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontSizes.tiny,
                       color: AppColors.textGrey,
                     ),
                   ),
@@ -741,7 +745,7 @@ class _ReviewPreview extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: AppFontSizes.caption,
               height: 1.4,
               color: AppColors.textGrey,
             ),

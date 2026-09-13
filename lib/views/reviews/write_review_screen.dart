@@ -10,6 +10,7 @@ import '../../data/models/review_model.dart';
 import '../../providers/review_provider.dart';
 import '../../providers/deal_provider.dart';
 import '../booking_checkin/checkin_screen.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class WriteReviewScreen extends StatefulWidget {
   final String dealId;
@@ -116,7 +117,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
       appBar: AppBar(
         title: const Text(
           'Schildern Sie Ihre Erfahrungen',
-          style: TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: AppFontSizes.title),
         ),
       ),
       body: OwnerPageBackground(
@@ -252,7 +253,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                       child: Text(
                         'Datum, Uhrzeit und Personen stammen aus Ihrem verifizierten Check-in.',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppFontSizes.captionSmall,
                           color: AppColors.textGrey,
                         ),
                       ),
@@ -313,7 +314,10 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontSize: AppFontSizes.body,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 12),
         child,

@@ -52,7 +52,7 @@ class _SearchBodyState extends State<_SearchBody> {
                         autofocus: true,
                         onChanged: provider.setSearchQuery,
                         decoration: InputDecoration(
-                          hintText: 'Finde dein Gericht, Restaurants und Bars',
+                          hintText: 'Finde Gerichte, Restaurants und Bars',
                           prefixIcon: const Icon(Icons.search, size: 18),
                           filled: true,
                           fillColor: Colors.white,
