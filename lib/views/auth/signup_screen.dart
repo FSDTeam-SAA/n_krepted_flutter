@@ -9,7 +9,6 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../providers/auth_provider.dart';
 import '../authenticated_landing_screen.dart';
-import 'verify_otp_screen.dart';
 
 /// Frame `Sign up.png`:
 ///   heading   @ y 191, subtitle @ y 223
@@ -53,19 +52,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!mounted) return;
 
     if (success) {
-      if (_joinAsRestaurantOwner) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const AuthenticatedLandingScreen()),
-          (route) => false,
-        );
-        return;
-      }
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (_) => VerifyOtpScreen(email: _emailController.text.trim()),
-        ),
+        MaterialPageRoute(builder: (_) => const AuthenticatedLandingScreen()),
+        (route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

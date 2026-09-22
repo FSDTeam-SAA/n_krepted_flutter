@@ -1,17 +1,15 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-
 class ApiConstants {
   static String get baseUrl {
-    const configured = String.fromEnvironment('API_BASE_URL');
-    if (configured.isNotEmpty) return configured.replaceFirst(RegExp(r'/$'), '');
-    if (kIsWeb) {
-      return 'http://localhost:5000/api';
+    const configured = String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'https://n-krypted-sd-backend.onrender.com/api',
+    );
+    final normalized = configured.replaceFirst(RegExp(r'/+$'), '');
+    if (normalized.endsWith('/api/v1')) {
+      return normalized.replaceFirst(RegExp(r'/v1$'), '');
     }
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:5000/api';
-    }
-    return 'http://localhost:5000/api';
+    if (normalized.endsWith('/api')) return normalized;
+    return '$normalized/api';
   }
 
   // Auth Endpoints

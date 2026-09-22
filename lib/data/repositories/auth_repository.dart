@@ -52,9 +52,6 @@ class AuthRepository {
     );
 
     if (response.data != null && response.data['success'] == true) {
-      if (isRestaurantOwner) {
-        return login(email: email, password: password);
-      }
       final userMap = response.data['data'];
       final token = response.data['token'];
       final user = UserModel.fromJson(userMap, token: token);
