@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+// Flutter SDKs differ in which library exports CupertinoPageTransitionsBuilder.
+// ignore: unnecessary_import
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -123,7 +126,7 @@ class SignatureDishApp extends StatelessWidget {
           foregroundColor: AppColors.textDark,
         ),
         // Same soft slide on every pushed route, on both platforms.
-        pageTransitionsTheme: PageTransitionsTheme(
+        pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
             TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
