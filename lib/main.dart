@@ -123,7 +123,7 @@ class SignatureDishApp extends StatelessWidget {
           foregroundColor: AppColors.textDark,
         ),
         // Same soft slide on every pushed route, on both platforms.
-        pageTransitionsTheme: const PageTransitionsTheme(
+        pageTransitionsTheme: PageTransitionsTheme(
           builders: {
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
             TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
