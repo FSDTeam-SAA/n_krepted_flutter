@@ -42,6 +42,7 @@ flutter:
   # reference — bundling them added ~15 MB of screenshots to the binary.
   assets:
     - assets/img/
+    - shorebird.yaml
 
   # Bundled rather than fetched at runtime: google_fonts downloads on first
   # launch, so the design typefaces showed as system fallbacks until then.
