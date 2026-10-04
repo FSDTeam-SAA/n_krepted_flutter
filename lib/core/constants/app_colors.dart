@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Every value here was sampled straight out of the Figma frames in `assets/`.
+/// Every value here was sampled from the original Figma frames.
 class AppColors {
   // Brand
   static const Color primary = Color(0xFF0097B0); // buttons, titles, active dot

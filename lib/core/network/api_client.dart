@@ -4,6 +4,41 @@ import '../services/storage_service.dart';
 
 class ApiClient {
   late final Dio dio;
+  Future<String?>? _refreshing;
+
+  Future<String?> _refreshAccessToken() {
+    return _refreshing ??= _performRefresh().whenComplete(
+      () => _refreshing = null,
+    );
+  }
+
+  Future<String?> _performRefresh() async {
+    final refreshToken = await StorageService.getRefreshToken();
+    if (refreshToken == null) return null;
+    final client = Dio(
+      BaseOptions(
+        baseUrl: dio.options.baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+      ),
+    );
+    try {
+      final response = await client.post(
+        '/v1/auth/refresh-token',
+        data: {'refreshToken': refreshToken},
+      );
+      final data = response.data['data'] as Map<String, dynamic>;
+      final token = data['accessToken'] as String;
+      // A response arriving after logout must never restore the session.
+      if (await StorageService.getRefreshToken() != refreshToken) return null;
+      await StorageService.saveToken(token);
+      await StorageService.saveRefreshToken(data['refreshToken'] as String?);
+      return token;
+    } finally {
+      client.close();
+    }
+  }
 
   ApiClient() {
     dio = Dio(
@@ -32,7 +67,33 @@ class ApiClient {
         onResponse: (response, handler) {
           return handler.next(response);
         },
-        onError: (DioException error, handler) {
+        onError: (DioException error, handler) async {
+          final request = error.requestOptions;
+          if (error.response?.statusCode == 401 &&
+              request.headers.containsKey('Authorization') &&
+              request.extra['sessionRetried'] != true) {
+            try {
+              // Another request may already have refreshed the old token.
+              var token = await StorageService.getToken();
+              if (token == null ||
+                  request.headers['Authorization'] == 'Bearer $token') {
+                token = await _refreshAccessToken();
+              }
+              if (token != null) {
+                request.extra['sessionRetried'] = true;
+                request.headers['Authorization'] = 'Bearer $token';
+                if (request.data is FormData) {
+                  request.data = (request.data as FormData).clone();
+                }
+                return handler.resolve(await dio.fetch(request));
+              }
+            } on DioException catch (refreshError) {
+              // A temporary outage while refreshing does not invalidate login.
+              return handler.next(refreshError);
+            } catch (_) {
+              return handler.next(error);
+            }
+          }
           return handler.next(error);
         },
       ),

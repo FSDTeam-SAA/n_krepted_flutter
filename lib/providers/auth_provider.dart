@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class AuthProvider with ChangeNotifier {
   bool _isInitialized = false;
   String? _errorMessage;
   late final Future<void> _initialization;
+  Future<bool>? sessionValidation;
 
   AuthProvider({required this.authRepository}) {
     _initialization = _loadUserFromStorage();
@@ -26,6 +28,7 @@ class AuthProvider with ChangeNotifier {
   bool get isInitialized => _isInitialized;
   String? get errorMessage => _errorMessage;
   Future<void> get initialization => _initialization;
+  Future<void> warmUpRegistration() => authRepository.warmUpRegistration();
 
   Future<void> _loadUserFromStorage() async {
     try {
@@ -39,7 +42,10 @@ class AuthProvider with ChangeNotifier {
       if (userMap != null && token != null && token.isNotEmpty) {
         _currentUser = UserModel.fromJson(userMap, token: token);
         notifyListeners();
-        await refreshCurrentUser();
+        // Restore the local session immediately; a cold server must not hold
+        // the splash screen open. ApiClient refreshes expired access tokens.
+        sessionValidation = refreshCurrentUser();
+        unawaited(sessionValidation);
       }
     } finally {
       _isInitialized = true;
@@ -52,7 +58,9 @@ class AuthProvider with ChangeNotifier {
     if (user == null || user.id.isEmpty) return false;
 
     try {
-      _currentUser = await authRepository.getSingleUser(user.id);
+      final updated = await authRepository.getSingleUser(user.id);
+      if (_currentUser?.id != user.id) return false;
+      _currentUser = updated;
       notifyListeners();
       return true;
     } catch (error) {
@@ -60,6 +68,7 @@ class AuthProvider with ChangeNotifier {
       // with an old server secret. Do not keep retrying protected endpoints
       // with credentials the server has already rejected.
       if (error is DioException && error.response?.statusCode == 401) {
+        if (_currentUser?.id != user.id) return false;
         await StorageService.clearAuth();
         _currentUser = null;
         notifyListeners();

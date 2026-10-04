@@ -571,7 +571,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Startpreis: ${formatEuro(context, restaurant.price)}',
+                          'Preis ab: ${formatEuro(context, restaurant.price)}',
                           style: const TextStyle(
                             fontSize: AppFontSizes.small,
                             fontWeight: FontWeight.w600,

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
   static const String _tokenKey = 'nk_token';
+  static const String _refreshTokenKey = 'nk_refresh_token';
   static const String _userKey = 'nk_user';
   static const String _firstTimeKey = 'nk_first_time';
   static const String _savedDealsKey = 'nk_saved_deals';
@@ -16,6 +17,20 @@ class StorageService {
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_tokenKey);
+  }
+
+  static Future<void> saveRefreshToken(String? token) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (token == null || token.isEmpty) {
+      await prefs.remove(_refreshTokenKey);
+    } else {
+      await prefs.setString(_refreshTokenKey, token);
+    }
+  }
+
+  static Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_refreshTokenKey);
   }
 
   static Future<void> saveUser(Map<String, dynamic> userMap) async {
@@ -73,6 +88,7 @@ class StorageService {
   static Future<void> clearAuth() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+    await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userKey);
   }
 }

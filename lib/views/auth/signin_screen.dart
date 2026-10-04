@@ -191,14 +191,15 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 SizedBox(height: 74.h),
                 CustomButton(
-                  text: 'anmelden',
+                  text: 'Anmelden',
                   isLoading: authProvider.isLoading,
                   onPressed: _handleLogin,
                 ).fadeSlideUp(delay: Motion.step(6)),
 
                 SizedBox(height: 16.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  runSpacing: 4,
                   children: [
                     Text(
                       'Sie haben noch kein Konto? ',
@@ -210,7 +211,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         MaterialPageRoute(builder: (_) => const SignUpScreen()),
                       ),
                       child: Text(
-                        'Melden Sie sich an',
+                        'Registrieren Sie sich bitte hier.',
                         style: AppTextStyles.label(
                           size: AppFontSizes.labelSmall,
                           color: AppColors.primary,

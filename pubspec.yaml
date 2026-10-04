@@ -24,6 +24,7 @@ dependencies:
   flutter_rating_bar: ^4.0.1
   intl: ^0.20.2
   image_picker: ^1.1.2
+  path_provider: ^2.1.6
   flutter_animate: ^4.5.2
   geolocator: ^14.0.3
   flutter_map: ^8.3.2
@@ -31,6 +32,7 @@ dependencies:
   url_launcher: ^6.3.2
 
 dev_dependencies:
+  path_provider_platform_interface: ^2.1.3
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
@@ -38,8 +40,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Only the cut-outs ship. The full-frame Figma exports stay in assets/ for
-  # reference — bundling them added ~15 MB of screenshots to the binary.
+  # Only the cut-outs used by the app are bundled.
   assets:
     - assets/img/
     - shorebird.yaml

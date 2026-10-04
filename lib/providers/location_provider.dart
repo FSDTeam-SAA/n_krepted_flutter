@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 
 class LocationProvider extends ChangeNotifier {
   Position? position;
   bool isLoading = false;
   String? errorMessage;
+  Future<void> openSettings() async {
+    if (await Geolocator.isLocationServiceEnabled()) {
+      await Geolocator.openAppSettings();
+    } else {
+      await Geolocator.openLocationSettings();
+    }
+  }
+
   Future<bool> locate() async {
     if (isLoading) return false;
     isLoading = true;
@@ -33,7 +42,9 @@ class LocationProvider extends ChangeNotifier {
       return true;
     } catch (error) {
       position = null;
-      errorMessage = error.toString().replaceFirst('Exception: ', '');
+      errorMessage = error is TimeoutException
+          ? 'GPS-Standort konnte nicht rechtzeitig ermittelt werden. Bitte im Freien erneut versuchen oder die Adresse auf der Karte suchen.'
+          : error.toString().replaceFirst('Exception: ', '');
       return false;
     } finally {
       isLoading = false;

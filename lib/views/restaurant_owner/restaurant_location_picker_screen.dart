@@ -28,6 +28,7 @@ class RestaurantLocationSelection {
 }
 
 class RestaurantLocationPickerScreen extends StatefulWidget {
+  final bool hasInitialSelection;
   final double initialLatitude;
   final double initialLongitude;
   final String initialAddress;
@@ -36,6 +37,7 @@ class RestaurantLocationPickerScreen extends StatefulWidget {
 
   const RestaurantLocationPickerScreen({
     super.key,
+    this.hasInitialSelection = true,
     required this.initialLatitude,
     required this.initialLongitude,
     this.initialAddress = '',
@@ -81,16 +83,18 @@ class _RestaurantLocationPickerScreenState
       widget.initialCountry,
     ].where((part) => part.trim().isNotEmpty).join(', ');
 
-    _selection = RestaurantLocationSelection(
-      latitude: widget.initialLatitude,
-      longitude: widget.initialLongitude,
-      address: widget.initialAddress,
-      city: widget.initialCity,
-      country: widget.initialCountry,
-      displayName: initialDisplay.isEmpty
-          ? _formatCoordinates(_selectedPoint)
-          : initialDisplay,
-    );
+    _selection = widget.hasInitialSelection
+        ? RestaurantLocationSelection(
+            latitude: widget.initialLatitude,
+            longitude: widget.initialLongitude,
+            address: widget.initialAddress,
+            city: widget.initialCity,
+            country: widget.initialCountry,
+            displayName: initialDisplay.isEmpty
+                ? _formatCoordinates(_selectedPoint)
+                : initialDisplay,
+          )
+        : null;
   }
 
   @override

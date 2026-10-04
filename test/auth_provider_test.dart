@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:n_krepted_flutter/core/network/api_client.dart';
 import 'package:n_krepted_flutter/core/services/storage_service.dart';
@@ -29,6 +30,7 @@ void main() {
     );
 
     await provider.initialization;
+    await provider.sessionValidation;
 
     expect(provider.isInitialized, isTrue);
     expect(provider.isAuthenticated, isFalse);
@@ -47,12 +49,37 @@ void main() {
     final provider = AuthProvider(authRepository: _RefreshAuthRepository());
 
     await provider.initialization;
+    await provider.sessionValidation;
 
     expect(provider.isInitialized, isTrue);
     expect(provider.isAuthenticated, isTrue);
     expect(provider.currentUser?.id, storedUser['_id']);
     expect(await StorageService.getToken(), 'still-potentially-valid-token');
   });
+
+  test('startup restores locally while the server has not responded', () async {
+    SharedPreferences.setMockInitialValues({
+      'nk_token': 'cached-token',
+      'nk_user':
+          '{"_id":"owner-1","name":"Owner","email":"owner@example.com","role":"restaurant_owner","isVerified":true}',
+    });
+    final repository = _SlowAuthRepository();
+    final provider = AuthProvider(authRepository: repository);
+    await provider.initialization.timeout(const Duration(seconds: 1));
+    expect(provider.isInitialized, isTrue);
+    expect(provider.isAuthenticated, isTrue);
+    expect(repository.result.isCompleted, isFalse);
+    repository.result.complete(UserModel.fromJson(storedUser));
+    await provider.sessionValidation;
+    provider.dispose();
+  });
+}
+
+class _SlowAuthRepository extends AuthRepository {
+  final result = Completer<UserModel>();
+  _SlowAuthRepository() : super(apiClient: ApiClient());
+  @override
+  Future<UserModel> getSingleUser(String userId) => result.future;
 }
 
 class _RefreshAuthRepository extends AuthRepository {

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +11,10 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/location_provider.dart';
+import '../../core/services/restaurant_draft_store.dart';
+import 'dish_form_sheet.dart';
 import 'restaurant_location_picker_screen.dart';
 import 'owner_workspace_screen.dart';
 
@@ -30,8 +35,8 @@ class CreateEditRestaurantScreen extends StatefulWidget {
       _CreateEditRestaurantScreenState();
 }
 
-class _CreateEditRestaurantScreenState
-    extends State<CreateEditRestaurantScreen> {
+class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _titleController;
@@ -46,10 +51,22 @@ class _CreateEditRestaurantScreenState
   final ImagePicker _imagePicker = ImagePicker();
   late final List<String> _existingImages;
   final List<XFile> _newImages = [];
+  final Map<String, String> _photoCategories = {};
+  final List<Map<String, dynamic>> _signatureDishes = [];
+  Timer? _draftTimer;
+  String? _draftUserId;
+  bool _draftReady = false;
+  bool _submitted = false;
+  static const _photoLabels = {
+    'interior': 'Innenbereich',
+    'exterior': 'Außenbereich',
+    'other': 'Weitere Restaurantbereiche',
+  };
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final r = widget.restaurant;
     _titleController = TextEditingController(text: r?.title ?? '');
     _shortDescController = TextEditingController(
@@ -61,26 +78,144 @@ class _CreateEditRestaurantScreenState
     );
     _existingImages = List<String>.from(r?.images ?? const <String>[]);
     _addressController = TextEditingController(text: r?.location.address ?? '');
-    _cityController = TextEditingController(
-      text: r?.location.city ?? 'München',
-    );
+    _cityController = TextEditingController(text: r?.location.city ?? '');
     _countryController = TextEditingController(
       text: r?.location.country ?? 'Deutschland',
     );
     _latController = TextEditingController(
-      text: r?.location.latitude != null
-          ? r!.location.latitude.toString()
-          : '48.137154',
+      text: r?.location.latitude != null ? r!.location.latitude.toString() : '',
     );
     _lngController = TextEditingController(
       text: r?.location.longitude != null
           ? r!.location.longitude.toString()
-          : '11.576124',
+          : '',
     );
+    for (var i = 0; i < _existingImages.length; i++) {
+      _photoCategories[_existingImages[i]] =
+          i < (r?.photoCategories.length ?? 0)
+          ? r!.photoCategories[i]
+          : 'other';
+    }
+    if (r == null) {
+      _draftUserId = context.read<AuthProvider>().currentUser?.id;
+      _restoreDraft();
+    } else {
+      _draftReady = true;
+    }
+  }
+
+  Map<String, TextEditingController> get _draftFields => {
+    'title': _titleController,
+    'shortDescription': _shortDescController,
+    'description': _descController,
+    'address': _addressController,
+    'city': _cityController,
+    'country': _countryController,
+    'latitude': _latController,
+    'longitude': _lngController,
+  };
+
+  Future<void> _restoreDraft() async {
+    final id = _draftUserId;
+    final draft = id == null ? null : await RestaurantDraftStore.load(id);
+    if (!mounted) return;
+    if (draft != null) {
+      for (final entry in _draftFields.entries) {
+        entry.value.text = draft[entry.key] as String? ?? entry.value.text;
+      }
+      _newImages.addAll((draft['imageFiles'] as List).cast<XFile>());
+      final categories = (draft['newPhotoCategories'] as List).cast<String>();
+      for (var i = 0; i < _newImages.length; i++) {
+        _photoCategories[_newImages[i].path] = categories[i];
+      }
+      _signatureDishes.addAll(
+        (draft['signatureDishes'] as List).map(
+          (dish) => Map<String, dynamic>.from(dish as Map),
+        ),
+      );
+    }
+    setState(() => _draftReady = true);
+  }
+
+  void _scheduleDraft() {
+    if (!_draftReady || _draftUserId == null || _submitted) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 350), _saveDraft);
+  }
+
+  Future<void> _saveDraft() async {
+    final id = _draftUserId;
+    if (id == null || !_draftReady || _submitted) return;
+    try {
+      await RestaurantDraftStore.save(id, {
+        for (final entry in _draftFields.entries) entry.key: entry.value.text,
+        'imageFiles': List<XFile>.from(_newImages),
+        'newPhotoCategories': [
+          for (final image in _newImages)
+            _photoCategories[image.path] ?? 'other',
+        ],
+        'signatureDishes': [
+          for (final dish in _signatureDishes)
+            {
+              ...dish,
+              'imageFiles': List<XFile>.from(dish['imageFiles'] as List),
+            },
+        ],
+      });
+    } catch (_) {
+      if (mounted) {
+        _showImageMessage(
+          'Entwurf konnte nicht gespeichert werden. Bitte erneut versuchen.',
+        );
+      }
+    }
+  }
+
+  Future<void> _leaveForm() async {
+    await _saveDraft();
+    if (!mounted) return;
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OwnerWorkspaceScreen()),
+      );
+    }
+  }
+
+  Future<void> _editSignatureDish([int? index]) async {
+    final draft = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => DishFormSheet(
+        draftOnly: true,
+        draft: index == null ? null : _signatureDishes[index],
+      ),
+    );
+    if (draft == null || !mounted) return;
+    setState(() {
+      if (index == null) {
+        _signatureDishes.add(draft);
+      } else {
+        _signatureDishes[index] = draft;
+      }
+    });
+    _scheduleDraft();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _saveDraft();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _draftTimer?.cancel();
+    _saveDraft();
     _titleController.dispose();
     _shortDescController.dispose();
     _descController.dispose();
@@ -95,8 +230,9 @@ class _CreateEditRestaurantScreenState
 
   int get _imageCount => _existingImages.length + _newImages.length;
 
-  Future<void> _pickRestaurantImages() async {
-    final remaining = 4 - _imageCount;
+  Future<void> _pickRestaurantImages(String category) async {
+    final remaining =
+        4 - _photoCategories.values.where((value) => value == category).length;
     if (remaining <= 0) {
       _showImageMessage('Maximal 4 Bilder sind erlaubt.');
       return;
@@ -108,7 +244,13 @@ class _CreateEditRestaurantScreenState
     );
     if (!mounted || selected.isEmpty) return;
 
-    setState(() => _newImages.addAll(selected.take(remaining)));
+    setState(() {
+      for (final image in selected.take(remaining)) {
+        _newImages.add(image);
+        _photoCategories[image.path] = category;
+      }
+    });
+    _scheduleDraft();
     if (selected.length > remaining) {
       _showImageMessage(
         'Es wurden nur $remaining weitere Bilder hinzugef\u00fcgt.',
@@ -116,7 +258,7 @@ class _CreateEditRestaurantScreenState
     }
   }
 
-  Future<void> _replaceMainImage() async {
+  Future<void> _replaceImage(int index) async {
     final selected = await _imagePicker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
@@ -125,23 +267,32 @@ class _CreateEditRestaurantScreenState
     if (!mounted || selected == null) return;
 
     setState(() {
-      if (_newImages.isNotEmpty) {
-        _newImages.removeAt(0);
-      } else if (_existingImages.isNotEmpty) {
-        _existingImages.removeAt(0);
+      final oldKey = index < _newImages.length
+          ? _newImages[index].path
+          : _existingImages[index - _newImages.length];
+      final category = _photoCategories.remove(oldKey) ?? 'other';
+      if (index < _newImages.length) {
+        _newImages[index] = selected;
+      } else {
+        _existingImages.removeAt(index - _newImages.length);
+        _newImages.add(selected);
       }
-      _newImages.insert(0, selected);
+      _photoCategories[selected.path] = category;
     });
+    _scheduleDraft();
   }
 
   void _removeImage(int index) {
     setState(() {
       if (index < _newImages.length) {
+        _photoCategories.remove(_newImages[index].path);
         _newImages.removeAt(index);
       } else {
+        _photoCategories.remove(_existingImages[index - _newImages.length]);
         _existingImages.removeAt(index - _newImages.length);
       }
     });
+    _scheduleDraft();
   }
 
   void _showImageMessage(String message) {
@@ -153,8 +304,16 @@ class _CreateEditRestaurantScreenState
   Future<void> _openLocationPicker() async {
     FocusScope.of(context).unfocus();
 
-    final latitude = double.tryParse(_latController.text.trim()) ?? 48.137154;
-    final longitude = double.tryParse(_lngController.text.trim()) ?? 11.576124;
+    final position = context.read<LocationProvider?>()?.position;
+    // This is only the map camera's starting point, never a submitted location.
+    final latitude =
+        double.tryParse(_latController.text.trim()) ??
+        position?.latitude ??
+        48.137154;
+    final longitude =
+        double.tryParse(_lngController.text.trim()) ??
+        position?.longitude ??
+        11.576124;
 
     final selection = await Navigator.push<RestaurantLocationSelection>(
       context,
@@ -165,6 +324,8 @@ class _CreateEditRestaurantScreenState
           initialAddress: _addressController.text.trim(),
           initialCity: _cityController.text.trim(),
           initialCountry: _countryController.text.trim(),
+          hasInitialSelection:
+              _latController.text.isNotEmpty && _lngController.text.isNotEmpty,
         ),
       ),
     );
@@ -184,6 +345,7 @@ class _CreateEditRestaurantScreenState
       _latController.text = selection.latitude.toStringAsFixed(6);
       _lngController.text = selection.longitude.toStringAsFixed(6);
     });
+    _scheduleDraft();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -195,10 +357,39 @@ class _CreateEditRestaurantScreenState
   }
 
   Future<void> _handleSubmit() async {
+    if (context.read<OwnerRestaurantProvider>().isActionLoading) return;
     if (!_formKey.currentState!.validate()) return;
     if (_imageCount == 0) {
       _showImageMessage('Bitte mindestens ein Restaurantbild ausw\u00e4hlen.');
       return;
+    }
+    final latitude = double.tryParse(_latController.text);
+    final longitude = double.tryParse(_lngController.text);
+    if (latitude == null ||
+        longitude == null ||
+        !latitude.isFinite ||
+        !longitude.isFinite ||
+        latitude.abs() > 90 ||
+        longitude.abs() > 180) {
+      _showImageMessage(
+        'Bitte den Restaurantstandort auf der Karte bestätigen.',
+      );
+      return;
+    }
+    if (widget.restaurant == null) {
+      if (_signatureDishes.isEmpty) {
+        _showImageMessage(
+          'Bitte mindestens ein Signature-Gericht hinzufügen (maximal 4).',
+        );
+        return;
+      }
+      if (!_photoCategories.containsValue('interior') ||
+          !_photoCategories.containsValue('exterior')) {
+        _showImageMessage(
+          'Bitte mindestens ein Foto vom Innen- und Außenbereich hinzufügen.',
+        );
+        return;
+      }
     }
 
     final provider = context.read<OwnerRestaurantProvider>();
@@ -212,12 +403,17 @@ class _CreateEditRestaurantScreenState
       'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
       'existingImages': List<String>.from(_existingImages),
       'imageFiles': List<XFile>.from(_newImages),
+      'photoCategories': [
+        for (final image in _existingImages) _photoCategories[image] ?? 'other',
+        for (final image in _newImages) _photoCategories[image.path] ?? 'other',
+      ],
+      if (widget.restaurant == null) 'signatureDishes': _signatureDishes,
       'location': {
         'address': _addressController.text.trim(),
         'city': _cityController.text.trim(),
         'country': _countryController.text.trim(),
-        'latitude': double.tryParse(_latController.text.trim()) ?? 48.137154,
-        'longitude': double.tryParse(_lngController.text.trim()) ?? 11.576124,
+        'latitude': latitude,
+        'longitude': longitude,
       },
     };
 
@@ -233,6 +429,10 @@ class _CreateEditRestaurantScreenState
     if (!mounted) return;
 
     if (success) {
+      _submitted = true;
+      _draftTimer?.cancel();
+      if (_draftUserId != null) await RestaurantDraftStore.clear(_draftUserId!);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -273,6 +473,11 @@ class _CreateEditRestaurantScreenState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Zurück',
+          onPressed: provider.isActionLoading ? null : _leaveForm,
+          icon: const Icon(Icons.arrow_back),
+        ),
         title: Text(
           isEditing
               ? 'Restaurant bearbeiten'
@@ -290,15 +495,7 @@ class _CreateEditRestaurantScreenState
         actions: [
           if (widget.isInitialSetup)
             TextButton(
-              onPressed: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const OwnerWorkspaceScreen(),
-                  ),
-                  (route) => false,
-                );
-              },
+              onPressed: provider.isActionLoading ? null : _leaveForm,
               child: const Text(
                 'Später',
                 style: TextStyle(
@@ -310,267 +507,278 @@ class _CreateEditRestaurantScreenState
             ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.isResubmission &&
-                    widget.restaurant?.rejectionReason != null)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 18),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.red.shade700,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Grund der Ablehnung durch Admin:',
-                                style: TextStyle(
-                                  fontSize: AppFontSizes.smallPlus,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red.shade900,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                widget.restaurant!.rejectionReason!,
-                                style: TextStyle(
-                                  fontSize: AppFontSizes.small,
-                                  color: Colors.red.shade800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+      body: !_draftReady
+          ? const Center(child: CircularProgressIndicator())
+          : AbsorbPointer(
+              absorbing: provider.isActionLoading,
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
                   ),
-
-                _buildSectionHeader('Basisinformationen'),
-                const SizedBox(height: 12),
-
-                _buildFieldLabel('Restaurantname'),
-                CustomTextField(
-                  controller: _titleController,
-                  hintText: 'z. B. Sonnengarten Restaurant',
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Bitte Restaurantname eingeben'
-                      : null,
-                ),
-
-                const SizedBox(height: 14),
-                _buildFieldLabel('Startpreis (€)'),
-                CustomTextField(
-                  controller: _priceController,
-                  hintText: '0.00',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Bitte Startpreis eingeben'
-                      : null,
-                ),
-
-                const SizedBox(height: 14),
-                _buildFieldLabel('Kurzbeschreibung'),
-                CustomTextField(
-                  controller: _shortDescController,
-                  hintText: 'Kurze Zusammenfassung für die Kartenansicht',
-                ),
-
-                const SizedBox(height: 14),
-                _buildFieldLabel('Detaillierte Beschreibung'),
-                TextFormField(
-                  controller: _descController,
-                  maxLines: 4,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Bitte Beschreibung eingeben'
-                      : null,
-                  decoration: InputDecoration(
-                    hintText: 'Detaillierte Beschreibung Ihres Restaurants...',
-                    hintStyle: AppTextStyles.body(
-                      size: AppFontSizes.labelSmall,
-                      color: AppColors.textGrey,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.all(14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.inputBorder,
-                        width: 1.2,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-                _buildFieldLabel('Restaurantbilder'),
-                _buildRestaurantImagePicker(),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader('Standort & Adresse'),
-                const SizedBox(height: 12),
-
-                OutlinedButton.icon(
-                  onPressed: _openLocationPicker,
-                  icon: const Icon(Icons.map_outlined, size: 20),
-                  label: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Form(
+                    key: _formKey,
+                    onChanged: _scheduleDraft,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          'Standort auf der Karte auswählen',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                        if (widget.isResubmission &&
+                            widget.restaurant?.rejectionReason != null)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 18),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.red.shade200),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: Colors.red.shade700,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Grund der Ablehnung durch Admin:',
+                                        style: TextStyle(
+                                          fontSize: AppFontSizes.smallPlus,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red.shade900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        widget.restaurant!.rejectionReason!,
+                                        style: TextStyle(
+                                          fontSize: AppFontSizes.small,
+                                          color: Colors.red.shade800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        _buildSectionHeader('Basisinformationen'),
+                        const SizedBox(height: 12),
+
+                        _buildFieldLabel('Restaurantname'),
+                        CustomTextField(
+                          controller: _titleController,
+                          hintText: 'z. B. Sonnengarten Restaurant',
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Bitte Restaurantname eingeben'
+                              : null,
                         ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Adresse suchen oder direkt auf die Karte tippen',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: AppFontSizes.captionSmall,
-                            fontWeight: FontWeight.w400,
+
+                        const SizedBox(height: 14),
+                        _buildFieldLabel('Kurzbeschreibung'),
+                        CustomTextField(
+                          controller: _shortDescController,
+                          hintText:
+                              'Kurze Zusammenfassung für die Kartenansicht',
+                        ),
+
+                        const SizedBox(height: 14),
+                        _buildFieldLabel('Detaillierte Beschreibung'),
+                        TextFormField(
+                          controller: _descController,
+                          maxLines: 4,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Bitte Beschreibung eingeben'
+                              : null,
+                          decoration: InputDecoration(
+                            hintText:
+                                'Detaillierte Beschreibung Ihres Restaurants...',
+                            hintStyle: AppTextStyles.body(
+                              size: AppFontSizes.labelSmall,
+                              color: AppColors.textGrey,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.all(14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.inputBorder,
+                                width: 1.2,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5,
+                              ),
+                            ),
                           ),
                         ),
+
+                        const SizedBox(height: 14),
+                        _buildFieldLabel('Restaurantbilder'),
+                        _buildRestaurantImagePicker(),
+
+                        const SizedBox(height: 24),
+                        _buildSectionHeader('Standort & Adresse'),
+                        const SizedBox(height: 12),
+
+                        OutlinedButton.icon(
+                          onPressed: _openLocationPicker,
+                          icon: const Icon(Icons.map_outlined, size: 20),
+                          label: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Standort auf der Karte auswählen',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Adresse suchen oder direkt auf die Karte tippen',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: AppFontSizes.captionSmall,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        _buildFieldLabel('Straße & Hausnummer'),
+                        CustomTextField(
+                          controller: _addressController,
+                          hintText: 'z. B. Marienplatz 1',
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Bitte Adresse eingeben'
+                              : null,
+                        ),
+
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildFieldLabel('Stadt'),
+                                  CustomTextField(
+                                    controller: _cityController,
+                                    hintText: 'z. B. München',
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Bitte Stadt eingeben'
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildFieldLabel('Land'),
+                                  CustomTextField(
+                                    controller: _countryController,
+                                    hintText: 'Deutschland',
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Bitte Land eingeben'
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 14),
+                        Text(
+                          _latController.text.isEmpty
+                              ? 'Noch kein Standort bestätigt. Bitte Adresse suchen oder den Standort auf der Karte auswählen.'
+                              : 'Restaurantstandort auf der Karte hinterlegt.',
+                          style: AppTextStyles.body(size: AppFontSizes.small),
+                        ),
+                        if (widget.restaurant == null) ...[
+                          const SizedBox(height: 24),
+                          _buildSectionHeader('Signature-Gerichte'),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Fügen Sie 1 bis 4 Signature-Gerichte hinzu. Jedes Gericht benötigt eine Beschreibung, einen Preis und mindestens ein eigenes Foto.',
+                          ),
+                          for (var i = 0; i < _signatureDishes.length; i++)
+                            ListTile(
+                              title: Text(
+                                _signatureDishes[i]['name'] as String,
+                              ),
+                              subtitle: Text(
+                                _signatureDishes[i]['description'] as String,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onTap: () => _editSignatureDish(i),
+                              trailing: IconButton(
+                                tooltip: 'Gericht entfernen',
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () {
+                                  setState(() => _signatureDishes.removeAt(i));
+                                  _scheduleDraft();
+                                },
+                              ),
+                            ),
+                          if (_signatureDishes.length < 4)
+                            OutlinedButton.icon(
+                              onPressed: _draftReady
+                                  ? () => _editSignatureDish()
+                                  : null,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Signature-Gericht hinzufügen'),
+                            ),
+                          const Text(
+                            'Ihr Entwurf wird automatisch gespeichert. Sie können später fortfahren.',
+                          ),
+                        ],
+
+                        const SizedBox(height: 32),
+                        CustomButton(
+                          text: isEditing
+                              ? 'Änderungen speichern'
+                              : widget.isResubmission
+                              ? 'Erneut zur Genehmigung einreichen'
+                              : 'Restaurant zur Genehmigung einreichen',
+                          isLoading: provider.isActionLoading,
+                          onPressed: _handleSubmit,
+                        ),
+                        const SizedBox(height: 30),
                       ],
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                 ),
-                const SizedBox(height: 16),
-
-                _buildFieldLabel('Straße & Hausnummer'),
-                CustomTextField(
-                  controller: _addressController,
-                  hintText: 'z. B. Marienplatz 1',
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Bitte Adresse eingeben'
-                      : null,
-                ),
-
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFieldLabel('Stadt'),
-                          CustomTextField(
-                            controller: _cityController,
-                            hintText: 'z. B. München',
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Bitte Stadt eingeben'
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFieldLabel('Land'),
-                          CustomTextField(
-                            controller: _countryController,
-                            hintText: 'Deutschland',
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Bitte Land eingeben'
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFieldLabel('Breitengrad (Lat)'),
-                          CustomTextField(
-                            controller: _latController,
-                            hintText: '48.137154',
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFieldLabel('Längengrad (Lng)'),
-                          CustomTextField(
-                            controller: _lngController,
-                            hintText: '11.576124',
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 32),
-                CustomButton(
-                  text: isEditing
-                      ? 'Änderungen speichern'
-                      : widget.isResubmission
-                      ? 'Erneut zur Genehmigung einreichen'
-                      : 'Restaurant zur Genehmigung einreichen',
-                  isLoading: provider.isActionLoading,
-                  onPressed: _handleSubmit,
-                ),
-                const SizedBox(height: 30),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -586,100 +794,104 @@ class _CreateEditRestaurantScreenState
   }
 
   Widget _buildRestaurantImagePicker() {
+    final keys = [..._newImages.map((image) => image.path), ..._existingImages];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GestureDetector(
-          onTap: _imageCount == 0 ? _pickRestaurantImages : _replaceMainImage,
-          child: Container(
-            height: 170,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.primary, width: 1.2),
-            ),
-            child: _imageCount == 0
-                ? const _ImageAddPlaceholder(
-                    label: 'Hauptfoto hinzuf\u00fcgen',
-                    large: true,
-                  )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(13),
-                    child: Stack(
-                      fit: StackFit.expand,
+        const Text(
+          'Restaurantfotos getrennt von Gerichtsfotos hochladen. Innen- und Außenbereich benötigen jeweils mindestens ein Foto; weitere Bereiche sind optional.',
+        ),
+        for (final category in _photoLabels.entries) ...[
+          const SizedBox(height: 12),
+          _buildFieldLabel(category.value),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (var i = 0; i < keys.length; i++)
+                if ((_photoCategories[keys[i]] ?? 'other') == category.key)
+                  SizedBox(
+                    width: 140,
+                    child: Column(
                       children: [
-                        _buildImageAt(0),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: _ImageActionButton(
-                            icon: Icons.edit_outlined,
-                            onTap: _replaceMainImage,
+                        SizedBox(
+                          height: 100,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                _buildImageAt(i),
+                                Positioned(
+                                  right: 4,
+                                  top: 4,
+                                  child: _ImageActionButton(
+                                    icon: Icons.close,
+                                    compact: true,
+                                    onTap: () => _removeImage(i),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 4,
+                                  bottom: 4,
+                                  child: _ImageActionButton(
+                                    icon: Icons.edit,
+                                    compact: true,
+                                    onTap: () => _replaceImage(i),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        Positioned(
-                          right: 8,
-                          bottom: 8,
-                          child: _ImageActionButton(
-                            icon: Icons.delete_outline,
-                            onTap: () => _removeImage(0),
-                          ),
+                        DropdownButton<String>(
+                          value: category.key,
+                          isExpanded: true,
+                          items: [
+                            for (final item in _photoLabels.entries)
+                              DropdownMenuItem(
+                                value: item.key,
+                                child: Text(
+                                  item.value,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            if (_photoCategories.values
+                                    .where((item) => item == value)
+                                    .length >=
+                                4) {
+                              _showImageMessage(
+                                'Maximal 4 Bilder pro Bereich.',
+                              );
+                              return;
+                            }
+                            setState(() => _photoCategories[keys[i]] = value);
+                            _scheduleDraft();
+                          },
                         ),
                       ],
                     ),
                   ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 86,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount:
-                (_imageCount - 1).clamp(0, 3) + (_imageCount < 4 ? 1 : 0),
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, listIndex) {
-              final imageIndex = listIndex + 1;
-              if (imageIndex >= _imageCount) {
-                return GestureDetector(
-                  onTap: _pickRestaurantImages,
-                  child: const SizedBox(
-                    width: 105,
-                    child: _ImageAddPlaceholder(label: 'Weitere Bilder'),
-                  ),
-                );
-              }
-              return SizedBox(
-                width: 105,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _buildImageAt(imageIndex),
-                      Positioned(
-                        right: 5,
-                        top: 5,
-                        child: _ImageActionButton(
-                          icon: Icons.close,
-                          compact: true,
-                          onTap: () => _removeImage(imageIndex),
-                        ),
-                      ),
-                    ],
-                  ),
+              if (_photoCategories.values
+                      .where((value) => value == category.key)
+                      .length <
+                  4)
+                OutlinedButton.icon(
+                  onPressed: _draftReady
+                      ? () => _pickRestaurantImages(category.key)
+                      : null,
+                  icon: const Icon(Icons.add_a_photo_outlined),
+                  label: const Text('Foto hinzufügen'),
                 ),
-              );
-            },
+            ],
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Bis zu 4 Bilder. Tippen Sie auf das Hauptbild, um es zu ersetzen.',
-          style: AppTextStyles.body(
-            size: AppFontSizes.captionSmall,
-            color: AppColors.textGrey,
-          ),
+        ],
+        const SizedBox(height: 8),
+        const Text(
+          'Bis zu 4 Fotos pro Bereich. Gerichtsfotos fügen Sie beim jeweiligen Signature-Gericht hinzu.',
         ),
       ],
     );
@@ -711,40 +923,6 @@ class _CreateEditRestaurantScreenState
           color: Color(0xFF334155),
         ),
       ),
-    );
-  }
-}
-
-class _ImageAddPlaceholder extends StatelessWidget {
-  final String label;
-  final bool large;
-
-  const _ImageAddPlaceholder({required this.label, this.large = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        CircleAvatar(
-          radius: large ? 20 : 16,
-          backgroundColor: const Color(0xFFF4F6F6),
-          child: Icon(
-            Icons.add,
-            color: AppColors.primary,
-            size: large ? 25 : 20,
-          ),
-        ),
-        const SizedBox(height: 7),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: AppFontSizes.captionSmall,
-            color: AppColors.textGrey,
-          ),
-        ),
-      ],
     );
   }
 }

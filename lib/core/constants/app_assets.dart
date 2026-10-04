@@ -2,8 +2,7 @@
 /// frame position it was measured at (design space is 393 x 852), so screens can
 /// place it with `AppSizes` and land exactly where the design puts it.
 ///
-/// The full-frame Figma exports still live in `assets/` for reference but are no
-/// longer bundled — only `assets/img/` ships with the app.
+/// Only the assets used by the app live in `assets/img/` and ship with it.
 class AppAssets {
   AppAssets._();
 
@@ -56,10 +55,6 @@ class AppAssets {
   static const String homeDecoCoffee = '${_img}home_deco_coffee.png';
   static const String homeDecoHerbs = '${_img}home_deco_herbs.png';
   static const String homeDecoOnion = '${_img}home_deco_onion.png';
-
-  /// Stand-in for the live map until a map SDK is wired in — this is a real
-  /// background image, so `BoxFit.cover` is correct here.
-  static const String mapPlaceholder = '${_img}map_placeholder.jpg';
 
   // Onboarding slide 1 — "Entdecken Sie unsere Spezialitäten"
   static const String onb1Coffee =

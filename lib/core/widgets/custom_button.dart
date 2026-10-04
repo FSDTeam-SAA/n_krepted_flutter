@@ -75,6 +75,7 @@ class _CustomButtonState extends State<CustomButton> {
                   : null,
             ),
             alignment: Alignment.center,
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
             child: widget.isLoading
                 ? SizedBox(
                     width: 18.w,
@@ -94,12 +95,17 @@ class _CustomButtonState extends State<CustomButton> {
                         widget.icon!,
                         SizedBox(width: 8.w),
                       ],
-                      Text(
-                        widget.text,
-                        style: AppTextStyles.label(
-                          size: widget.fontSize,
-                          color: fg,
-                          weight: FontWeight.w500,
+                      Flexible(
+                        child: Text(
+                          widget.text,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.label(
+                            size: widget.fontSize,
+                            color: fg,
+                            weight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],

@@ -144,6 +144,7 @@ class DealModel {
   final String contactEmail;
   final String contactPhone;
   final bool? reservationRequired;
+  final List<String> photoCategories;
 
   DealModel({
     required this.id,
@@ -175,6 +176,7 @@ class DealModel {
     this.contactEmail = '',
     this.contactPhone = '',
     this.reservationRequired,
+    this.photoCategories = const [],
   });
 
   factory DealModel.fromJson(Map<String, dynamic> json) {
@@ -221,6 +223,9 @@ class DealModel {
       contactEmail: json['contactEmail']?.toString() ?? '',
       contactPhone: json['contactPhone']?.toString() ?? '',
       reservationRequired: json['reservationRequired'] as bool?,
+      photoCategories: (json['photoCategories'] as List? ?? [])
+          .map((value) => value.toString())
+          .toList(),
       dishes: json['dishes'] is List
           ? (json['dishes'] as List)
                 .whereType<Map<String, dynamic>>()

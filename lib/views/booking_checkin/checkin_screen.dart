@@ -286,7 +286,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Der Check-in ist nur vor Ort möglich. Ihr aktueller GPS-Standort muss höchstens 100 Meter vom Restaurant entfernt sein.',
+                        'Ein Check-in bestätigt Ihren Restaurantbesuch und ermöglicht anschließend eine Bewertung. Er ist nur vor Ort möglich: Ihr GPS-Standort muss höchstens 100 Meter vom Restaurant entfernt sein.',
                         style: TextStyle(
                           fontSize: AppFontSizes.labelSmall,
                           height: 1.4,

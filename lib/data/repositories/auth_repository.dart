@@ -11,6 +11,19 @@ class AuthRepository {
 
   AuthRepository({required this.apiClient});
 
+  Future<void> warmUpRegistration() async {
+    try {
+      // Wake an idle service while the user fills out the form, rather than
+      // starting the cold-start wait only after they press Register.
+      await apiClient.dio.get(
+        ApiConstants.baseUrl.replaceFirst(RegExp(r'/api$'), '/'),
+        options: Options(receiveTimeout: const Duration(seconds: 15)),
+      );
+    } catch (_) {
+      // A failed health request must never prevent registration.
+    }
+  }
+
   Future<UserModel> login({
     required String email,
     required String password,
@@ -26,6 +39,9 @@ class AuthRepository {
       final user = UserModel.fromJson(userMap, token: token);
 
       await StorageService.saveToken(token);
+      await StorageService.saveRefreshToken(
+        response.data['refreshToken'] as String?,
+      );
       await StorageService.saveUser(user.toJson());
       return user;
     } else {
@@ -57,6 +73,9 @@ class AuthRepository {
       final user = UserModel.fromJson(userMap, token: token);
       if (token != null) {
         await StorageService.saveToken(token);
+        await StorageService.saveRefreshToken(
+          response.data['refreshToken'] as String?,
+        );
         await StorageService.saveUser(user.toJson());
       }
       return user;
@@ -92,6 +111,9 @@ class AuthRepository {
       final token = response.data['token'];
       if (token != null) {
         await StorageService.saveToken(token);
+        await StorageService.saveRefreshToken(
+          response.data['refreshToken'] as String?,
+        );
       }
       final user = UserModel.fromJson(response.data['data'], token: token);
       await StorageService.saveUser(user.toJson());

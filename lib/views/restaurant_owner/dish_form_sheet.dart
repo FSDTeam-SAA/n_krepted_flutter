@@ -12,8 +12,15 @@ import '../../providers/owner_restaurant_provider.dart';
 
 class DishFormSheet extends StatefulWidget {
   final DealDish? dish;
+  final Map<String, dynamic>? draft;
+  final bool draftOnly;
 
-  const DishFormSheet({super.key, this.dish});
+  const DishFormSheet({
+    super.key,
+    this.dish,
+    this.draft,
+    this.draftOnly = false,
+  });
 
   @override
   State<DishFormSheet> createState() => _DishFormSheetState();
@@ -63,6 +70,24 @@ class _DishFormSheetState extends State<DishFormSheet> {
       text: d?.preparationProcess ?? '',
     );
     _isSignatureDish = d?.isSignatureDish ?? false;
+    if (widget.draftOnly) {
+      final draft = widget.draft;
+      _nameController.text = draft?['name'] as String? ?? '';
+      _priceController.text = '${draft?['price'] ?? 0}';
+      _categoryController.text = draft?['category'] as String? ?? '';
+      _descController.text = draft?['description'] as String? ?? '';
+      _specialtyController.text =
+          draft?['specialtyDescription'] as String? ?? '';
+      _ingredientsController.text = (draft?['ingredients'] as List? ?? []).join(
+        '\n',
+      );
+      _preparationController.text =
+          draft?['preparationProcess'] as String? ?? '';
+      _newImages.addAll(
+        (draft?['imageFiles'] as List? ?? []).whereType<XFile>(),
+      );
+      _isSignatureDish = true;
+    }
   }
 
   @override
@@ -139,7 +164,9 @@ class _DishFormSheetState extends State<DishFormSheet> {
 
     final payload = {
       'name': _nameController.text.trim(),
-      'price': double.tryParse(_priceController.text.trim()) ?? 0,
+      'price':
+          double.tryParse(_priceController.text.trim().replaceAll(',', '.')) ??
+          0,
       'category': _categoryController.text.trim(),
       'existingImages': _existingImages,
       'imageFiles': _newImages,
@@ -153,6 +180,11 @@ class _DishFormSheetState extends State<DishFormSheet> {
       'preparationProcess': _preparationController.text.trim(),
       'isSignatureDish': _isSignatureDish,
     };
+
+    if (widget.draftOnly) {
+      Navigator.of(context, rootNavigator: true).pop(payload);
+      return;
+    }
 
     bool success;
     if (widget.dish != null) {
@@ -191,6 +223,11 @@ class _DishFormSheetState extends State<DishFormSheet> {
   Widget build(BuildContext context) {
     final provider = context.watch<OwnerRestaurantProvider>();
     final isEditing = widget.dish != null;
+    final signatureCount =
+        provider.restaurant?.dishes
+            .where((dish) => dish.isSignatureDish)
+            .length ??
+        0;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -260,9 +297,14 @@ class _DishFormSheetState extends State<DishFormSheet> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Preis eingeben'
-                              : null,
+                          validator: (v) {
+                            final price = double.tryParse(
+                              (v ?? '').replaceAll(',', '.'),
+                            );
+                            return price == null || !price.isFinite || price < 0
+                                ? 'Gültigen Preis eingeben'
+                                : null;
+                          },
                         ),
                       ],
                     ),
@@ -291,6 +333,9 @@ class _DishFormSheetState extends State<DishFormSheet> {
               _buildFieldLabel('Beschreibung'),
               TextFormField(
                 controller: _descController,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Bitte das Gericht beschreiben'
+                    : null,
                 maxLines: 3,
                 decoration: _areaDecoration(
                   'Zutaten und Zubereitung kurz beschreiben...',
@@ -368,15 +413,30 @@ class _DishFormSheetState extends State<DishFormSheet> {
                     Switch.adaptive(
                       value: _isSignatureDish,
                       activeTrackColor: AppColors.primary,
-                      onChanged: (v) => setState(() => _isSignatureDish = v),
+                      onChanged:
+                          widget.draftOnly ||
+                              (signatureCount >= 4 &&
+                                  widget.dish?.isSignatureDish != true)
+                          ? null
+                          : (v) => setState(() => _isSignatureDish = v),
                     ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 20),
+              if (!widget.draftOnly &&
+                  signatureCount >= 4 &&
+                  widget.dish?.isSignatureDish != true)
+                const Text(
+                  'Bereits 4 Signature-Gerichte vorhanden. Weitere Gerichte können als normale Gerichte hinzugefügt werden.',
+                ),
               CustomButton(
-                text: isEditing ? 'Gericht speichern' : 'Gericht hinzufügen',
+                text: widget.draftOnly
+                    ? 'Zur Registrierung hinzufügen'
+                    : isEditing
+                    ? 'Gericht speichern'
+                    : 'Gericht hinzufügen',
                 isLoading: provider.isActionLoading,
                 onPressed: _handleSubmit,
               ),

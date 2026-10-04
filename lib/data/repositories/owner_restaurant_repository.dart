@@ -42,12 +42,30 @@ class OwnerRestaurantRepository {
     final fields = Map<String, dynamic>.from(payload);
     final imageFiles =
         (fields.remove('imageFiles') as List?)?.whereType<XFile>().toList() ??
-        const <XFile>[];
+        <XFile>[];
     fields['location'] = jsonEncode(fields['location']);
     fields['existingImages'] = jsonEncode(
       (fields['existingImages'] as List?)?.whereType<String>().toList() ??
           const <String>[],
     );
+
+    fields['photoCategories'] = jsonEncode(fields['photoCategories'] ?? []);
+    final drafts = (fields.remove('signatureDishes') as List?) ?? [];
+    fields['restaurantImageCount'] = imageFiles.length;
+    final signatureDishes = <Map<String, dynamic>>[];
+    for (final draft in drafts) {
+      final dish = Map<String, dynamic>.from(draft as Map);
+      final photos = (dish.remove('imageFiles') as List).cast<XFile>();
+      dish['imageIndexes'] = List.generate(
+        photos.length,
+        (i) => imageFiles.length + i,
+      );
+      imageFiles.addAll(photos);
+      signatureDishes.add(dish);
+    }
+    if (drafts.isNotEmpty) {
+      fields['signatureDishes'] = jsonEncode(signatureDishes);
+    }
 
     final formData = FormData.fromMap(fields);
     for (final image in imageFiles) {

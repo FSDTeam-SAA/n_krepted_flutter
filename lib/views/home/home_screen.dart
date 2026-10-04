@@ -125,6 +125,10 @@ class HomeScreen extends StatelessWidget {
                                     location.errorMessage ??
                                         'Standort nicht verfügbar.',
                                   ),
+                                  action: SnackBarAction(
+                                    label: 'Einstellungen',
+                                    onPressed: location.openSettings,
+                                  ),
                                 ),
                               );
                             }

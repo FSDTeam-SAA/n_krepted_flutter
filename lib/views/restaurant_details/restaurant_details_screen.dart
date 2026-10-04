@@ -250,41 +250,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         Icons.schedule,
                         'Demnächst verfügbar: ${restaurant.opensAt!.toLocal()}',
                       ),
-                    if (restaurant.images.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Expanded(child: Text('Essbereich')),
-                          TextButton(
-                            onPressed: () =>
-                                openPhotoGallery(context, restaurant.images),
-                            child: const Text('Alle anzeigen'),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 80,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: restaurant.images.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 8),
-                          itemBuilder: (_, index) => GestureDetector(
-                            onTap: () => openPhotoGallery(
-                              context,
-                              restaurant.images,
-                              initialIndex: index,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: SizedBox(
-                                width: 100,
-                                child: RemotePhoto(restaurant.images[index]),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ..._restaurantPhotoSections(restaurant),
                     const SizedBox(height: 24),
                     if (signature.isNotEmpty) ...[
                       const Text(
@@ -406,6 +372,55 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         ),
       ),
     );
+  }
+
+  List<Widget> _restaurantPhotoSections(DealModel restaurant) {
+    const labels = {
+      'interior': 'Innenbereich',
+      'exterior': 'Außenbereich',
+      'other': 'Weitere Restaurantbereiche',
+    };
+    final sections = <Widget>[];
+    for (final entry in labels.entries) {
+      final photos = <String>[
+        for (var i = 0; i < restaurant.images.length; i++)
+          if ((i < restaurant.photoCategories.length
+                  ? restaurant.photoCategories[i]
+                  : 'other') ==
+              entry.key)
+            restaurant.images[i],
+      ];
+      if (photos.isEmpty) continue;
+      sections.addAll([
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: Text(entry.value)),
+            TextButton(
+              onPressed: () => openPhotoGallery(context, photos),
+              child: const Text('Alle anzeigen'),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 80,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: photos.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (_, index) => GestureDetector(
+              onTap: () =>
+                  openPhotoGallery(context, photos, initialIndex: index),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(width: 100, child: RemotePhoto(photos[index])),
+              ),
+            ),
+          ),
+        ),
+      ]);
+    }
+    return sections;
   }
 
   Widget _info(IconData icon, String text) => Padding(

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import '../../providers/location_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/custom_button.dart';
 import '../auth/signin_screen.dart';
 import '../auth/signup_screen.dart';
+import 'onboarding_screen.dart';
 
 /// Frame `Location allow.png` — the permission sheet sits on a dimmed sign-up
 /// screen, so that is exactly what is rendered behind it rather than a
@@ -21,22 +24,25 @@ class LocationPermissionScreen extends StatefulWidget {
 
 class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
   int _selected = 0;
+  bool _proceeding = false;
 
   static const List<String> _options = [
-    'Standort immer zulassen',
-    'Nur während der Nutzung der App zulassen.',
+    'Standort während der Nutzung erlauben',
     'Standort nicht zulassen',
   ];
 
   Future<void> _proceed() async {
-    if (_selected != 2) {
+    if (_proceeding) return;
+    setState(() => _proceeding = true);
+    if (_selected == 0) {
       try {
-        await Geolocator.requestPermission();
+        await context.read<LocationProvider>().locate();
       } catch (_) {
         /* Discovery remains available without location. */
       }
     }
     if (!mounted) return;
+    setState(() => _proceeding = false);
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const SignInScreen()),
@@ -56,6 +62,19 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
         Container(
           color: Colors.black.withValues(alpha: 0.45),
         ).animate().fadeIn(duration: 320.ms),
+        Positioned(
+          top: MediaQuery.paddingOf(context).top + 8,
+          left: 12,
+          child: IconButton(
+            tooltip: 'Zurück',
+            color: Colors.white,
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+            ),
+          ),
+        ),
 
         Center(
           child: Padding(
@@ -84,6 +103,13 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                               ),
                             ),
                             SizedBox(height: 18.h),
+                            const Text(
+                              'Ihr GPS-Standort hilft, Restaurants in Ihrer Nähe zu finden. Ohne Freigabe können Sie weiterhin nach Orten suchen.',
+                            ),
+                            TextButton(
+                              onPressed: () => Geolocator.openAppSettings(),
+                              child: const Text('Standorteinstellungen öffnen'),
+                            ),
                             ...List.generate(_options.length, (i) {
                               final selected = _selected == i;
                               return InkWell(
@@ -147,6 +173,7 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                             SizedBox(height: 24.h),
                             CustomButton(
                               text: 'Weitermachen',
+                              isLoading: _proceeding,
                               onPressed: _proceed,
                             ),
                           ],
