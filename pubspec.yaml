@@ -2,7 +2,7 @@ name: n_krepted_flutter
 description: "Signature Dish - N_Krepted Mobile App"
 publish_to: 'none'
 
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: '>=3.11.1 <4.0.0'
