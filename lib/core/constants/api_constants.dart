@@ -2,7 +2,7 @@ class ApiConstants {
   static String get baseUrl {
     const configured = String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'https://n-krypted-sd-backend.onrender.com/api',
+      defaultValue: 'https://fahimstack.tech/nkr/api',
     );
     final normalized = configured.replaceFirst(RegExp(r'/+$'), '');
     if (normalized.endsWith('/api/v1')) {
