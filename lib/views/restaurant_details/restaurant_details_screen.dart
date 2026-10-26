@@ -64,7 +64,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   Widget build(BuildContext context) {
     final restaurant = _restaurant;
     final dishes = restaurant?.activeDishes ?? <DealDish>[];
-    final signature = dishes.where((dish) => dish.isSignatureDish).toList();
+    final signature = dishes
+        .where((dish) => dish.isSignatureDish)
+        .take(3)
+        .toList();
     final categories = dishes
         .map((dish) => dish.category)
         .where((name) => name.isNotEmpty)
@@ -186,6 +189,21 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
+                    if (signature.isNotEmpty) ...[
+                      const Text(
+                        'Signature-Gerichte',
+                        style: TextStyle(
+                          fontSize: AppFontSizes.button,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...signature.map((dish) => _dishCard(restaurant, dish)),
+                    ] else
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text('Noch keine Signature-Gerichte vorhanden.'),
+                      ),
                     if (restaurant.location.label.isNotEmpty ||
                         restaurant.location.address.isNotEmpty)
                       InkWell(
@@ -252,21 +270,6 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       ),
                     ..._restaurantPhotoSections(restaurant),
                     const SizedBox(height: 24),
-                    if (signature.isNotEmpty) ...[
-                      const Text(
-                        'Signature-Gerichte',
-                        style: TextStyle(
-                          fontSize: AppFontSizes.button,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ...signature.map((dish) => _dishCard(restaurant, dish)),
-                    ] else
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Noch keine Signature-Gerichte vorhanden.'),
-                      ),
                     if (!restaurant.isUpcoming && signature.isEmpty)
                       FilledButton.icon(
                         onPressed: () => Navigator.push(

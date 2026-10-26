@@ -26,11 +26,13 @@ class RestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final featured = dish ?? deal.featuredDish;
+    final featured = dish;
     final upcoming = deal.isUpcoming;
-    final photo = upcoming
-        ? deal.firstImage
-        : featured?.image ?? deal.firstImage;
+    final signatures = deal.activeDishes
+        .where((item) => item.isSignatureDish)
+        .take(3)
+        .toList();
+    final photo = featured?.image ?? deal.firstImage;
     final image = Stack(
       fit: StackFit.expand,
       children: [
@@ -170,6 +172,10 @@ class RestaurantCard extends StatelessWidget {
                 ),
               ),
             ),
+          if (compact && dish == null && signatures.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _signaturePreviews(signatures),
+          ],
           if (!compact && showMore && !upcoming) ...[
             const SizedBox(height: 12),
             SizedBox(
@@ -226,6 +232,11 @@ class RestaurantCard extends StatelessWidget {
                         child: image,
                       ),
                     ),
+                    if (dish == null && signatures.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                        child: _signaturePreviews(signatures),
+                      ),
                     info,
                   ],
                 ),
@@ -233,4 +244,48 @@ class RestaurantCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _signaturePreviews(List<DealDish> signatures) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      for (var index = 0; index < 3; index++) ...[
+        if (index > 0) const SizedBox(width: 8),
+        if (index >= signatures.length)
+          const Spacer()
+        else
+          Expanded(
+            child: InkWell(
+              key: ValueKey('signature-preview-${signatures[index].id}'),
+              onTap: onDishTap == null
+                  ? onTap
+                  : () => onDishTap!(signatures[index]),
+              borderRadius: BorderRadius.circular(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: AspectRatio(
+                      aspectRatio: 1.2,
+                      child: RemotePhoto(signatures[index].image),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    signatures[index].name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact
+                          ? AppFontSizes.tiny
+                          : AppFontSizes.small,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ],
+  );
 }

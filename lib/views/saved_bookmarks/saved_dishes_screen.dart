@@ -77,6 +77,15 @@ class _SavedDishesScreenState extends State<SavedDishesScreen>
                       deal: entry.restaurant,
                       dish: entry.dish,
                       compact: true,
+                      onDishTap: (dish) => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DishDetailsScreen(
+                            deal: entry.restaurant,
+                            dish: dish,
+                          ),
+                        ),
+                      ),
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(

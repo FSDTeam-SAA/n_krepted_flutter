@@ -379,7 +379,7 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     if (widget.restaurant == null) {
       if (_signatureDishes.isEmpty) {
         _showImageMessage(
-          'Bitte mindestens ein Signature-Gericht hinzufügen (maximal 4).',
+          'Bitte mindestens ein Signature-Gericht hinzufügen (maximal 3).',
         );
         return;
       }
@@ -727,7 +727,7 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
                           _buildSectionHeader('Signature-Gerichte'),
                           const SizedBox(height: 8),
                           const Text(
-                            'Fügen Sie 1 bis 4 Signature-Gerichte hinzu. Jedes Gericht benötigt eine Beschreibung, einen Preis und mindestens ein eigenes Foto.',
+                            'Fügen Sie 1 bis 3 Signature-Gerichte hinzu. Jedes Gericht benötigt eine Beschreibung, einen Preis und mindestens ein eigenes Foto.',
                           ),
                           for (var i = 0; i < _signatureDishes.length; i++)
                             ListTile(
@@ -749,7 +749,7 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
                                 },
                               ),
                             ),
-                          if (_signatureDishes.length < 4)
+                          if (_signatureDishes.length < 3)
                             OutlinedButton.icon(
                               onPressed: _draftReady
                                   ? () => _editSignatureDish()

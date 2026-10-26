@@ -415,7 +415,7 @@ class _DishFormSheetState extends State<DishFormSheet> {
                       activeTrackColor: AppColors.primary,
                       onChanged:
                           widget.draftOnly ||
-                              (signatureCount >= 4 &&
+                              (signatureCount >= 3 &&
                                   widget.dish?.isSignatureDish != true)
                           ? null
                           : (v) => setState(() => _isSignatureDish = v),
@@ -426,10 +426,10 @@ class _DishFormSheetState extends State<DishFormSheet> {
 
               const SizedBox(height: 20),
               if (!widget.draftOnly &&
-                  signatureCount >= 4 &&
+                  signatureCount >= 3 &&
                   widget.dish?.isSignatureDish != true)
                 const Text(
-                  'Bereits 4 Signature-Gerichte vorhanden. Weitere Gerichte können als normale Gerichte hinzugefügt werden.',
+                  'Bereits 3 Signature-Gerichte vorhanden. Weitere Gerichte können als normale Gerichte hinzugefügt werden.',
                 ),
               CustomButton(
                 text: widget.draftOnly

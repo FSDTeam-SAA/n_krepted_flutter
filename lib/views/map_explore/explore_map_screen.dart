@@ -15,6 +15,7 @@ import '../../data/models/deal_model.dart';
 import '../../providers/deal_provider.dart';
 import '../../providers/location_provider.dart';
 import '../restaurant_details/restaurant_details_screen.dart';
+import '../dish_details/dish_details_screen.dart';
 import '../../core/constants/app_text_styles.dart';
 
 class ExploreMapScreen extends StatefulWidget {
@@ -445,6 +446,13 @@ class _ExploreMapScreenState extends State<ExploreMapScreen>
                       child: RestaurantCard(
                         deal: _selected!,
                         compact: true,
+                        onDishTap: (dish) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                DishDetailsScreen(deal: _selected!, dish: dish),
+                          ),
+                        ),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(

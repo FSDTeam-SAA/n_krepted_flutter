@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:n_krepted_flutter/core/network/api_client.dart';
 import 'package:n_krepted_flutter/core/widgets/restaurant_card.dart';
+import 'package:n_krepted_flutter/core/widgets/discovery_widgets.dart';
 import 'package:n_krepted_flutter/core/widgets/photo_gallery.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:n_krepted_flutter/views/saved_bookmarks/saved_dishes_screen.dart';
@@ -368,6 +369,130 @@ void main() {
     },
   );
   for (final width in [320.0, 393.0]) {
+    for (final compact in [false, true]) {
+      testWidgets('one, two and three dish previews keep thumbnail widths at $width px (compact: $compact)', (tester) async {
+        tester.view.physicalSize = Size(width, 1100);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final api = _Api()..onGet = (_, _) async => response({'items': []});
+        double? thumbnailWidth;
+        for (var count = 1; count <= 3; count++) {
+          final json = restaurantJson('thumbnails');
+          json['dishes'] = [
+            for (var i = 0; i < count; i++) {
+              '_id': 'thumb-$i', 'name': 'Signature $i',
+              'price': 12, 'isSignatureDish': true,
+            },
+          ];
+          String? selected;
+          await tester.pumpWidget(MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => SavedProvider(dealRepository: DealRepository(apiClient: api))),
+              ChangeNotifierProvider(create: (_) => LocationProvider()),
+            ],
+            child: MaterialApp(home: Scaffold(body: ListView(children: [
+              RestaurantCard(deal: DealModel.fromJson(json), compact: compact, onDishTap: (dish) => selected = dish.id),
+            ]))),
+          ));
+          await tester.pumpAndSettle();
+          final first = find.byKey(const ValueKey('signature-preview-thumb-0'));
+          final size = tester.getSize(first);
+          thumbnailWidth ??= size.width;
+          expect(size.width, closeTo(thumbnailWidth, .01));
+          expect(size.width, lessThan(width / 3));
+          for (var i = 0; i < count; i++) {
+            final preview = find.byKey(ValueKey('signature-preview-thumb-$i'));
+            expect(tester.getSize(preview).width, closeTo(thumbnailWidth, .01));
+            await tester.ensureVisible(preview);
+            await tester.tap(preview);
+            expect(selected, 'thumb-$i');
+          }
+          expect(tester.takeException(), isNull);
+        }
+      });
+    }
+    testWidgets(
+      'restaurant previews show three active signatures and open the selected dish at $width px',
+      (tester) async {
+        tester.view.physicalSize = Size(width, 1100);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final json = restaurantJson('preview');
+        json['images'] = ['https://example.test/restaurant.jpg'];
+        json['dishes'] = [
+          for (var i = 0; i < 4; i++)
+            {
+              '_id': 'signature-$i',
+              'name': 'Signature dish $i',
+              'isSignatureDish': true,
+              'price': 12,
+              'images': ['https://example.test/dish-$i.jpg'],
+            },
+          {'_id': 'regular', 'name': 'Regular dish', 'price': 10},
+          {
+            '_id': 'hidden',
+            'name': 'Hidden dish',
+            'isSignatureDish': true,
+            'isActive': false,
+            'price': 10,
+          },
+        ];
+        final api = _Api()..onGet = (_, _) async => response({'items': []});
+        String? selected;
+        var restaurantTaps = 0;
+        await tester.pumpWidget(
+          MultiProvider(
+            providers: [
+              ChangeNotifierProvider(
+                create: (_) => SavedProvider(
+                  dealRepository: DealRepository(apiClient: api),
+                ),
+              ),
+              ChangeNotifierProvider(create: (_) => LocationProvider()),
+            ],
+            child: MaterialApp(
+              home: Scaffold(
+                body: ListView(
+                  children: [
+                    RestaurantCard(
+                      deal: DealModel.fromJson(json),
+                      onTap: () => restaurantTaps++,
+                      onDishTap: (dish) => selected = dish.id,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.widgetList<RemotePhoto>(find.byType(RemotePhoto)).first.url,
+          'https://example.test/restaurant.jpg',
+        );
+        expect(
+          find.byKey(const ValueKey('signature-preview-signature-3')),
+          findsNothing,
+        );
+        expect(find.text('Regular dish'), findsNothing);
+        expect(find.text('Hidden dish'), findsNothing);
+        for (var i = 0; i < 3; i++) {
+          final preview = find.byKey(
+            ValueKey('signature-preview-signature-$i'),
+          );
+          await tester.ensureVisible(preview);
+          await tester.tap(preview);
+          expect(selected, 'signature-$i');
+        }
+        expect(restaurantTaps, 0);
+        await tester.ensureVisible(find.byType(RemotePhoto).first);
+        await tester.tap(find.byType(RemotePhoto).first);
+        expect(restaurantTaps, 1);
+        expect(tester.takeException(), isNull);
+      },
+    );
     testWidgets(
       'reference restaurant card fits $width px including long names',
       (tester) async {
