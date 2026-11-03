@@ -67,7 +67,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     return AuthBackdrop(
       child: SafeArea(
-        bottom: false,
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -77,7 +76,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(height: 285.h - AppSizes.topInset),
+                    SizedBox(
+                      height: MediaQuery.viewInsetsOf(context).bottom > 0
+                          ? 56
+                          : 96.h,
+                    ),
                     Text(
                       'Passwort vergessen?',
                       textAlign: TextAlign.center,
@@ -94,7 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ).fadeSlideUp(delay: Motion.step(1)),
 
-                    SizedBox(height: 75.h),
+                    SizedBox(height: 32.h),
                     CustomTextField(
                       controller: _emailController,
                       hintText: 'E-Mail',
@@ -104,7 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           : null,
                     ).fadeSlideUp(delay: Motion.step(2)),
 
-                    SizedBox(height: 72.h),
+                    SizedBox(height: 24.h),
                     CustomButton(
                       text: 'Bestätigungscode senden',
                       isLoading: authProvider.isLoading,

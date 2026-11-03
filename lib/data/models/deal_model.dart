@@ -48,6 +48,8 @@ class DealLocation {
 }
 
 class DealDish {
+  final List<String> tags;
+  final String leadImage;
   final String id;
   final String name;
   final String description;
@@ -64,6 +66,8 @@ class DealDish {
   final int reviewCount;
 
   const DealDish({
+    this.tags = const [],
+    this.leadImage = '',
     required this.id,
     required this.name,
     required this.description,
@@ -91,6 +95,8 @@ class DealDish {
     if (images.isEmpty && legacyImage.isNotEmpty) images.add(legacyImage);
 
     return DealDish(
+      tags: (json['tags'] as List? ?? []).map((v) => v.toString()).toList(),
+      leadImage: json['leadImage']?.toString() ?? '',
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
@@ -115,6 +121,15 @@ class DealDish {
 }
 
 class DealModel {
+  final String leadImage,
+      timeZone,
+      healthNotice,
+      safetyComment,
+      safetyDisclaimer,
+      priceRange;
+  final bool showTeamReviews, isOpenNow;
+  final List<Map<String, dynamic>> openingHoursSchedule;
+  final List<PromotionModel> promotions;
   final String id;
   final String title;
   final String? shortDescription;
@@ -128,6 +143,7 @@ class DealModel {
   final String? rejectionReason;
   final String? owner;
   final CategoryModel? category;
+  final List<String> categories;
   final int time;
   final double rating;
   final double sdRating;
@@ -147,6 +163,16 @@ class DealModel {
   final List<String> photoCategories;
 
   DealModel({
+    this.leadImage = '',
+    this.timeZone = 'Europe/Berlin',
+    this.healthNotice = '',
+    this.safetyComment = '',
+    this.safetyDisclaimer = '',
+    this.priceRange = r'$$',
+    this.showTeamReviews = true,
+    this.isOpenNow = false,
+    this.openingHoursSchedule = const [],
+    this.promotions = const [],
     required this.id,
     required this.title,
     this.shortDescription,
@@ -160,6 +186,7 @@ class DealModel {
     this.rejectionReason,
     this.owner,
     this.category,
+    this.categories = const [],
     this.time = 0,
     this.rating = 0,
     this.sdRating = 0,
@@ -197,6 +224,22 @@ class DealModel {
     }
 
     return DealModel(
+      leadImage: json['leadImage']?.toString() ?? '',
+      timeZone: json['timeZone']?.toString() ?? 'Europe/Berlin',
+      healthNotice: json['healthNotice']?.toString() ?? '',
+      safetyComment: json['safetyComment']?.toString() ?? '',
+      safetyDisclaimer: json['safetyDisclaimer']?.toString() ?? '',
+      priceRange: json['priceRange']?.toString() ?? r'$$',
+      showTeamReviews: json['showTeamReviews'] != false,
+      isOpenNow: json['isOpenNow'] == true,
+      openingHoursSchedule: (json['openingHoursSchedule'] as List? ?? [])
+          .whereType<Map>()
+          .map((v) => Map<String, dynamic>.from(v))
+          .toList(),
+      promotions: (json['promotions'] as List? ?? [])
+          .whereType<Map>()
+          .map((v) => PromotionModel.fromJson(Map<String, dynamic>.from(v)))
+          .toList(),
       id: json['_id'] ?? json['id'] ?? '',
       title: json['title'] ?? '',
       shortDescription: json['shortDescription'],
@@ -212,6 +255,12 @@ class DealModel {
       rejectionReason: json['rejectionReason'],
       owner: ownerId.isNotEmpty ? ownerId : null,
       category: cat,
+      categories:
+          (json['categories'] as List? ??
+                  (cat == null ? [] : [cat.categoryName]))
+              .map((value) => value.toString())
+              .where((value) => value.isNotEmpty)
+              .toList(),
       time: json['time'] ?? 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
       sdRating: (json['sdRating'] as num?)?.toDouble() ?? 0,
@@ -261,5 +310,40 @@ class DealModel {
       featuredDish?.image.isNotEmpty == true ? featuredDish!.image : firstImage;
   bool get isUpcoming => opensAt?.isAfter(DateTime.now()) == true;
 
-  String get firstImage => images.isNotEmpty ? images.first : '';
+  String get firstImage => leadImage.isNotEmpty && images.contains(leadImage)
+      ? leadImage
+      : images.isNotEmpty
+      ? images.first
+      : '';
+}
+
+class PromotionModel {
+  final String title, text, bannerUrl, discountType, dishId;
+  final double discountValue;
+  final DateTime? endsAt;
+  const PromotionModel({
+    required this.title,
+    required this.text,
+    required this.bannerUrl,
+    required this.discountType,
+    required this.discountValue,
+    required this.dishId,
+    this.endsAt,
+  });
+  factory PromotionModel.fromJson(Map<String, dynamic> json) => PromotionModel(
+    title: json['title']?.toString() ?? '',
+    text: json['text']?.toString() ?? '',
+    bannerUrl: json['bannerUrl']?.toString() ?? '',
+    discountType: json['discountType']?.toString() ?? 'none',
+    discountValue: (json['discountValue'] as num?)?.toDouble() ?? 0,
+    dishId: json['dish']?.toString() ?? '',
+    endsAt: DateTime.tryParse('${json['endsAt']}'),
+  );
+  double price(double original) =>
+      (discountType == 'percent'
+              ? original * (1 - discountValue / 100)
+              : discountType == 'amount'
+              ? original - discountValue
+              : original)
+          .clamp(0, double.infinity);
 }

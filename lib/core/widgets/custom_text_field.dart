@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../constants/app_text_styles.dart';
+import '../constants/app_spacing.dart';
 
-/// Design: 353 x 40 pill-ish field, 10px radius, 1px #6CD5E7 border,
-/// 14px hint in #B1B1B1, 13px left padding.
+/// Shared form field with a 48px minimum tap target and room for validation.
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
@@ -59,7 +59,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   }
 
   OutlineInputBorder _border(Color color, double width) => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(10.w),
+    borderRadius: BorderRadius.circular(AppSpacing.radius),
     borderSide: BorderSide(color: color, width: width),
   );
 
@@ -98,6 +98,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             decoration: InputDecoration(
               isDense: true,
+              constraints: const BoxConstraints(
+                minHeight: AppSpacing.controlHeight,
+              ),
               hintText: widget.hintText,
               hintStyle: AppTextStyles.body(
                 size: AppFontSizes.body,
@@ -122,20 +125,19 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     )
                   : widget.suffixIcon,
               suffixIconConstraints: BoxConstraints(
-                minWidth: 36.w,
-                minHeight: 20.h,
+                minWidth: AppSpacing.controlHeight,
+                minHeight: AppSpacing.controlHeight,
               ),
-              // Vertical padding, not a height constraint: the decorator centres
-              // the text between these and lands on exactly 40.
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 13.w,
-                vertical: isSingleLine ? 11.h : 12.h,
+                vertical: isSingleLine ? 14 : 12,
               ),
               border: _border(AppColors.inputBorder, 1),
               enabledBorder: _border(AppColors.inputBorder, 1),
               focusedBorder: _border(AppColors.primary, 1.4),
               errorBorder: _border(AppColors.badgeRed, 1),
               focusedErrorBorder: _border(AppColors.badgeRed, 1.4),
+              errorMaxLines: 3,
               errorStyle: AppTextStyles.body(
                 size: AppFontSizes.captionSmall,
                 color: AppColors.badgeRed,

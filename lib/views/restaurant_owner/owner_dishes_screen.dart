@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/description_text.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
 import '../dish_details/dish_details_screen.dart';
@@ -352,7 +353,7 @@ class _SignatureCard extends StatelessWidget {
                 if (dish.description.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    dish.description,
+                    plainDescription(dish.description),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

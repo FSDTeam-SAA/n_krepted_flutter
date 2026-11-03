@@ -84,7 +84,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     return AuthBackdrop(
       child: SafeArea(
-        bottom: false,
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -94,7 +93,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(height: 258.h - AppSizes.topInset),
+                    SizedBox(
+                      height: MediaQuery.viewInsetsOf(context).bottom > 0
+                          ? 56
+                          : 80.h,
+                    ),
                     Text(
                       'Passwort ändern',
                       textAlign: TextAlign.center,
@@ -111,7 +114,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       ),
                     ).fadeSlideUp(delay: Motion.step(1)),
 
-                    SizedBox(height: 72.h),
+                    SizedBox(height: 32.h),
                     CustomTextField(
                       controller: _passwordController,
                       hintText: 'Neues Passwort',
@@ -127,7 +130,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       },
                     ).fadeSlideUp(delay: Motion.step(2)),
 
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 16.h),
                     CustomTextField(
                       controller: _confirmPasswordController,
                       hintText: 'Passwort bestätigen',
@@ -137,7 +140,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           : null,
                     ).fadeSlideUp(delay: Motion.step(3)),
 
-                    SizedBox(height: 72.h),
+                    SizedBox(height: 32.h),
                     CustomButton(
                       text: 'Speichern',
                       isLoading: authProvider.isLoading,

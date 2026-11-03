@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/description_text.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
 import 'create_edit_restaurant_screen.dart';
@@ -109,10 +111,16 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
       ),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: _buildBody(provider, restaurant),
+          : SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: _buildBody(provider, restaurant),
+              ),
             ),
     );
   }
@@ -399,7 +407,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: AppSpacing.pagePadding,
           decoration: BoxDecoration(
             color: Colors.red.shade50,
             borderRadius: BorderRadius.circular(20),
@@ -653,8 +661,11 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
         const SizedBox(height: 20),
 
         // Dishes Header & Action
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 12,
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,20 +800,22 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        dish.name,
-                        style: const TextStyle(
-                          fontSize: AppFontSizes.body,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
-                        ),
+                    Text(
+                      dish.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: AppFontSizes.body,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
                       ),
                     ),
                     if (dish.isSignatureDish)
                       Container(
+                        margin: const EdgeInsets.only(top: 6),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,
                           vertical: 2,
@@ -842,7 +855,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
                 if (dish.description.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    dish.description,
+                    plainDescription(dish.description),
                     style: const TextStyle(
                       fontSize: AppFontSizes.captionSmall,
                       color: AppColors.textGrey,
@@ -854,21 +867,28 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(
-              Icons.edit_outlined,
-              size: 18,
-              color: AppColors.textGrey,
-            ),
-            onPressed: () => _openAddDishSheet(dish),
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.delete_outline,
-              size: 18,
-              color: AppColors.badgeRed,
-            ),
-            onPressed: () => _confirmDeleteDish(dish),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Gericht bearbeiten',
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  size: 18,
+                  color: AppColors.textGrey,
+                ),
+                onPressed: () => _openAddDishSheet(dish),
+              ),
+              IconButton(
+                tooltip: 'Gericht löschen',
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: AppColors.badgeRed,
+                ),
+                onPressed: () => _confirmDeleteDish(dish),
+              ),
+            ],
           ),
         ],
       ),
@@ -975,7 +995,7 @@ class _OwnerWorkspaceScreenState extends State<OwnerWorkspaceScreen> {
             const Divider(height: 1, color: AppColors.divider),
             const SizedBox(height: 12),
             Text(
-              restaurant.description,
+              plainDescription(restaurant.description),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -112,7 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: AppSpacing.pagePadding,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight - 40,
@@ -122,7 +123,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     key: _form,
                     child: Column(
                       children: [
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 8),
                         GestureDetector(
                           onTap: _pickImage,
                           child: Stack(
@@ -157,7 +158,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 38),
+                        const SizedBox(height: 24),
                         CustomTextField(
                           controller: _name,
                           hintText: language.text('Benutzer', 'Name'),
@@ -191,8 +192,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           controller: _address,
                           hintText: language.text('Adresse', 'Address'),
                         ),
-                        const Spacer(),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         CustomButton(
                           text: language.text('Speichern', 'Save'),
                           isLoading: auth.isLoading,

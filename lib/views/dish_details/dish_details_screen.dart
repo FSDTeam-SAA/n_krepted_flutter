@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/feature_content.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -7,6 +8,8 @@ import '../../core/widgets/owner_page_background.dart';
 import '../../core/widgets/photo_gallery.dart';
 import '../../core/widgets/rating_badge.dart';
 import '../../core/widgets/review_card.dart';
+import '../../core/widgets/bottom_action_bar.dart';
+import '../../core/constants/app_spacing.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/deal_provider.dart';
 import '../../providers/review_provider.dart';
@@ -80,32 +83,29 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
       ),
       bottomNavigationBar: dish == null || restaurant == null
           ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
-                child: OutlinedButton.icon(
-                  onPressed: restaurant.isUpcoming
-                      ? null
-                      : () async {
-                          final changed = await Navigator.push<bool>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => WriteReviewScreen(
-                                dealId: restaurant.id,
-                                dishId: dish.id,
-                              ),
+          : BottomActionBar(
+              child: OutlinedButton.icon(
+                onPressed: restaurant.isUpcoming
+                    ? null
+                    : () async {
+                        final changed = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => WriteReviewScreen(
+                              dealId: restaurant.id,
+                              dishId: dish.id,
                             ),
-                          );
-                          if (changed == true && mounted) {
-                            await _load();
-                            if (context.mounted) {
-                              await showDessertSuggestion(context);
-                            }
+                          ),
+                        );
+                        if (changed == true && mounted) {
+                          await _load();
+                          if (context.mounted) {
+                            await showDessertSuggestion(context);
                           }
-                        },
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Schildern Sie Ihre Erfahrungen'),
-                ),
+                        }
+                      },
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Schildern Sie Ihre Erfahrungen'),
               ),
             ),
       body: OwnerPageBackground(
@@ -118,7 +118,8 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: AppSpacing.pagePadding,
                   children: [
                     GestureDetector(
                       onTap: () => openPhotoGallery(
@@ -131,7 +132,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: RemotePhoto(
-                            fit: BoxFit.contain,
+                            fit: BoxFit.cover,
                             images.isEmpty ? '' : images[_imageIndex],
                           ),
                         ),
@@ -140,7 +141,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                     if (images.length > 1) ...[
                       const SizedBox(height: 12),
                       SizedBox(
-                        height: 106,
+                        height: 72,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: images.length,
@@ -148,7 +149,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                           itemBuilder: (_, i) => GestureDetector(
                             onTap: () => setState(() => _imageIndex = i),
                             child: Container(
-                              width: 106,
+                              width: 72,
                               clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(9),
@@ -159,16 +160,13 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                                   width: 2,
                                 ),
                               ),
-                              child: RemotePhoto(
-                                images[i],
-                                fit: BoxFit.contain,
-                              ),
+                              child: RemotePhoto(images[i], fit: BoxFit.cover),
                             ),
                           ),
                         ),
                       ),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
@@ -183,25 +181,41 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                         SaveButton(restaurant: restaurant, dishId: dish.id),
                       ],
                     ),
-                    Row(
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Expanded(
-                          child: Text(
-                            formatEuro(context, dish.price),
-                            style: const TextStyle(
-                              fontSize: AppFontSizes.title,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        Text(
+                          formatEuro(context, dish.price),
+                          style: const TextStyle(
+                            fontSize: AppFontSizes.title,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        RatingBadge(rating: dish.rating),
-                        const SizedBox(width: 5),
-                        Text(
-                          '${dish.reviewCount} Bewertungen',
-                          style: const TextStyle(fontSize: AppFontSizes.small),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            RatingBadge(rating: dish.rating),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                '${dish.reviewCount} Bewertungen',
+                                style: const TextStyle(
+                                  fontSize: AppFontSizes.small,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    if (dish.isSignatureDish) ...[
+                      const SizedBox(height: 12),
+                      const SignatureBadge(),
+                    ],
+                    FoodTags(dish.tags),
+                    PromotionList(restaurant, dish: dish),
                     if (dish.description.trim().isNotEmpty)
                       _section('Beschreibung', dish.description),
                     if (dish.specialtyDescription.trim().isNotEmpty)
@@ -211,7 +225,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                       ),
                     if (dish.ingredients.isNotEmpty ||
                         dish.preparationProcess.isNotEmpty) ...[
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.section),
                       const Text(
                         'Zubereitungsmethode',
                         style: TextStyle(
@@ -256,7 +270,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
                         Text(dish.preparationProcess, style: _bodyStyle),
                       ],
                     ],
-                    const SizedBox(height: 22),
+                    const SizedBox(height: AppSpacing.section),
                     Row(
                       children: [
                         const Expanded(
@@ -315,7 +329,7 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
     height: 1.5,
   );
   Widget _section(String title, String body) => Padding(
-    padding: const EdgeInsets.only(top: 20),
+    padding: const EdgeInsets.only(top: AppSpacing.section),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -326,8 +340,8 @@ class _DishDetailsScreenState extends State<DishDetailsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 6),
-        Text(body, style: _bodyStyle),
+        const SizedBox(height: 8),
+        FormattedText(body),
       ],
     ),
   );

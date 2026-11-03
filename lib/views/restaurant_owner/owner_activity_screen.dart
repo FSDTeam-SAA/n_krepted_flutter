@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'owner_views_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -24,9 +25,11 @@ class _OwnerActivityScreenState extends State<OwnerActivityScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<CheckInProvider>().fetchOwnerCheckIns(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.type == OwnerActivityType.checkIns) {
+        context.read<CheckInProvider>().fetchOwnerCheckIns();
+      }
+    });
   }
 
   List<CheckInModel> _items(List<CheckInModel> source) {
@@ -40,6 +43,9 @@ class _OwnerActivityScreenState extends State<OwnerActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.type == OwnerActivityType.viewers) {
+      return const OwnerViewsScreen();
+    }
     final provider = context.watch<CheckInProvider>();
     final items = _items(provider.checkIns);
     final isCheckIns = widget.type == OwnerActivityType.checkIns;
@@ -57,68 +63,71 @@ class _OwnerActivityScreenState extends State<OwnerActivityScreen> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          const Positioned(
-            right: -40,
-            top: -45,
-            child: _PageDecoration(
-              asset: AppAssets.homeDecoHerbs,
-              width: 120,
-              opacity: .28,
-            ),
-          ),
-          const Positioned(
-            left: -45,
-            top: 140,
-            child: _PageDecoration(
-              asset: AppAssets.homeDecoCoffee,
-              width: 112,
-              opacity: .12,
-            ),
-          ),
-          const Positioned(
-            right: -35,
-            bottom: -20,
-            child: _PageDecoration(
-              asset: AppAssets.decoSkewers,
-              width: 142,
-              opacity: .32,
-            ),
-          ),
-          if (provider.isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          else if (items.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(
-                  provider.errorMessage ??
-                      (isCheckIns
-                          ? 'Noch keine Check-ins vorhanden.'
-                          : 'Noch keine Besucher vorhanden.'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textGrey),
-                ),
-              ),
-            )
-          else
-            RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: provider.fetchOwnerCheckIns,
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (_, index) => _OwnerPersonTile(
-                  item: items[index],
-                  showPartySize: isCheckIns,
-                ),
+      body: SafeArea(
+        top: false,
+        child: Stack(
+          children: [
+            const Positioned(
+              right: -40,
+              top: -45,
+              child: _PageDecoration(
+                asset: AppAssets.homeDecoHerbs,
+                width: 120,
+                opacity: .28,
               ),
             ),
-        ],
+            const Positioned(
+              left: -45,
+              top: 140,
+              child: _PageDecoration(
+                asset: AppAssets.homeDecoCoffee,
+                width: 112,
+                opacity: .12,
+              ),
+            ),
+            const Positioned(
+              right: -35,
+              bottom: -20,
+              child: _PageDecoration(
+                asset: AppAssets.decoSkewers,
+                width: 142,
+                opacity: .32,
+              ),
+            ),
+            if (provider.isLoading)
+              const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
+            else if (items.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text(
+                    provider.errorMessage ??
+                        (isCheckIns
+                            ? 'Noch keine Check-ins vorhanden.'
+                            : 'Noch keine Besucher vorhanden.'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.textGrey),
+                  ),
+                ),
+              )
+            else
+              RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: provider.fetchOwnerCheckIns,
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (_, index) => _OwnerPersonTile(
+                    item: items[index],
+                    showPartySize: isCheckIns,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

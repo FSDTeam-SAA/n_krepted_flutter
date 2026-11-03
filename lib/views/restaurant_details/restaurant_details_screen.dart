@@ -7,6 +7,9 @@ import '../../core/widgets/discovery_widgets.dart';
 import '../../core/widgets/owner_page_background.dart';
 import '../../core/widgets/photo_gallery.dart';
 import '../../core/widgets/rating_badge.dart';
+import '../../core/widgets/bottom_action_bar.dart';
+import '../../core/constants/app_spacing.dart';
+import '../../core/widgets/feature_content.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/deal_provider.dart';
 import '../dish_details/dish_details_screen.dart';
@@ -30,6 +33,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   String? _error;
   String _category = '';
   bool _loading = true;
+  bool _viewRecorded = false;
   @override
   void initState() {
     super.initState();
@@ -43,6 +47,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     });
     final provider = context.read<DealProvider>();
     final result = await provider.getDealDetails(widget.deal.id);
+    if (result != null && !_viewRecorded) {
+      _viewRecorded = true;
+      provider.dealRepository.recordView(result.id);
+    }
     if (mounted) {
       setState(() {
         _restaurant = result;
@@ -88,34 +96,31 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
       );
     }
     return Scaffold(
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
-          child: OutlinedButton.icon(
-            onPressed: restaurant.isUpcoming
-                ? null
-                : () async {
-                    final changed = await Navigator.push<bool>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            WriteReviewScreen(dealId: restaurant.id),
-                      ),
-                    );
-                    if (changed == true && mounted) {
-                      await _load();
-                      if (context.mounted) await showDessertSuggestion(context);
-                    }
-                  },
-            icon: const Icon(Icons.edit_outlined),
-            label: const Text('Schildern Sie Ihre Erfahrungen'),
-          ),
+      bottomNavigationBar: BottomActionBar(
+        child: OutlinedButton.icon(
+          onPressed: restaurant.isUpcoming
+              ? null
+              : () async {
+                  final changed = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => WriteReviewScreen(dealId: restaurant.id),
+                    ),
+                  );
+                  if (changed == true && mounted) {
+                    await _load();
+                    if (context.mounted) await showDessertSuggestion(context);
+                  }
+                },
+          icon: const Icon(Icons.edit_outlined),
+          label: const Text('Schildern Sie Ihre Erfahrungen'),
         ),
       ),
       body: OwnerPageBackground(
         child: RefreshIndicator(
           onRefresh: _load,
           child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverAppBar(
                 expandedHeight: 180,
@@ -149,7 +154,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.all(20),
+                padding: AppSpacing.pagePadding,
                 sliver: SliverList.list(
                   children: [
                     Row(
@@ -175,10 +180,12 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                               AllReviewsScreen(dealId: restaurant.id),
                         ),
                       ),
-                      child: Row(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           RatingBadge(rating: restaurant.rating),
-                          const SizedBox(width: 6),
                           Text(
                             '${restaurant.reviewCount} Bewertungen',
                             style: const TextStyle(
@@ -188,7 +195,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.section),
                     if (signature.isNotEmpty) ...[
                       const Text(
                         'Signature-Gerichte',
@@ -226,6 +233,42 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                         ),
                       ),
                     DistanceLine(restaurant),
+                    TextButton.icon(
+                      onPressed: () => openExternalLink(
+                        context,
+                        googleMapsDirections(restaurant),
+                      ),
+                      icon: const Icon(Icons.directions_walk),
+                      label: const Text('Route in Google Maps'),
+                    ),
+                    if (restaurant.description.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Über das Restaurant',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      FormattedText(restaurant.description),
+                    ],
+                    PromotionList(restaurant),
+                    for (final offer in restaurant.offers)
+                      _info(Icons.local_offer_outlined, offer),
+                    if (restaurant.healthNotice.isNotEmpty ||
+                        restaurant.safetyComment.isNotEmpty ||
+                        restaurant.safetyDisclaimer.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Gesundheit & Sicherheit',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      if (restaurant.healthNotice.isNotEmpty)
+                        FormattedText(restaurant.healthNotice),
+                      if (restaurant.safetyComment.isNotEmpty)
+                        FormattedText(restaurant.safetyComment),
+                      if (restaurant.safetyDisclaimer.isNotEmpty)
+                        FormattedText(restaurant.safetyDisclaimer),
+                    ],
                     if (restaurant.openingHours.isNotEmpty)
                       _info(Icons.access_time, restaurant.openingHours),
                     if (restaurant.contactEmail.isNotEmpty)
@@ -446,7 +489,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     ),
   );
   Widget _dishCard(DealModel restaurant, DealDish dish) => Padding(
-    padding: const EdgeInsets.only(bottom: 30),
+    padding: const EdgeInsets.only(bottom: AppSpacing.item),
     child: Material(
       color: Colors.white,
       elevation: 1,
@@ -463,11 +506,17 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  RemotePhoto(dish.image, fit: BoxFit.contain),
+                  RemotePhoto(dish.image, fit: BoxFit.cover),
+                  if (dish.isSignatureDish)
+                    const Positioned(
+                      left: 10,
+                      top: 10,
+                      child: SignatureBadge(),
+                    ),
                   if (!restaurant.isUpcoming)
                     Positioned(
-                      right: 0,
-                      bottom: 36,
+                      right: 12,
+                      bottom: 12,
                       child: FilledButton(
                         onPressed: () => Navigator.push(
                           context,
@@ -482,7 +531,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -502,7 +551,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                   ),
                   if (dish.description.isNotEmpty)
                     Text(
-                      dish.description,
+                      plainDescription(dish.description),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -512,24 +561,34 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                       ),
                     ),
                   const SizedBox(height: 10),
-                  Row(
+                  FoodTags(dish.tags),
+                  PromotionList(restaurant, dish: dish),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          formatEuro(context, dish.price),
-                          style: const TextStyle(
-                            fontSize: AppFontSizes.title,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      Text(
+                        formatEuro(context, dish.price),
+                        style: const TextStyle(
+                          fontSize: AppFontSizes.title,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      RatingBadge(rating: dish.rating),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${dish.reviewCount} Bewertungen',
-                        style: const TextStyle(
-                          fontSize: AppFontSizes.captionSmall,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          RatingBadge(rating: dish.rating),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              '${dish.reviewCount} Bewertungen',
+                              style: const TextStyle(
+                                fontSize: AppFontSizes.captionSmall,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

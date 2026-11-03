@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../core/widgets/app_dropdown.dart';
 import '../../core/widgets/discovery_widgets.dart';
 import '../../core/widgets/owner_page_background.dart';
 import '../../core/network/api_error.dart';
@@ -159,7 +161,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
             : Form(
                 key: _form,
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.pagePadding,
                   children: [
                     _section(
                       'Bewertung',
@@ -223,10 +225,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                     if (_eligibility!.dishes.isNotEmpty)
                       _section(
                         'Verzehrtes Gericht',
-                        DropdownButtonFormField<String>(
-                          initialValue: _dishId,
-                          isExpanded: true,
-                          decoration: _decoration(),
+                        AppDropdown<String>(
+                          value: _dishId,
                           hint: const Text('Gericht auswählen'),
                           items: _eligibility!.dishes
                               .map(

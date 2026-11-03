@@ -15,6 +15,9 @@ class DealProvider with ChangeNotifier {
   double? latitude, longitude;
   String sort = 'rating', availability = 'active';
   String? recommendation;
+  String? priceRange;
+  bool openNow = false;
+  List<String> tags = [];
   Timer? _debounce;
 
   DealProvider({required this.dealRepository, bool autoLoad = true}) {
@@ -30,6 +33,16 @@ class DealProvider with ChangeNotifier {
   double get radiusKm => _radiusKm;
   int get minimumRating => _minimumRating;
   String? get cuisine => _cuisine;
+
+  int get activeFilterCount =>
+      (latitude != null || _locationQuery.isNotEmpty ? 1 : 0) +
+      (_minimumRating > 0 ? 1 : 0) +
+      (_selectedCategory != null ? 1 : 0) +
+      (_cuisine != null ? 1 : 0) +
+      (priceRange != null ? 1 : 0) +
+      (openNow ? 1 : 0) +
+      tags.length +
+      (sort != 'rating' ? 1 : 0);
 
   Future<void> fetchDeals({
     String? categoryId,
@@ -68,6 +81,9 @@ class DealProvider with ChangeNotifier {
         availability: availability,
         page: page,
         recommendation: recommendation,
+        priceRange: priceRange,
+        openNow: openNow,
+        tags: tags,
       );
       if (_disposed || request != _request) return;
       _deals = loadMore ? [..._deals, ...result] : result;
@@ -130,6 +146,9 @@ class DealProvider with ChangeNotifier {
     latitude = null;
     longitude = null;
     sort = 'rating';
+    priceRange = null;
+    openNow = false;
+    tags = [];
     await fetchDeals();
   }
 

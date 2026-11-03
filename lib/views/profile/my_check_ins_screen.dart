@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -43,7 +44,7 @@ class _MyCheckInsScreenState extends State<MyCheckInsScreen> {
               ),
             )
           : ListView.separated(
-              padding: const EdgeInsets.all(20),
+              padding: AppSpacing.pagePadding,
               itemCount: provider.checkIns.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {

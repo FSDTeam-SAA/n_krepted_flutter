@@ -2,11 +2,28 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/services/social_login_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/storage_service.dart';
 import '../models/user_model.dart';
 
 class AuthRepository {
+  Future<UserModel> socialLogin(String provider) async {
+    final credentials = await SocialLoginService.credentials(
+      provider,
+      apiClient,
+    );
+    final response = await apiClient.post('/auth/social', data: credentials);
+    final token = response.data['token'] as String;
+    final user = UserModel.fromJson(response.data['data'], token: token);
+    await StorageService.saveToken(token);
+    await StorageService.saveRefreshToken(
+      response.data['refreshToken'] as String?,
+    );
+    await StorageService.saveUser(user.toJson());
+    return user;
+  }
+
   final ApiClient apiClient;
 
   AuthRepository({required this.apiClient});

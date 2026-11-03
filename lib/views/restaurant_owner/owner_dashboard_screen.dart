@@ -158,12 +158,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        language.text('Signature-Gerichte', 'Signature Dishes'),
-                        style: const TextStyle(
-                          fontSize: AppFontSizes.button,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
+                      Expanded(
+                        child: Text(
+                          language.text(
+                            'Signature-Gerichte',
+                            'Signature Dishes',
+                          ),
+                          style: const TextStyle(
+                            fontSize: AppFontSizes.button,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
                         ),
                       ),
                       TextButton.icon(
@@ -382,7 +387,7 @@ class _StatsGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 14,
       crossAxisSpacing: 14,
-      childAspectRatio: 1.58,
+      mainAxisExtent: 132,
       children: [
         _StatCard(
           icon: Icons.star,
@@ -413,7 +418,7 @@ class _StatsGrid extends StatelessWidget {
           icon: Icons.visibility_outlined,
           iconColor: const Color(0xFF8B2CFF),
           label: language.text('Aufrufe insgesamt', 'Total viewers'),
-          value: _compactNumber(stats.totalCustomers),
+          value: _compactNumber(stats.totalViews),
           onTap: onViewersTap,
         ),
       ],
@@ -461,7 +466,7 @@ class _StatCard extends StatelessWidget {
               const Spacer(),
               Text(
                 label,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: AppFontSizes.small,
@@ -554,6 +559,7 @@ class _OwnerDishCard extends StatelessWidget {
                 ),
                 Positioned(
                   left: 14,
+                  right: 88,
                   bottom: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -573,11 +579,15 @@ class _OwnerDishCard extends StatelessWidget {
                           size: 14,
                         ),
                         const SizedBox(width: 7),
-                        Text(
-                          dish.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: AppFontSizes.small,
+                        Flexible(
+                          child: Text(
+                            dish.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: AppFontSizes.small,
+                            ),
                           ),
                         ),
                       ],
@@ -597,7 +607,7 @@ class _OwnerDishCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Text(
-                      '${restaurant.rating.toStringAsFixed(1)} ★',
+                      '${dish.rating.toStringAsFixed(1)} ★',
                       style: const TextStyle(
                         color: AppColors.orangeAccent,
                         fontWeight: FontWeight.w700,
@@ -615,14 +625,16 @@ class _OwnerDishCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        language.text('Rezensionen', 'Reviews'),
-                        style: const TextStyle(
-                          fontSize: AppFontSizes.body,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          language.text('Rezensionen', 'Reviews'),
+                          style: const TextStyle(
+                            fontSize: AppFontSizes.body,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       InkWell(
                         onTap: onReviewsTap,
                         child: Padding(

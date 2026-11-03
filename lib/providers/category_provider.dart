@@ -10,6 +10,7 @@ class CategoryProvider with ChangeNotifier {
   bool _isLoading = false;
   String? errorMessage;
   List<String> cities = [], cuisines = [];
+  List<String> tags = [];
 
   CategoryProvider({required this.dealRepository}) {
     fetchCategories();
@@ -28,6 +29,7 @@ class CategoryProvider with ChangeNotifier {
       final options = await dealRepository.getDiscoveryOptions();
       cities = (options['cities'] as List).cast<String>();
       cuisines = (options['cuisines'] as List).cast<String>();
+      tags = (options['tags'] as List? ?? []).cast<String>();
     } catch (error) {
       errorMessage = friendlyApiError(error);
     }

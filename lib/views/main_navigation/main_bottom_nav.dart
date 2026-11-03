@@ -74,6 +74,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: SafeArea(
+          top: false,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -116,55 +117,62 @@ class _MainBottomNavState extends State<MainBottomNav> {
   }) {
     final isSelected = _currentIndex == index;
 
-    return GestureDetector(
-      onTap: () {
-        if (_currentIndex == index) return;
-        setState(() {
-          _currentIndex = index;
-          _visited.add(index);
-        });
-      },
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 18 : 10,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          // Design uses an outline icon even when active, on a #FFFBE7 pill.
-          color: isSelected ? const Color(0xFFFFFBE7) : Colors.transparent,
-          borderRadius: BorderRadius.circular(22),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // A small bump each time a tab becomes active.
-            TweenAnimationBuilder<double>(
-              key: ValueKey(isSelected),
-              tween: Tween(begin: isSelected ? 0.8 : 1, end: 1),
-              duration: const Duration(milliseconds: 320),
-              curve: Curves.easeOutBack,
-              builder: (context, value, child) =>
-                  Transform.scale(scale: value, child: child),
-              child: Icon(
-                icon,
-                color: isSelected ? AppColors.primary : AppColors.textGrey,
-                size: 22,
-              ),
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        child: GestureDetector(
+          onTap: () {
+            if (_currentIndex == index) return;
+            setState(() {
+              _currentIndex = index;
+              _visited.add(index);
+            });
+          },
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            decoration: BoxDecoration(
+              // Design uses an outline icon even when active, on a #FFFBE7 pill.
+              color: isSelected ? const Color(0xFFFFFBE7) : Colors.transparent,
+              borderRadius: BorderRadius.circular(22),
             ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 220),
-              style: TextStyle(
-                fontSize: AppFontSizes.captionSmall,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? AppColors.primary : AppColors.textGrey,
-              ),
-              child: Text(label),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // A small bump each time a tab becomes active.
+                TweenAnimationBuilder<double>(
+                  key: ValueKey(isSelected),
+                  tween: Tween(begin: isSelected ? 0.8 : 1, end: 1),
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeOutBack,
+                  builder: (context, value, child) =>
+                      Transform.scale(scale: value, child: child),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? AppColors.primary : AppColors.textGrey,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 220),
+                  style: TextStyle(
+                    fontSize: AppFontSizes.captionSmall,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? AppColors.primary : AppColors.textGrey,
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

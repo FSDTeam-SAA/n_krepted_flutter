@@ -4,6 +4,7 @@ import '../../data/models/deal_model.dart';
 import '../constants/app_colors.dart';
 import 'discovery_widgets.dart';
 import 'rating_badge.dart';
+import 'feature_content.dart';
 import '../constants/app_text_styles.dart';
 
 /// The same database restaurant/dish pair is used in Home, Search, Saved and Map.
@@ -32,11 +33,14 @@ class RestaurantCard extends StatelessWidget {
         .where((item) => item.isSignatureDish)
         .take(3)
         .toList();
-    final photo = featured?.image ?? deal.firstImage;
+    final photo = featured?.image ?? deal.discoveryImage;
     final image = Stack(
       fit: StackFit.expand,
       children: [
-        RemotePhoto(photo, fit: BoxFit.contain),
+        RemotePhoto(photo, fit: BoxFit.cover),
+        if (featured?.isSignatureDish == true ||
+            (featured == null && deal.featuredDish?.isSignatureDish == true))
+          const Positioned(left: 8, top: 8, child: SignatureBadge()),
         if (!upcoming && featured != null) ...[
           Positioned(
             top: compact ? 5 : 8,
@@ -89,7 +93,7 @@ class RestaurantCard extends StatelessWidget {
       ],
     );
     final info = Padding(
-      padding: EdgeInsets.all(compact ? 8 : 12),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -141,19 +145,27 @@ class RestaurantCard extends StatelessWidget {
               ),
             ),
           DistanceLine(deal, compact: compact),
+          if (!compact && featured != null) FoodTags(featured.tags),
           SizedBox(height: compact ? 4 : 6),
-          Row(
+          Wrap(
+            spacing: 5,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                deal.rating.toStringAsFixed(1).replaceAll('.', ','),
-                style: const TextStyle(
-                  color: Color(0xFFA4B600),
-                  fontSize: AppFontSizes.small,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    deal.rating.toStringAsFixed(1).replaceAll('.', ','),
+                    style: const TextStyle(
+                      color: AppColors.primaryDark,
+                      fontSize: AppFontSizes.small,
+                    ),
+                  ),
+                  const Icon(Icons.star, color: AppColors.starYellow, size: 13),
+                ],
               ),
-              const Icon(Icons.star, color: Color(0xFFA4B600), size: 13),
               if (!compact) ...[
-                const SizedBox(width: 5),
                 Text(
                   '${deal.reviewCount} Bewertungen',
                   style: const TextStyle(fontSize: AppFontSizes.captionSmall),
@@ -180,7 +192,6 @@ class RestaurantCard extends StatelessWidget {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              height: 40,
               child: OutlinedButton(
                 onPressed: onTap,
                 style: OutlinedButton.styleFrom(
@@ -197,7 +208,7 @@ class RestaurantCard extends StatelessWidget {
       ),
     );
     return Padding(
-      padding: EdgeInsets.only(bottom: compact ? 20 : 22),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Material(
         color: Colors.white,
         elevation: 1,
@@ -212,8 +223,8 @@ class RestaurantCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
-                        width: (constraints.maxWidth * .43).clamp(100.0, 152.0),
-                        height: 118,
+                        width: (constraints.maxWidth * .35).clamp(88.0, 132.0),
+                        height: 132,
                         child: image,
                       ),
                       Expanded(child: info),

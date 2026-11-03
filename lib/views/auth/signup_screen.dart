@@ -86,7 +86,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: Stack(
         children: [
           SafeArea(
-            bottom: false,
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Form(
@@ -94,7 +93,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(height: 191.h - AppSizes.topInset),
+                    SizedBox(
+                      height: MediaQuery.viewInsetsOf(context).bottom > 0
+                          ? 56
+                          : 72.h,
+                    ),
                     Text(
                       'Registrieren Sie sich bitte hier.',
                       textAlign: TextAlign.center,
@@ -111,7 +114,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ).fadeSlideUp(delay: Motion.step(1)),
 
-                    SizedBox(height: 73.h),
+                    SizedBox(height: 32.h),
                     CustomTextField(
                       controller: _nameController,
                       hintText: 'Benutzername',
@@ -120,7 +123,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           : null,
                     ).fadeSlideUp(delay: Motion.step(2)),
 
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 16.h),
                     CustomTextField(
                       controller: _emailController,
                       hintText: 'E-Mail',
@@ -130,7 +133,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           : null,
                     ).fadeSlideUp(delay: Motion.step(3)),
 
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 16.h),
                     CustomTextField(
                       controller: _passwordController,
                       hintText: 'Neues Passwort',
@@ -146,7 +149,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       },
                     ).fadeSlideUp(delay: Motion.step(4)),
 
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 16.h),
                     CustomTextField(
                       controller: _confirmPasswordController,
                       hintText: 'Passwort bestätigen',
@@ -225,8 +228,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ).fadeSlideUp(delay: Motion.step(7)),
 
                     SizedBox(height: 16.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      runSpacing: 8,
                       children: [
                         Text(
                           'Sie haben bereits ein Konto? ',

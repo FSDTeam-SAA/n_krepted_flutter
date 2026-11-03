@@ -32,6 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+/config/build.local.json
+/ios/Flutter/ProviderKeys.xcconfig
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +45,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+config.bat
+node_modules

@@ -13,24 +13,24 @@ class OwnerPageBackground extends StatelessWidget {
       Positioned(
         right: -26,
         top: -58,
-        child: _asset(AppAssets.homeDecoHerbs, 122, .3),
+        child: _asset(AppAssets.homeDecoHerbs, 122, .14),
       ),
       Positioned(
         left: -54,
         top: 105,
-        child: _asset(AppAssets.homeDecoCoffee, 116, .12),
+        child: _asset(AppAssets.homeDecoCoffee, 116, .07),
       ),
       Positioned(
         left: -35,
         bottom: -26,
-        child: _asset(AppAssets.homeDecoSpice, 116, .3),
+        child: _asset(AppAssets.homeDecoSpice, 116, .12),
       ),
       Positioned(
         right: -25,
         bottom: -22,
-        child: _asset(AppAssets.decoSkewers, 145, .33),
+        child: _asset(AppAssets.decoSkewers, 145, .12),
       ),
-      child,
+      SafeArea(top: false, child: child),
     ],
   );
 

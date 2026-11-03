@@ -7,9 +7,10 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:n_krepted_flutter/core/network/api_client.dart';
 import 'package:n_krepted_flutter/core/widgets/restaurant_card.dart';
+import 'package:n_krepted_flutter/core/widgets/app_dropdown.dart';
 import 'package:n_krepted_flutter/core/widgets/discovery_widgets.dart';
 import 'package:n_krepted_flutter/core/widgets/photo_gallery.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:n_krepted_flutter/core/utils/open_external_link.dart';
 import 'package:n_krepted_flutter/views/saved_bookmarks/saved_dishes_screen.dart';
 import 'package:n_krepted_flutter/data/models/deal_model.dart';
 import 'package:n_krepted_flutter/data/repositories/deal_repository.dart';
@@ -102,85 +103,123 @@ Response response(Object data) =>
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
-  test('a stale Saved GET cannot erase a completed database save; new session reads server items', () async {
-    final stale = Completer<Response>();
-    final api = _Api()..onGet = (_, _) => stale.future;
-    final repository = DealRepository(apiClient: api);
-    final saved = SavedProvider(dealRepository: repository)..bindUser('user');
-    await Future<void>.delayed(Duration.zero);
-    final restaurant = DealModel.fromJson(restaurantJson('restaurant'));
-    expect(await saved.toggleSave(restaurant), isTrue);
-    stale.complete(response({'items': []}));
-    await Future<void>.delayed(Duration.zero);
-    expect(saved.isSaved('restaurant'), isTrue);
-    api.onGet = (_, _) async => response({'items': [{'restaurant': restaurantJson('restaurant'), 'dishId': ''}]});
-    saved.dispose();
-    final reopened = SavedProvider(dealRepository: repository)..bindUser('user');
-    await Future<void>.delayed(Duration.zero);
-    expect(reopened.isSaved('restaurant'), isTrue);
-    reopened.dispose();
-  });
-  testWidgets('gallery back icon stays white, zoom controls work, reset allows paging', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(appBarTheme: const AppBarTheme(iconTheme: IconThemeData(color: Colors.black))),
-      home: Builder(builder: (context) => Scaffold(body: TextButton(onPressed: () => openPhotoGallery(context, ['', '']), child: const Text('Gallery')))),
-    ));
-    await tester.tap(find.text('Gallery'));
-    await tester.pumpAndSettle();
-    expect(IconTheme.of(tester.element(find.byType(BackButton))).color, Colors.white);
-    await tester.tap(find.byTooltip('Vergrößern'));
-    await tester.pump();
-    final viewer = tester.widget<InteractiveViewer>(find.byType(InteractiveViewer).first);
-    expect(viewer.transformationController!.value.getMaxScaleOnAxis(), 2);
-    expect(tester.widget<PageView>(find.byType(PageView)).physics, isA<NeverScrollableScrollPhysics>());
-    await tester.tap(find.byTooltip('Zoom zurücksetzen'));
-    await tester.pump();
-    expect(viewer.transformationController!.value.getMaxScaleOnAxis(), 1);
-    await tester.drag(find.byType(PageView), const Offset(-600, 0));
-    await tester.pumpAndSettle();
-    expect(find.text('2 / 2'), findsOneWidget);
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.text('Gallery'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-  testWidgets('selected map pin fits; zoom controls and pan move the real map camera', (tester) async {
-    tester.view.physicalSize = const Size(393, 852);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final data = restaurantJson('map-restaurant')..['location'] = {'latitude': 23.77, 'longitude': 90.4};
-    final queries = <Map<String, dynamic>>[];
-    final api = _Api()..onGet = (path, query) async {
-      if (path == '/discovery/options') return response({'cuisines': ['Deutsch', 'Italienisch']});
-      queries.add(query!);
-      return response({'deals': [data]});
-    };
-    await tester.pumpWidget(_app(api, ExploreMapScreen(initialRestaurant: DealModel.fromJson(data))));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-    final controller = tester.widget<FlutterMap>(find.byType(FlutterMap)).mapController!;
-    final initialZoom = controller.camera.zoom;
-    await tester.tap(find.byTooltip('Vergrößern'));
-    await tester.pump();
-    expect(controller.camera.zoom, initialZoom + 1);
-    await tester.tap(find.byTooltip('Verkleinern'));
-    await tester.pump();
-    expect(controller.camera.zoom, initialZoom);
-    final initialCenter = controller.camera.center;
-    await tester.dragFrom(const Offset(120, 330), const Offset(80, 50));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(controller.camera.center, isNot(initialCenter));
-    expect(find.text('Am besten bewertet'), findsOneWidget);
-    await tester.tap(find.text('Am günstigsten'));
-    await tester.pump();
-    expect(queries.last['sort'], 'priceAsc');
-    await tester.tap(find.text('Deutsch'));
-    await tester.pump();
-    expect(queries.last['cuisine'], 'Deutsch');
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-  });
+  test(
+    'a stale Saved GET cannot erase a completed database save; new session reads server items',
+    () async {
+      final stale = Completer<Response>();
+      final api = _Api()..onGet = (_, _) => stale.future;
+      final repository = DealRepository(apiClient: api);
+      final saved = SavedProvider(dealRepository: repository)..bindUser('user');
+      await Future<void>.delayed(Duration.zero);
+      final restaurant = DealModel.fromJson(restaurantJson('restaurant'));
+      expect(await saved.toggleSave(restaurant), isTrue);
+      stale.complete(response({'items': []}));
+      await Future<void>.delayed(Duration.zero);
+      expect(saved.isSaved('restaurant'), isTrue);
+      api.onGet = (_, _) async => response({
+        'items': [
+          {'restaurant': restaurantJson('restaurant'), 'dishId': ''},
+        ],
+      });
+      saved.dispose();
+      final reopened = SavedProvider(dealRepository: repository)
+        ..bindUser('user');
+      await Future<void>.delayed(Duration.zero);
+      expect(reopened.isSaved('restaurant'), isTrue);
+      reopened.dispose();
+    },
+  );
+  testWidgets(
+    'gallery back icon stays white, zoom controls work, reset allows paging',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            appBarTheme: const AppBarTheme(
+              iconTheme: IconThemeData(color: Colors.black),
+            ),
+          ),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => openPhotoGallery(context, ['', '']),
+                child: const Text('Gallery'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Gallery'));
+      await tester.pumpAndSettle();
+      expect(
+        IconTheme.of(tester.element(find.byType(BackButton))).color,
+        Colors.white,
+      );
+      await tester.tap(find.byTooltip('Vergrößern'));
+      await tester.pump();
+      final viewer = tester.widget<InteractiveViewer>(
+        find.byType(InteractiveViewer).first,
+      );
+      expect(viewer.transformationController!.value.getMaxScaleOnAxis(), 2);
+      expect(
+        tester.widget<PageView>(find.byType(PageView)).physics,
+        isA<NeverScrollableScrollPhysics>(),
+      );
+      await tester.tap(find.byTooltip('Zoom zurücksetzen'));
+      await tester.pump();
+      expect(viewer.transformationController!.value.getMaxScaleOnAxis(), 1);
+      await tester.drag(find.byType(PageView), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('2 / 2'), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Gallery'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'Google Maps selection preserves restaurant and sends price sorting',
+    (tester) async {
+      final data = restaurantJson('map-restaurant')
+        ..['location'] = {'latitude': 23.77, 'longitude': 90.4};
+      final queries = <Map<String, dynamic>>[];
+      final api = _Api()
+        ..onGet = (path, query) async {
+          if (path == '/discovery/options') {
+            return response({
+              'cuisines': ['Deutsch'],
+            });
+          }
+          queries.add(query!);
+          return response({
+            'deals': [data],
+          });
+        };
+      await tester.pumpWidget(
+        _app(
+          api,
+          ExploreMapScreen(initialRestaurant: DealModel.fromJson(data)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Route in Google Maps'), findsOneWidget);
+      expect(
+        find.text('Restaurant with a long name - preserved'),
+        findsOneWidget,
+      );
+      final uri = Uri.parse(googleMapsDirections(DealModel.fromJson(data)));
+      expect(uri.host, 'www.google.com');
+      expect(uri.queryParameters['destination'], '23.77,90.4');
+      expect(uri.queryParameters['travelmode'], 'walking');
+      await tester.tap(find.byType(AppDropdown<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Am günstigsten').last);
+      await tester.pumpAndSettle();
+      expect(queries.last['sort'], 'priceAsc');
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets('Saved renders API entries with actual image URLs', (
     tester,
   ) async {
@@ -370,47 +409,76 @@ void main() {
   );
   for (final width in [320.0, 393.0]) {
     for (final compact in [false, true]) {
-      testWidgets('one, two and three dish previews keep thumbnail widths at $width px (compact: $compact)', (tester) async {
-        tester.view.physicalSize = Size(width, 1100);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        final api = _Api()..onGet = (_, _) async => response({'items': []});
-        double? thumbnailWidth;
-        for (var count = 1; count <= 3; count++) {
-          final json = restaurantJson('thumbnails');
-          json['dishes'] = [
+      testWidgets(
+        'one, two and three dish previews keep thumbnail widths at $width px (compact: $compact)',
+        (tester) async {
+          tester.view.physicalSize = Size(width, 1100);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final api = _Api()..onGet = (_, _) async => response({'items': []});
+          double? thumbnailWidth;
+          for (var count = 1; count <= 3; count++) {
+            final json = restaurantJson('thumbnails');
+            json['dishes'] = [
+              for (var i = 0; i < count; i++)
+                {
+                  '_id': 'thumb-$i',
+                  'name': 'Signature $i',
+                  'price': 12,
+                  'isSignatureDish': true,
+                },
+            ];
+            String? selected;
+            await tester.pumpWidget(
+              MultiProvider(
+                providers: [
+                  ChangeNotifierProvider(
+                    create: (_) => SavedProvider(
+                      dealRepository: DealRepository(apiClient: api),
+                    ),
+                  ),
+                  ChangeNotifierProvider(create: (_) => LocationProvider()),
+                ],
+                child: MaterialApp(
+                  home: Scaffold(
+                    body: ListView(
+                      children: [
+                        RestaurantCard(
+                          deal: DealModel.fromJson(json),
+                          compact: compact,
+                          onDishTap: (dish) => selected = dish.id,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+            final first = find.byKey(
+              const ValueKey('signature-preview-thumb-0'),
+            );
+            final size = tester.getSize(first);
+            thumbnailWidth ??= size.width;
+            expect(size.width, closeTo(thumbnailWidth, .01));
+            expect(size.width, lessThan(width / 3));
             for (var i = 0; i < count; i++) {
-              '_id': 'thumb-$i', 'name': 'Signature $i',
-              'price': 12, 'isSignatureDish': true,
-            },
-          ];
-          String? selected;
-          await tester.pumpWidget(MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => SavedProvider(dealRepository: DealRepository(apiClient: api))),
-              ChangeNotifierProvider(create: (_) => LocationProvider()),
-            ],
-            child: MaterialApp(home: Scaffold(body: ListView(children: [
-              RestaurantCard(deal: DealModel.fromJson(json), compact: compact, onDishTap: (dish) => selected = dish.id),
-            ]))),
-          ));
-          await tester.pumpAndSettle();
-          final first = find.byKey(const ValueKey('signature-preview-thumb-0'));
-          final size = tester.getSize(first);
-          thumbnailWidth ??= size.width;
-          expect(size.width, closeTo(thumbnailWidth, .01));
-          expect(size.width, lessThan(width / 3));
-          for (var i = 0; i < count; i++) {
-            final preview = find.byKey(ValueKey('signature-preview-thumb-$i'));
-            expect(tester.getSize(preview).width, closeTo(thumbnailWidth, .01));
-            await tester.ensureVisible(preview);
-            await tester.tap(preview);
-            expect(selected, 'thumb-$i');
+              final preview = find.byKey(
+                ValueKey('signature-preview-thumb-$i'),
+              );
+              expect(
+                tester.getSize(preview).width,
+                closeTo(thumbnailWidth, .01),
+              );
+              await tester.ensureVisible(preview);
+              await tester.tap(preview);
+              expect(selected, 'thumb-$i');
+            }
+            expect(tester.takeException(), isNull);
           }
-          expect(tester.takeException(), isNull);
-        }
-      });
+        },
+      );
     }
     testWidgets(
       'restaurant previews show three active signatures and open the selected dish at $width px',
@@ -470,7 +538,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           tester.widgetList<RemotePhoto>(find.byType(RemotePhoto)).first.url,
-          'https://example.test/restaurant.jpg',
+          'https://example.test/dish-0.jpg',
         );
         expect(
           find.byKey(const ValueKey('signature-preview-signature-3')),

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../constants/app_text_styles.dart';
+import '../constants/app_spacing.dart';
 
-/// Design: 353 x 40, 10px radius, solid #0097B0, 15px white label.
+/// Shared action button with enough height for a two-line label.
 class CustomButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -26,8 +27,8 @@ class CustomButton extends StatefulWidget {
     this.backgroundColor,
     this.textColor,
     this.width,
-    this.height = 40,
-    this.borderRadius = 10,
+    this.height = AppSpacing.controlHeight,
+    this.borderRadius = AppSpacing.radius,
     this.fontSize = 15,
     this.icon,
   });
@@ -52,64 +53,75 @@ class _CustomButtonState extends State<CustomButton> {
         widget.textColor ??
         (widget.isOutlined ? AppColors.primary : Colors.white);
 
-    return GestureDetector(
-      onTapDown: _enabled ? (_) => _set(true) : null,
-      onTapUp: _enabled ? (_) => _set(false) : null,
-      onTapCancel: () => _set(false),
-      onTap: _enabled ? widget.onPressed : null,
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: AnimatedOpacity(
-          opacity: _enabled ? 1 : 0.55,
-          duration: const Duration(milliseconds: 180),
-          child: Container(
-            width: widget.width == null ? double.infinity : widget.width!.w,
-            height: widget.height.h,
-            decoration: BoxDecoration(
-              color: widget.isOutlined ? Colors.transparent : bg,
-              borderRadius: BorderRadius.circular(widget.borderRadius.w),
-              border: widget.isOutlined
-                  ? Border.all(color: fg, width: 1.2)
-                  : null,
-            ),
-            alignment: Alignment.center,
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
-            child: widget.isLoading
-                ? SizedBox(
-                    width: 18.w,
-                    height: 18.w,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
-                      color: widget.isOutlined
-                          ? AppColors.primary
-                          : Colors.white,
-                    ),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (widget.icon != null) ...[
-                        widget.icon!,
-                        SizedBox(width: 8.w),
-                      ],
-                      Flexible(
-                        child: Text(
-                          widget.text,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.label(
-                            size: widget.fontSize,
-                            color: fg,
-                            weight: FontWeight.w500,
-                          ),
+    return Semantics(
+      button: true,
+      enabled: _enabled,
+      child: GestureDetector(
+        onTapDown: _enabled ? (_) => _set(true) : null,
+        onTapUp: _enabled ? (_) => _set(false) : null,
+        onTapCancel: () => _set(false),
+        onTap: _enabled ? widget.onPressed : null,
+        child: AnimatedScale(
+          scale: _pressed ? 0.97 : 1,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: AnimatedOpacity(
+            opacity: _enabled ? 1 : 0.55,
+            duration: const Duration(milliseconds: 180),
+            child: Container(
+              width: widget.width == null ? double.infinity : widget.width!.w,
+              constraints: BoxConstraints(
+                minHeight: widget.height.h.clamp(
+                  AppSpacing.controlHeight,
+                  double.infinity,
+                ),
+              ),
+              decoration: BoxDecoration(
+                color: widget.isOutlined ? Colors.transparent : bg,
+                borderRadius: BorderRadius.circular(widget.borderRadius.w),
+                border: widget.isOutlined
+                    ? Border.all(color: fg, width: 1.2)
+                    : null,
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12),
+              child: Align(
+                heightFactor: 1,
+                child: widget.isLoading
+                    ? SizedBox(
+                        width: 18.w,
+                        height: 18.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: widget.isOutlined
+                              ? AppColors.primary
+                              : Colors.white,
                         ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (widget.icon != null) ...[
+                            widget.icon!,
+                            SizedBox(width: 8.w),
+                          ],
+                          Flexible(
+                            child: Text(
+                              widget.text,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.label(
+                                size: widget.fontSize,
+                                color: fg,
+                                weight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+              ),
+            ),
           ),
         ),
       ),

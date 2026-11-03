@@ -178,6 +178,15 @@ class DistanceLine extends StatelessWidget {
               color: AppColors.textGrey,
             ),
           ),
+          Text(
+            'ca. ${(km / 4.8 * 60).ceil().clamp(1, 9999)} Min. zu Fuß (Schätzung)',
+            style: TextStyle(
+              fontSize: compact
+                  ? AppFontSizes.micro
+                  : AppFontSizes.captionSmall,
+              color: AppColors.textGrey,
+            ),
+          ),
         ],
       ),
     );

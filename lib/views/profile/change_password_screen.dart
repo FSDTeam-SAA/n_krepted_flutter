@@ -180,8 +180,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           },
                         ),
 
-                        const Spacer(),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 24),
 
                         CustomButton(
                           text: language.text('Speichern', 'Save'),

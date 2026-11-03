@@ -5,11 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:n_krepted_flutter/core/network/api_client.dart';
 import 'package:n_krepted_flutter/core/services/storage_service.dart';
 
-class _LocalHttp extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) =>
-      super.createHttpClient(context);
-}
+class _LocalHttp extends HttpOverrides {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

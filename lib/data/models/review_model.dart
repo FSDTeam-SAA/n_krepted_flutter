@@ -89,6 +89,7 @@ class ReviewUserModel {
 }
 
 class ReviewModel {
+  final String reviewType;
   final String id;
   final ReviewUserModel user;
   final String dealId;
@@ -102,6 +103,7 @@ class ReviewModel {
   final ReviewVisitModel? checkIn;
 
   ReviewModel({
+    this.reviewType = 'customer',
     required this.id,
     required this.user,
     required this.dealId,
@@ -137,8 +139,15 @@ class ReviewModel {
     }
 
     return ReviewModel(
+      reviewType: json['reviewType']?.toString() ?? 'customer',
       id: json['_id'] ?? json['id'] ?? '',
-      user: ReviewUserModel.fromJson(json['userID']),
+      user: json['reviewType'] == 'sd_admin'
+          ? ReviewUserModel(
+              id: json['adminAuthor']?['_id']?.toString() ?? '',
+              name: 'Signature Dish Team',
+              email: '',
+            )
+          : ReviewUserModel.fromJson(json['userID']),
       dealId: dId,
       dishId: dishId,
       restaurantName: rName,

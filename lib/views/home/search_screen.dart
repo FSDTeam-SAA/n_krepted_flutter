@@ -86,11 +86,7 @@ class _SearchBodyState extends State<_SearchBody> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    FilledButton.icon(
-                      onPressed: () => showDiscoveryFilters(context),
-                      icon: const Icon(Icons.tune, size: 16),
-                      label: const Text('Filter'),
-                    ),
+                    const DiscoveryFilterButton(),
                     const SizedBox(width: 8),
                     ChoiceChip(
                       label: const Text('Alle'),

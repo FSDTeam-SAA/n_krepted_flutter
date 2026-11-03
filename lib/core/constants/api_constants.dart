@@ -3,6 +3,7 @@ class ApiConstants {
     const configured = String.fromEnvironment(
       'API_BASE_URL',
       defaultValue: 'https://fahimstack.tech/nkr/api',
+      // defaultValue: 'http://10.0.2.2:5000/api', // Android emulator -> local backend.
     );
     final normalized = configured.replaceFirst(RegExp(r'/+$'), '');
     if (normalized.endsWith('/api/v1')) {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/discovery_widgets.dart';
 import '../../core/widgets/review_card.dart';
+import '../../core/widgets/bottom_action_bar.dart';
 import '../../core/widgets/owner_page_background.dart';
 import '../../providers/review_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -36,28 +38,25 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
       appBar: AppBar(title: const Text('Rezensionen')),
       bottomNavigationBar:
           context.watch<AuthProvider>().currentUser?.role == 'user'
-          ? SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final changed = await Navigator.push<bool>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => WriteReviewScreen(
-                          dealId: widget.dealId,
-                          dishId: widget.dishId,
-                        ),
+          ? BottomActionBar(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final changed = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => WriteReviewScreen(
+                        dealId: widget.dealId,
+                        dishId: widget.dishId,
                       ),
-                    );
-                    if (changed == true && mounted) {
-                      await _load();
-                      if (context.mounted) await showDessertSuggestion(context);
-                    }
-                  },
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Schildern Sie Ihre Erfahrungen'),
-                ),
+                    ),
+                  );
+                  if (changed == true && mounted) {
+                    await _load();
+                    if (context.mounted) await showDessertSuggestion(context);
+                  }
+                },
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Schildern Sie Ihre Erfahrungen'),
               ),
             )
           : null,
@@ -71,7 +70,7 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.pagePadding,
                   itemCount: reviews.length,
                   itemBuilder: (_, index) => ReviewCard(review: reviews[index]),
                 ),

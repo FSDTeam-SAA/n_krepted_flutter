@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/owner_page_background.dart';
 import '../../core/widgets/discovery_widgets.dart';
@@ -69,7 +70,7 @@ class _SavedDishesScreenState extends State<SavedDishesScreen>
                 onRefresh: saved.loadSavedDeals,
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(20),
+                  padding: AppSpacing.pagePadding,
                   itemCount: saved.entries.length,
                   itemBuilder: (context, index) {
                     final entry = saved.entries[index];

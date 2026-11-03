@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>GoogleMapsAPIKey</key>
+	<string>$(GOOGLE_MAPS_IOS_KEY)</string>
+	<key>CFBundleURLTypes</key>
+	<array><dict><key>CFBundleURLSchemes</key><array><string>$(GOOGLE_REVERSED_CLIENT_ID)</string></array></dict></array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Signature Dish uses your location to verify that you are within 100 metres of the restaurant when checking in.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../core/widgets/app_dropdown.dart';
 import '../../core/widgets/custom_text_field.dart';
+import '../../core/utils/description_text.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
 
@@ -28,6 +30,9 @@ class DishFormSheet extends StatefulWidget {
 
 class _DishFormSheetState extends State<DishFormSheet> {
   final _formKey = GlobalKey<FormState>();
+  List<String> _tags = [];
+  int _leadImageIndex = 0;
+  late String _originalDescription;
 
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
@@ -45,6 +50,8 @@ class _DishFormSheetState extends State<DishFormSheet> {
   void initState() {
     super.initState();
     final d = widget.dish;
+    _tags = [...?d?.tags];
+    _leadImageIndex = d == null ? 0 : d.images.indexOf(d.image).clamp(0, 1000);
     _nameController = TextEditingController(text: d?.name ?? '');
     _priceController = TextEditingController(
       text: d != null ? d.price.toStringAsFixed(2) : '0.00',
@@ -59,7 +66,10 @@ class _DishFormSheetState extends State<DishFormSheet> {
           ? [d.image]
           : const <String>[],
     );
-    _descController = TextEditingController(text: d?.description ?? '');
+    _originalDescription = d?.description ?? '';
+    _descController = TextEditingController(
+      text: plainDescription(_originalDescription),
+    );
     _specialtyController = TextEditingController(
       text: d?.specialtyDescription ?? '',
     );
@@ -75,7 +85,12 @@ class _DishFormSheetState extends State<DishFormSheet> {
       _nameController.text = draft?['name'] as String? ?? '';
       _priceController.text = '${draft?['price'] ?? 0}';
       _categoryController.text = draft?['category'] as String? ?? '';
-      _descController.text = draft?['description'] as String? ?? '';
+      _originalDescription = draft?['description'] as String? ?? '';
+      _descController.text = plainDescription(_originalDescription);
+      _tags = (draft?['tags'] as List? ?? [])
+          .map((tag) => tag.toString())
+          .toList();
+      _leadImageIndex = (draft?['leadImageIndex'] as num?)?.toInt() ?? 0;
       _specialtyController.text =
           draft?['specialtyDescription'] as String? ?? '';
       _ingredientsController.text = (draft?['ingredients'] as List? ?? []).join(
@@ -104,6 +119,16 @@ class _DishFormSheetState extends State<DishFormSheet> {
 
   int get _imageCount => _newImages.length + _existingImages.length;
   bool get _hasImage => _imageCount > 0;
+  List<String> get _photoKeys => [
+    ..._newImages.map((image) => image.path),
+    ..._existingImages,
+  ];
+  String? get _currentLeadKey => _photoKeys.isEmpty
+      ? null
+      : _photoKeys[_leadImageIndex.clamp(0, _photoKeys.length - 1)];
+  void _restoreLeadKey(String? key) => _leadImageIndex = key == null
+      ? 0
+      : _photoKeys.indexOf(key).clamp(0, 1000);
 
   void _closeSheet() {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -118,7 +143,11 @@ class _DishFormSheetState extends State<DishFormSheet> {
       maxWidth: 1800,
     );
     if (!mounted || selected.isEmpty) return;
-    setState(() => _newImages.addAll(selected.take(available)));
+    final leadKey = _currentLeadKey;
+    setState(() {
+      _newImages.addAll(selected.take(available));
+      _restoreLeadKey(leadKey);
+    });
   }
 
   Future<void> _replaceMainImage() async {
@@ -128,6 +157,8 @@ class _DishFormSheetState extends State<DishFormSheet> {
       maxWidth: 1800,
     );
     if (!mounted || selected == null) return;
+    final leadKey = _currentLeadKey;
+    final firstKey = _photoKeys.firstOrNull;
     setState(() {
       if (_newImages.isNotEmpty) {
         _newImages[0] = selected;
@@ -137,16 +168,21 @@ class _DishFormSheetState extends State<DishFormSheet> {
       } else {
         _newImages.add(selected);
       }
+      _restoreLeadKey(leadKey == firstKey ? selected.path : leadKey);
     });
   }
 
-  void _removeImage(int index) => setState(() {
-    if (index < _newImages.length) {
-      _newImages.removeAt(index);
-    } else {
-      _existingImages.removeAt(index - _newImages.length);
-    }
-  });
+  void _removeImage(int index) {
+    final leadKey = _currentLeadKey;
+    setState(() {
+      if (index < _newImages.length) {
+        _newImages.removeAt(index);
+      } else {
+        _existingImages.removeAt(index - _newImages.length);
+      }
+      _restoreLeadKey(leadKey);
+    });
+  }
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -163,6 +199,12 @@ class _DishFormSheetState extends State<DishFormSheet> {
     final provider = context.read<OwnerRestaurantProvider>();
 
     final payload = {
+      'tags': _tags,
+      'leadImageIndex': leadImageSubmissionIndex(
+        _leadImageIndex,
+        _newImages.length,
+        _existingImages.length,
+      ),
       'name': _nameController.text.trim(),
       'price':
           double.tryParse(_priceController.text.trim().replaceAll(',', '.')) ??
@@ -170,7 +212,10 @@ class _DishFormSheetState extends State<DishFormSheet> {
       'category': _categoryController.text.trim(),
       'existingImages': _existingImages,
       'imageFiles': _newImages,
-      'description': _descController.text.trim(),
+      'description': descriptionForSubmission(
+        _originalDescription,
+        _descController.text,
+      ),
       'specialtyDescription': _specialtyController.text.trim(),
       'ingredients': _ingredientsController.text
           .split(RegExp(r'[\n,]'))
@@ -328,6 +373,38 @@ class _DishFormSheetState extends State<DishFormSheet> {
               const SizedBox(height: 12),
               _buildFieldLabel('Gerichtsbild'),
               _buildImagePicker(),
+              if (_existingImages.isNotEmpty || _newImages.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: AppDropdown<int>(
+                    value: _leadImageIndex.clamp(
+                      0,
+                      _existingImages.length + _newImages.length - 1,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Hauptbild'),
+                    items: List.generate(
+                      _existingImages.length + _newImages.length,
+                      (i) => DropdownMenuItem(
+                        value: i,
+                        child: Text('Foto ${i + 1}'),
+                      ),
+                    ),
+                    onChanged: (v) => setState(() => _leadImageIndex = v ?? 0),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              TextFormField(
+                initialValue: _tags.join(', '),
+                decoration: const InputDecoration(
+                  labelText: 'Labels (durch Komma trennen)',
+                  hintText: 'Vegan, Gluten-free, Spicy',
+                ),
+                onChanged: (v) => _tags = v
+                    .split(',')
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .toList(),
+              ),
 
               const SizedBox(height: 12),
               _buildFieldLabel('Beschreibung'),

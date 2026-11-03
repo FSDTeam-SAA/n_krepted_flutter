@@ -93,7 +93,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
     return AuthBackdrop(
       child: SafeArea(
-        bottom: false,
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -101,7 +100,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(height: 284.h - AppSizes.topInset),
+                  SizedBox(
+                    height: MediaQuery.viewInsetsOf(context).bottom > 0
+                        ? 56
+                        : 96.h,
+                  ),
                   Text(
                     'Bestätigungscode prüfen',
                     textAlign: TextAlign.center,
@@ -118,7 +121,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     ),
                   ).fadeSlideUp(delay: Motion.step(1)),
 
-                  SizedBox(height: 75.h),
+                  SizedBox(height: 32.h),
                   Row(
                     children: List.generate(11, (itemIndex) {
                       if (itemIndex.isOdd) {
@@ -135,7 +138,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     }),
                   ),
 
-                  SizedBox(height: 69.h),
+                  SizedBox(height: 24.h),
                   CustomButton(
                     text: 'Verifizieren',
                     isLoading: authProvider.isLoading,

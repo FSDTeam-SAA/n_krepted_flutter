@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -13,6 +14,10 @@ import 'change_password_screen.dart';
 import 'terms_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'my_check_ins_screen.dart';
+import 'information_screen.dart';
+import 'app_info_screen.dart';
+import '../reviews/my_reviews_screen.dart';
+import '../../core/widgets/social_account_links.dart';
 import '../../core/constants/app_text_styles.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -38,12 +43,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       ),
       body: OwnerPageBackground(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: AppSpacing.pagePadding,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
                 gradient: const LinearGradient(
                   colors: [Color(0xFFE8F8FF), Color(0xFFFFFBDC)],
                 ),
@@ -86,6 +91,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             const SizedBox(height: 16),
             _section(language.text('Konto', 'Account'), [
               _tile(
+                Icons.rate_review_outlined,
+                'Meine Bewertungen',
+                () => _open(const MyReviewsScreen()),
+              ),
+              _tile(
                 Icons.manage_accounts_outlined,
                 language.text('Profil bearbeiten', 'Edit profile'),
                 () => _open(const EditProfileScreen()),
@@ -120,6 +130,21 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
             _section(language.text('Hilfe & Recht', 'Help & legal'), [
               _tile(
+                Icons.info_outline_rounded,
+                'Über Signature Dish',
+                () => _open(const AppInfoScreen()),
+              ),
+              _tile(
+                Icons.info_outline,
+                'Impressum',
+                () => _open(const ImpressumScreen()),
+              ),
+              _tile(
+                Icons.contact_support_outlined,
+                'Kontakt',
+                () => _open(const ContactScreen()),
+              ),
+              _tile(
                 Icons.verified_user_outlined,
                 language.text('Geschäftsbedingungen', 'Terms and conditions'),
                 () => _open(const TermsScreen()),
@@ -130,6 +155,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 () => _open(const PrivacyPolicyScreen()),
               ),
             ]),
+            const SocialAccountLinks(),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
@@ -160,14 +186,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget _section(String title, List<Widget> children) => Container(
     margin: const EdgeInsets.only(bottom: 16),
     decoration: BoxDecoration(
-      border: Border.all(color: const Color(0xFFDDDDDD)),
-      borderRadius: BorderRadius.circular(8),
+      color: Colors.white,
+      border: Border.all(color: AppColors.cardBorder),
+      borderRadius: BorderRadius.circular(16),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
             title,
             style: const TextStyle(

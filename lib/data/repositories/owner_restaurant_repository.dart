@@ -8,6 +8,7 @@ import '../../core/network/api_client.dart';
 import '../models/deal_model.dart';
 
 class OwnerDashboardStats {
+  final int totalViews;
   final int totalCheckIns;
   final int totalCustomers;
   final int totalDeals;
@@ -15,6 +16,7 @@ class OwnerDashboardStats {
   final int activeDeals;
 
   const OwnerDashboardStats({
+    this.totalViews = 0,
     this.totalCheckIns = 0,
     this.totalCustomers = 0,
     this.totalDeals = 0,
@@ -24,6 +26,7 @@ class OwnerDashboardStats {
 
   factory OwnerDashboardStats.fromJson(Map<String, dynamic> json) {
     return OwnerDashboardStats(
+      totalViews: (json['totalViews'] as num?)?.toInt() ?? 0,
       totalCheckIns: (json['totalCheckIns'] as num?)?.toInt() ?? 0,
       totalCustomers: (json['totalCustomers'] as num?)?.toInt() ?? 0,
       totalDeals: (json['totalDeals'] as num?)?.toInt() ?? 0,
@@ -50,6 +53,12 @@ class OwnerRestaurantRepository {
     );
 
     fields['photoCategories'] = jsonEncode(fields['photoCategories'] ?? []);
+    if (fields['openingHours'] != null) {
+      fields['openingHours'] = jsonEncode(fields['openingHours']);
+    }
+    if (fields['offers'] != null) {
+      fields['offers'] = jsonEncode(fields['offers']);
+    }
     final drafts = (fields.remove('signatureDishes') as List?) ?? [];
     fields['restaurantImageCount'] = imageFiles.length;
     final signatureDishes = <Map<String, dynamic>>[];
@@ -84,6 +93,7 @@ class OwnerRestaurantRepository {
 
   Future<FormData> _dishFormData(Map<String, dynamic> payload) async {
     final fields = Map<String, dynamic>.from(payload);
+    if (fields['tags'] != null) fields['tags'] = jsonEncode(fields['tags']);
     final imageFiles =
         (fields.remove('imageFiles') as List?)?.whereType<XFile>().toList() ??
         const <XFile>[];

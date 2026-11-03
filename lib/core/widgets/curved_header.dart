@@ -26,7 +26,7 @@ class CurvedHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final bandHeight = _bandBottom.h;
 
-    return Column(
+    return Stack(
       children: [
         SizedBox(
           height: bandHeight,
@@ -79,11 +79,9 @@ class CurvedHeader extends StatelessWidget {
             ],
           ),
         ),
-        // No padding here — the caller decides which rows hug the screen edge
-        // (the filter pills scroll off it, the search bar does not).
         if (bottomChild != null)
-          Transform.translate(
-            offset: Offset(0, -_overlap.h),
+          Padding(
+            padding: EdgeInsets.only(top: bandHeight - _overlap.h),
             child: bottomChild!,
           ),
       ],

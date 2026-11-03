@@ -2,7 +2,7 @@ name: n_krepted_flutter
 description: "Signature Dish - N_Krepted Mobile App"
 publish_to: 'none'
 
-version: 1.0.0+6
+version: 1.0.0+8
 
 environment:
   sdk: '>=3.11.1 <4.0.0'
@@ -27,9 +27,14 @@ dependencies:
   path_provider: ^2.1.6
   flutter_animate: ^4.5.2
   geolocator: ^14.0.3
-  flutter_map: ^8.3.2
-  latlong2: ^0.10.1
   url_launcher: ^6.3.2
+  google_maps_flutter: ^2.18.1
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^8.1.0
+  crypto: ^3.0.8
+  flutter_widget_from_html_core: ^0.17.4
+  html: ^0.15.7
+  package_info_plus: ^10.2.1
 
 dev_dependencies:
   path_provider_platform_interface: ^2.1.3

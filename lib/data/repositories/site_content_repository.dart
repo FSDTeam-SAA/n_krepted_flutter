@@ -4,11 +4,19 @@ import '../../core/network/api_client.dart';
 class LegalContent {
   final String termsHtml;
   final String privacyHtml;
+  final String impressumHtml;
 
-  const LegalContent({this.termsHtml = '', this.privacyHtml = ''});
+  const LegalContent({
+    this.termsHtml = '',
+    this.privacyHtml = '',
+    this.impressumHtml = '',
+  });
 }
 
 class SiteContentRepository {
+  Future<Map<String, dynamic>> getSettings() async => Map<String, dynamic>.from(
+    (await apiClient.get('/content/app-settings')).data['settings'],
+  );
   final ApiClient apiClient;
 
   SiteContentRepository({ApiClient? apiClient})
@@ -21,6 +29,7 @@ class SiteContentRepository {
     return LegalContent(
       termsHtml: content['termsHtml']?.toString() ?? '',
       privacyHtml: content['privacyHtml']?.toString() ?? '',
+      impressumHtml: content['impressumHtml']?.toString() ?? '',
     );
   }
 

@@ -58,37 +58,40 @@ class _RatingsLoaderState extends State<_RatingsLoader> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          const Positioned(
-            right: -36,
-            top: -40,
-            child: _Decoration(asset: AppAssets.homeDecoHerbs, width: 110),
-          ),
-          const Positioned(
-            right: -34,
-            bottom: -10,
-            child: _Decoration(asset: AppAssets.decoSkewers, width: 145),
-          ),
-          if (provider.isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          else
-            RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: () =>
-                  provider.fetchReviewsForDeal(widget.restaurantId),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
-                children: [
-                  _DistributionCard(reviews: reviews),
-                  const SizedBox(height: 16),
-                  _TrendCard(reviews: reviews),
-                ],
-              ),
+      body: SafeArea(
+        top: false,
+        child: Stack(
+          children: [
+            const Positioned(
+              right: -36,
+              top: -40,
+              child: _Decoration(asset: AppAssets.homeDecoHerbs, width: 110),
             ),
-        ],
+            const Positioned(
+              right: -34,
+              bottom: -10,
+              child: _Decoration(asset: AppAssets.decoSkewers, width: 145),
+            ),
+            if (provider.isLoading)
+              const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
+            else
+              RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () =>
+                    provider.fetchReviewsForDeal(widget.restaurantId),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+                  children: [
+                    _DistributionCard(reviews: reviews),
+                    const SizedBox(height: 16),
+                    _TrendCard(reviews: reviews),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

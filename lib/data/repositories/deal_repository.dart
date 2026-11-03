@@ -4,6 +4,14 @@ import '../models/category_model.dart';
 import '../models/deal_model.dart';
 
 class DealRepository {
+  Future<void> recordView(String id) async {
+    try {
+      await apiClient.post('/restaurants/$id/views');
+    } catch (_) {
+      /* Analytics must not block the restaurant page. */
+    }
+  }
+
   final ApiClient apiClient;
 
   DealRepository({required this.apiClient});
@@ -24,6 +32,9 @@ class DealRepository {
     int minimumRating = 0,
     String? cuisine,
     String? recommendation,
+    String? priceRange,
+    bool openNow = false,
+    List<String> tags = const [],
   }) async {
     final Map<String, dynamic> query = {
       'page': page,
@@ -31,6 +42,9 @@ class DealRepository {
       'sort': sort,
       'availability': availability,
       'minimumRating': minimumRating,
+      if (priceRange?.isNotEmpty == true) 'priceRange': priceRange,
+      if (openNow) 'openNow': 'true',
+      if (tags.isNotEmpty) 'tags': tags.join(','),
       if (cuisine?.isNotEmpty == true) 'cuisine': cuisine,
       'recommendation': ?recommendation,
     };

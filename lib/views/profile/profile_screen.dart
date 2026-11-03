@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_spacing.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -12,6 +13,9 @@ import 'change_password_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
 import 'my_check_ins_screen.dart';
+import 'information_screen.dart';
+import 'app_info_screen.dart';
+import '../../core/widgets/social_account_links.dart';
 import '../restaurant_owner/create_edit_restaurant_screen.dart';
 import '../restaurant_owner/owner_workspace_screen.dart';
 import '../restaurant_details/restaurant_details_screen.dart';
@@ -45,7 +49,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: AppSpacing.pagePadding,
           child: Column(
             children: [
               Container(
@@ -263,9 +267,35 @@ class ProfileScreen extends StatelessWidget {
               ],
 
               // Group 3: Legal & Help
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('Impressum'),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ImpressumScreen()),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.contact_support_outlined),
+                title: const Text('Kontakt'),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ContactScreen()),
+                ),
+              ),
+              const SocialAccountLinks(),
               _buildSectionBox(
                 title: language.text('Hilfe & Recht', 'Help & legal'),
                 children: [
+                  _buildListTile(
+                    icon: Icons.info_outline_rounded,
+                    title: 'Über Signature Dish',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AppInfoScreen()),
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppColors.divider),
                   _buildListTile(
                     icon: Icons.verified_user_outlined,
                     title: language.text(

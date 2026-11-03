@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
@@ -8,6 +9,7 @@ import '../../core/widgets/app_motion.dart';
 import '../../core/widgets/auth_backdrop.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
+import '../../core/widgets/provider_brand_icon.dart';
 import '../../providers/auth_provider.dart';
 import '../authenticated_landing_screen.dart';
 import 'signup_screen.dart';
@@ -30,6 +32,25 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  Future<void> _social(String provider) async {
+    final auth = context.read<AuthProvider>();
+    final success = await auth.socialLogin(provider);
+    if (!mounted) return;
+    if (success) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthenticatedLandingScreen()),
+        (_) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? 'Anmeldung fehlgeschlagen.'),
+        ),
+      );
+    }
+  }
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -78,7 +99,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return AuthBackdrop(
       child: SafeArea(
-        bottom: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           child: Form(
@@ -86,10 +106,14 @@ class _SignInScreenState extends State<SignInScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: 146.h - AppSizes.topInset),
+                SizedBox(
+                  height: MediaQuery.viewInsetsOf(context).bottom > 0
+                      ? 16
+                      : 40.h,
+                ),
                 Center(child: const AppBrandLogo(width: 153).popIn(from: 0.9)),
 
-                SizedBox(height: 37.h),
+                SizedBox(height: 24.h),
                 Text(
                   'Willkommen bei Signature Dish',
                   textAlign: TextAlign.center,
@@ -106,7 +130,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ).fadeSlideUp(delay: Motion.step(2)),
 
-                SizedBox(height: 74.h),
+                SizedBox(height: 24.h),
                 CustomTextField(
                   controller: _emailController,
                   hintText: 'E-Mail',
@@ -116,7 +140,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       : null,
                 ).fadeSlideUp(delay: Motion.step(3)),
 
-                SizedBox(height: 12.h),
+                SizedBox(height: 16.h),
                 CustomTextField(
                   controller: _passwordController,
                   hintText: 'Passwort',
@@ -126,9 +150,12 @@ class _SignInScreenState extends State<SignInScreen> {
                       : null,
                 ).fadeSlideUp(delay: Motion.step(4)),
 
-                SizedBox(height: 15.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                SizedBox(height: 16.h),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 16,
+                  runSpacing: 12,
                   children: [
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
@@ -189,12 +216,40 @@ class _SignInScreenState extends State<SignInScreen> {
                   ],
                 ).fadeSlideUp(delay: Motion.step(5)),
 
-                SizedBox(height: 74.h),
+                SizedBox(height: 24.h),
                 CustomButton(
                   text: 'Anmelden',
                   isLoading: authProvider.isLoading,
                   onPressed: _handleLogin,
                 ).fadeSlideUp(delay: Motion.step(6)),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                  ),
+                  onPressed: authProvider.isLoading
+                      ? null
+                      : () => _social('google'),
+                  icon: const GoogleBrandIcon(),
+                  label: const Text('Mit Google anmelden'),
+                ),
+                if (!kIsWeb &&
+                    [
+                      TargetPlatform.iOS,
+                      TargetPlatform.android,
+                    ].contains(defaultTargetPlatform)) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                    ),
+                    onPressed: authProvider.isLoading
+                        ? null
+                        : () => _social('apple'),
+                    icon: const AppleBrandIcon(),
+                    label: const Text('Mit Apple anmelden'),
+                  ),
+                ],
 
                 SizedBox(height: 16.h),
                 Wrap(

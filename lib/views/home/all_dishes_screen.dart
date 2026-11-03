@@ -9,7 +9,11 @@ class AllDishesScreen extends StatelessWidget {
   const AllDishesScreen({super.key, required this.categoryName});
   @override
   Widget build(BuildContext context) {
-    final category = context.watch<CategoryProvider>().categories.where((item) => item.categoryName == categoryName).firstOrNull;
+    final category = context
+        .watch<CategoryProvider>()
+        .categories
+        .where((item) => item.categoryName == categoryName)
+        .firstOrNull;
     return CategoriesScreen(initialCategoryId: category?.id);
   }
 }

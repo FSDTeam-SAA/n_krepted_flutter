@@ -11,11 +11,12 @@ class ReviewCard extends StatelessWidget {
   const ReviewCard({super.key, required this.review, this.showVisit = true});
   @override
   Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(bottom: 14),
-    padding: const EdgeInsets.all(12),
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.cardBorder),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +39,11 @@ class ReviewCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    review.user.name,
+                    review.reviewType == 'sd_admin'
+                        ? '★ Signature Dish Team'
+                        : review.user.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: AppFontSizes.body),
                   ),
                   Text(

@@ -36,6 +36,7 @@ class DiscoveryFeed extends StatelessWidget {
       child: RefreshIndicator(
         onRefresh: provider.fetchDeals,
         child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
           itemCount: provider.deals.length + 1,
           itemBuilder: (context, index) {

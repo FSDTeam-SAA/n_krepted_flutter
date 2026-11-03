@@ -9,6 +9,20 @@ import '../core/network/api_error.dart';
 import '../data/repositories/auth_repository.dart';
 
 class AuthProvider with ChangeNotifier {
+  Future<bool> socialLogin(String provider) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      _currentUser = await authRepository.socialLogin(provider);
+      return true;
+    } catch (e) {
+      _errorMessage = friendlyApiError(e);
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   final AuthRepository authRepository;
 
   UserModel? _currentUser;

@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-// Flutter SDKs differ in which library exports CupertinoPageTransitionsBuilder.
-// ignore: unnecessary_import
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'core/constants/app_colors.dart';
 import 'core/constants/app_sizes.dart';
-import 'core/constants/app_text_styles.dart';
+import 'core/theme/app_theme.dart';
 import 'core/network/api_client.dart';
 import 'core/widgets/app_refresh_boundary.dart';
 import 'data/repositories/auth_repository.dart';
@@ -97,42 +93,7 @@ class SignatureDishApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-          surface: AppColors.background,
-        ),
-        fontFamily: AppTextStyles.sansFamily,
-        chipTheme: ChipThemeData(
-          backgroundColor: const Color(0xFFF4F3F3),
-          selectedColor: const Color(0xFFFFF6D4),
-          showCheckmark: false,
-          side: BorderSide.none,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          labelStyle: const TextStyle(
-            fontSize: AppFontSizes.small,
-            color: AppColors.textDark,
-          ),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          foregroundColor: AppColors.textDark,
-        ),
-        // Same soft slide on every pushed route, on both platforms.
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          },
-        ),
-      ),
+      theme: AppTheme.light,
       // One place to keep the 393 x 852 design mapping in sync with the window.
       builder: (context, child) {
         AppSizes.init(context);

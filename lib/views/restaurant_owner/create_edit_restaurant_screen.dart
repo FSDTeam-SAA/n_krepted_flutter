@@ -8,7 +8,9 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../core/widgets/app_dropdown.dart';
 import '../../core/widgets/custom_text_field.dart';
+import '../../core/utils/description_text.dart';
 import '../../data/models/deal_model.dart';
 import '../../providers/owner_restaurant_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -17,6 +19,7 @@ import '../../core/services/restaurant_draft_store.dart';
 import 'dish_form_sheet.dart';
 import 'restaurant_location_picker_screen.dart';
 import 'owner_workspace_screen.dart';
+import 'restaurant_details_fields.dart';
 
 class CreateEditRestaurantScreen extends StatefulWidget {
   final DealModel? restaurant;
@@ -38,6 +41,8 @@ class CreateEditRestaurantScreen extends StatefulWidget {
 class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
+  late Map<String, dynamic> _extra;
+  int _leadImageIndex = 0;
 
   late final TextEditingController _titleController;
   late final TextEditingController _shortDescController;
@@ -68,11 +73,17 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     final r = widget.restaurant;
+    _extra = restaurantExtraFields(r);
+    _leadImageIndex = r == null
+        ? 0
+        : r.images.indexOf(r.firstImage).clamp(0, 1000);
     _titleController = TextEditingController(text: r?.title ?? '');
     _shortDescController = TextEditingController(
       text: r?.shortDescription ?? '',
     );
-    _descController = TextEditingController(text: r?.description ?? '');
+    _descController = TextEditingController(
+      text: plainDescription(r?.description ?? ''),
+    );
     _priceController = TextEditingController(
       text: r?.price != null ? r!.price.toStringAsFixed(2) : '0.00',
     );
@@ -120,6 +131,10 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     final draft = id == null ? null : await RestaurantDraftStore.load(id);
     if (!mounted) return;
     if (draft != null) {
+      if (draft['extra'] is Map) {
+        _extra = {..._extra, ...Map<String, dynamic>.from(draft['extra'])};
+      }
+      _leadImageIndex = (draft['leadImageIndex'] as num?)?.toInt() ?? 0;
       for (final entry in _draftFields.entries) {
         entry.value.text = draft[entry.key] as String? ?? entry.value.text;
       }
@@ -148,6 +163,8 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     if (id == null || !_draftReady || _submitted) return;
     try {
       await RestaurantDraftStore.save(id, {
+        'extra': _extra,
+        'leadImageIndex': _leadImageIndex,
         for (final entry in _draftFields.entries) entry.key: entry.value.text,
         'imageFiles': List<XFile>.from(_newImages),
         'newPhotoCategories': [
@@ -232,9 +249,15 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
 
   Future<void> _pickRestaurantImages(String category) async {
     final remaining =
-        4 - _photoCategories.values.where((value) => value == category).length;
+        (4 - _photoCategories.values.where((value) => value == category).length)
+            .clamp(
+              0,
+              (10 - _existingImages.length - _newImages.length).clamp(0, 10),
+            );
     if (remaining <= 0) {
-      _showImageMessage('Maximal 4 Bilder sind erlaubt.');
+      _showImageMessage(
+        'Maximal 10 Restaurantfotos insgesamt und 4 pro Bereich.',
+      );
       return;
     }
 
@@ -244,11 +267,13 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     );
     if (!mounted || selected.isEmpty) return;
 
+    final leadKey = _currentLeadKey;
     setState(() {
       for (final image in selected.take(remaining)) {
         _newImages.add(image);
         _photoCategories[image.path] = category;
       }
+      _restoreLeadKey(leadKey);
     });
     _scheduleDraft();
     if (selected.length > remaining) {
@@ -266,6 +291,7 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     );
     if (!mounted || selected == null) return;
 
+    final leadKey = _currentLeadKey;
     setState(() {
       final oldKey = index < _newImages.length
           ? _newImages[index].path
@@ -278,11 +304,13 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
         _newImages.add(selected);
       }
       _photoCategories[selected.path] = category;
+      _restoreLeadKey(leadKey == oldKey ? selected.path : leadKey);
     });
     _scheduleDraft();
   }
 
   void _removeImage(int index) {
+    final leadKey = _currentLeadKey;
     setState(() {
       if (index < _newImages.length) {
         _photoCategories.remove(_newImages[index].path);
@@ -291,9 +319,21 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
         _photoCategories.remove(_existingImages[index - _newImages.length]);
         _existingImages.removeAt(index - _newImages.length);
       }
+      _restoreLeadKey(leadKey);
     });
     _scheduleDraft();
   }
+
+  List<String> get _photoKeys => [
+    ..._newImages.map((image) => image.path),
+    ..._existingImages,
+  ];
+  String? get _currentLeadKey => _photoKeys.isEmpty
+      ? null
+      : _photoKeys[_leadImageIndex.clamp(0, _photoKeys.length - 1)];
+  void _restoreLeadKey(String? key) => _leadImageIndex = key == null
+      ? 0
+      : _photoKeys.indexOf(key).clamp(0, 1000);
 
   void _showImageMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -395,11 +435,20 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
     final provider = context.read<OwnerRestaurantProvider>();
 
     final payload = {
+      ..._extra,
+      'leadImageIndex': leadImageSubmissionIndex(
+        _leadImageIndex,
+        _newImages.length,
+        _existingImages.length,
+      ),
       'title': _titleController.text.trim(),
       'shortDescription': _shortDescController.text.trim().isNotEmpty
           ? _shortDescController.text.trim()
           : _titleController.text.trim(),
-      'description': _descController.text.trim(),
+      'description': descriptionForSubmission(
+        widget.restaurant?.description ?? '',
+        _descController.text,
+      ),
       'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
       'existingImages': List<String>.from(_existingImages),
       'imageFiles': List<XFile>.from(_newImages),
@@ -735,7 +784,9 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
                                 _signatureDishes[i]['name'] as String,
                               ),
                               subtitle: Text(
-                                _signatureDishes[i]['description'] as String,
+                                plainDescription(
+                                  _signatureDishes[i]['description'] as String,
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -763,6 +814,36 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
                         ],
 
                         const SizedBox(height: 32),
+                        RestaurantDetailsFields(
+                          value: _extra,
+                          onChange: (v) {
+                            setState(() => _extra = v);
+                            _scheduleDraft();
+                          },
+                        ),
+                        if (_existingImages.isNotEmpty || _newImages.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: AppDropdown<int>(
+                              value: _leadImageIndex.clamp(
+                                0,
+                                _existingImages.length + _newImages.length - 1,
+                              ),
+                              decoration: const InputDecoration(
+                                labelText: 'Titelbild',
+                              ),
+                              items: List.generate(
+                                _existingImages.length + _newImages.length,
+                                (i) => DropdownMenuItem(
+                                  value: i,
+                                  child: Text('Foto ${i + 1}'),
+                                ),
+                              ),
+                              onChanged: (v) =>
+                                  setState(() => _leadImageIndex = v ?? 0),
+                            ),
+                          ),
+                        const SizedBox(height: 24),
                         CustomButton(
                           text: isEditing
                               ? 'Änderungen speichern'
@@ -844,9 +925,8 @@ class _CreateEditRestaurantScreenState extends State<CreateEditRestaurantScreen>
                             ),
                           ),
                         ),
-                        DropdownButton<String>(
+                        AppDropdown<String>(
                           value: category.key,
-                          isExpanded: true,
                           items: [
                             for (final item in _photoLabels.entries)
                               DropdownMenuItem(
